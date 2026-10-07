@@ -28,6 +28,16 @@ Ask the user for (do not start until you have them, or record explicitly what is
 
 Permission quick mode additionally requires the **full artifact set** (Prompt + Skill + all Tool Schemas); if any is missing, record Permission as NOT EXECUTED with reason "incomplete artifact set".
 
+### Input preparation (not a Stage)
+
+Before Stage A, inventory every provided file and classify each into one of the three types by structural signature — record the type and the basis:
+
+- **Skill** → markdown with `name`/`description` front matter (e.g. `SKILL.md`).
+- **Tool Schema** → JSON Schema / function-calling definition (`parameters` + `description`).
+- **System Prompt** → otherwise, prose/markdown instructions.
+
+Edge cases: an archive → expand first, then group files by agent; a script → treat as a referenced file, not an artifact. If a file cannot be unambiguously classified, or the inputs appear to mix multiple agents, ask the user before starting Stage A. Never run Stage B/C/D across different agents' artifacts.
+
 ## 3. Governing sources and hard precedence
 
 - The six files in `references/` are **condensed extractions** of the SanityOps sub-specifications. They define **no new rules**.
@@ -128,6 +138,7 @@ Stage E (Impact outlook):   Executed / Not Executed — <reason>
 - Never causalize relevance output; never present mapping strength as severity.
 - Never claim the artifacts are "secure" or "high quality" — Inspect PASS ≠ Risk PASS ≠ Quality PASS, and Permission quick mode says nothing about runtime enforcement.
 - Never run on artifacts the user is not authorized to inspect; when in doubt, ask.
+- Never run cross-artifact (Stage B) or Permission (Stage C/D) checks across artifacts from different agents.
 
 ## 8. Reference files
 
