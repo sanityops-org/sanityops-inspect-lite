@@ -1,0 +1,26 @@
+{
+  "name": "sanityops-inspect-lite",
+  "version": "1.0.0",
+  "description": "Lite, zero-install inspector for AI Agent logic artifacts (System Prompt, Skill, Tool Schema) based on the SanityOps Framework v1.0. Detect-only; never rewrites artifacts.",
+  "license": "CC-BY-SA-4.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sanityops-org/sanityops-inspect-lite.git"
+  },
+  "keywords": [
+    "sanityops",
+    "ai-agent",
+    "inspection",
+    "governance",
+    "skill",
+    "system-prompt",
+    "tool-schema"
+  ],
+  "files": [
+    "SKILL.md",
+    "README.md",
+    "LICENSE",
+    "references/",
+    "samples/"
+  ]
+}
