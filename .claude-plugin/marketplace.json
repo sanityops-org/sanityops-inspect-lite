@@ -1,0 +1,13 @@
+{
+  "name": "sanityops",
+  "owner": {
+    "name": "Sanity AI Labs"
+  },
+  "plugins": [
+    {
+      "name": "sanityops-inspect-lite",
+      "source": "./plugins/sanityops-inspect-lite",
+      "description": "Detect-only inspector for AI Agent logic artifacts (System Prompt, Skill, Tool Schema). Pure skill — no hooks, no MCP servers, no scripts."
+    }
+  ]
+}

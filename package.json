@@ -17,10 +17,10 @@
     "tool-schema"
   ],
   "files": [
-    "SKILL.md",
+    ".claude-plugin/",
+    "plugins/",
     "README.md",
     "LICENSE",
-    "references/",
     "samples/"
   ]
 }

@@ -9,14 +9,14 @@ license: CC BY-SA 4.0
 
 ## 1. What this skill is
 
-A **detect-only** inspector for the three Logic Artifact types covered by the SanityOps Framework v1.0: **System Prompt**, **Skill**, and **Tool Schema** (Permission is inspected as a cross-cutting aspect). It is executed by you — the host model — by applying the condensed checklists in `references/`. It has **zero dependencies**: no CLI, no scripts, no network calls.
+A **detect-only** inspector for the three Logic Artifact types in SanityOps Framework v1.0 — **System Prompt**, **Skill**, and **Tool Schema** (Permission as a cross-cutting aspect) — executed by you, the host model, applying the condensed checklists in `references/`. Zero dependencies: no CLI, no scripts, no network calls.
 
 It is **not**:
 
-- The official `sanityops-cli` or any SaaS: it covers only the condensed minimal rule sets, not the full specifications.
-- A security or quality gate: Inspect PASS ≠ Risk PASS ≠ Quality PASS (core.md §1.4). The Risk subsets (Explicit / Implicit sandbox validation) and Quality subsets are **not** run by this skill.
-- A repair tool: it never rewrites, patches, or generates "fixed" versions of any artifact.
-- A runtime auditor: Permission quick mode validates what is *declared in the artifacts* only — not IAM/IdP configuration, PEP/PDP enforcement, or runtime monitoring (permission.md §0.1.4).
+- The official `sanityops-cli` or any SaaS — condensed minimal rule sets only, not the full specification.
+- A security or quality gate — Inspect PASS ≠ Risk PASS ≠ Quality PASS (core.md §1.4); the Risk (Explicit/Implicit) and Quality subsets are **not** run.
+- A repair tool — it never rewrites, patches, or generates fixed versions.
+- A runtime auditor — Permission quick mode validates only what is *declared in the artifacts*, not IAM/IdP configuration, PEP/PDP enforcement, or runtime monitoring (permission.md §0.1.4).
 
 ## 2. Inputs
 
