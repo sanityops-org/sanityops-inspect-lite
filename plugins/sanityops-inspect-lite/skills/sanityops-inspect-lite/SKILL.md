@@ -56,7 +56,8 @@ Run stages **in order, never in parallel, never out of order**. After every stag
 2. For the Skill → `references/skill-checklist.md`. **Run the QD-S-0 baseline checks first** (they gate the rest of the Skill checklist).
 3. For each Tool Schema → `references/tool-checklist.md` (tier the Tool first, per the checklist's tier rules).
 4. Verdict per rule: `QD-x-y | PASS/FAIL | evidence: file, section/line`. Every FAIL must quote the offending artifact text (short excerpt).
-5. Collect all P0 findings and carry them forward. P0 findings do **not** halt the flow — continue to Stage B in the same run, unless the user asked for Stage A only.
+5. **Single-artifact boundary (hard)**: inspect each artifact in isolation. A declaration missing from the artifact under inspection is a defect of *that* artifact — do not treat a declaration present in a different artifact as satisfying it. Evidence for every FAIL must quote the inspected artifact itself, never a sibling artifact.
+6. Collect all P0 findings and carry them forward. P0 findings do **not** halt the flow — continue to Stage B in the same run, unless the user asked for Stage A only.
 
 ### Stage B — Cross-artifact inspection (QD-PS / QD-PT / QD-ST)
 

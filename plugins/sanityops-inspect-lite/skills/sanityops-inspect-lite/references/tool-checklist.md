@@ -14,7 +14,8 @@ description: "Condensed QD-T inspection checklist for the sanityops-inspect lite
 - **QD-T-1.x and QD-T-2.x are mechanical**: decide by direct schema reading only (field presence, `required` vs `properties`, enum contents, `additionalProperties`, length/format/boundary keywords). Per §1.4 these are JSON-Schema-validator-automatable.
 - **Judgment items**: QD-T-3.1/3.4 and QD-T-4.1/4.2 require reading description semantics and tool relationships (marked *Human* in the spec); QD-T-3.2/3.3/3.5 and QD-T-4.3 are *Semi-automated* (keyword scanning + reasoning). Per §2.4, combine automated constraint checks with this review.
 - **Output one verdict per rule** in the Stage-A contract form: `QD-T-x.y | PASS/FAIL | evidence: field path / JSON pointer / line`. Every FAIL must quote a short excerpt of the offending schema text.
-- **Any P0 FAIL blocks downstream stages** (Mode 2): finish the Stage A report and mark later stages "Not Executed — not executed because upstream P0 findings are unfixed".
+- **Judgment threshold — a missing field/constraint is the defect**: a rule is FAIL when the schema field or constraint its definition names is **absent** from the Tool Schema. The "leading-to …" tail of each definition describes the **risk mechanism**, not an additional precondition to prove. Do not require a demonstrated concrete failure to mark a missing-field rule FAIL.
+- **P0 findings are release-blocking but do not halt the flow** (non-blocking): record every P0 FAIL in the Stage A report and continue to Stage B; later stages are not marked "Not Executed" because of P0 findings.
 - **Must-pass vs recommended-pass** (Appendix A): in every tier, the tier's P0 items are the must-pass items; P1/P2 items are recommended-pass.
 - The **Level column is tier-specific**: the same rule carries different levels at different tiers (defect-level upgrade rules, §3.2.2). Use the level shown in the tier's own table.
 
