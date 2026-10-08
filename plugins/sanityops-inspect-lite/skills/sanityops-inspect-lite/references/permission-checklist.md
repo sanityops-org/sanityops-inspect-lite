@@ -94,11 +94,13 @@ Gate-0 **is not an inspection item**: it produces no numbers, does not participa
 | G0-3 | Responsibility boundary statements exist and are locatable | Locatability verification; must cite specific locations | No responsibility baseline; proportionality has no reference |
 | G0-4 | Each Tool Schema's `name`, `description`, and parameter descriptions are complete | Field-by-field completeness verification | Operation semantics undeterminable; permission items cannot be categorized |
 
+**Non-blocking note (lite skill)**: In this lite skill's non-blocking flow, G0-1 and G0-2 (no unfixed P0 upstream) are **recorded as informational findings and do not gate** admission; G0-3 and G0-4 remain the structural admission conditions. See SKILL.md §4 Stage C.
+
 Admission layer vs substance layer (§9.2.3): G0-3 verifies statements **exist** (QD-PM-1.4 then judges discriminative power — outside lite scope); G0-4 verifies fields **are complete** (QD-PM-1.5 then judges whether they express operation semantics — outside lite scope); permission-set enumerability has no admission condition — it is judged by QD-PM-6.5 itself.
 
 ### 3.3 Output norm when not passed (§9.2.4)
 
-When any condition fails, output **only**:
+When G0-3 or G0-4 fails, output **only**:
 
 ```text
 Subset: Inspect Permission Governance Specification (QD-PM)

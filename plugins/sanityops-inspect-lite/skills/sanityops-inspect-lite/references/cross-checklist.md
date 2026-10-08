@@ -9,7 +9,7 @@ description: "Condensed cross-artifact consistency checklist (QD-PS / QD-PT / QD
 
 ## How to Use
 
-- **Entry precondition — upstream P0 must be clear first.** Cross runs only after single-artifact inspection has passed. Spec wording (cross.md §5.2.1): *"Inspection Entry Condition: Single-artifact inspection has passed, and no undisposed P0 defects remain."* If any upstream single-artifact P0 is unfixed, do **not** run this checklist: record the run as **"NOT EXECUTED due to unfixed upstream P0"** with remediation guidance — this is an execution status, **NOT a FAIL verdict**. The spec's own failure handling (§5.1.2, Step 1) is: *"Output remediation guidance; halt cross-artifact inspection"*.
+- **Non-blocking mode (lite skill).** Cross runs regardless of upstream single-artifact P0 findings: upstream P0 defects are recorded and carried forward, but they do **not** prevent this checklist from executing, and they are not a reason to mark the run "NOT EXECUTED". (The upstream source spec cross.md §5.2.1 states an entry condition *"Single-artifact inspection has passed, and no undisposed P0 defects remain"* with failure handling *"halt cross-artifact inspection"*; this lite skill deliberately runs non-blocking and aggregates P0 findings instead of halting.)
 - **Confirm artifact version consistency before starting** (§5.2.2): Prompt, Skill, and Tool version numbers, update timestamps, and sources must be consistent; if not, ask the user for confirmation before proceeding.
 - **Determine the Agent tier (L1/L2/L3)** and run the corresponding scope (two layers, do not collapse them):
   1. **Evaluation scope — which items get a verdict** — per §5.4.3 inspection intensity, with item composition taken from the Appendix A applicability column in the tables below:
@@ -20,7 +20,7 @@ description: "Condensed cross-artifact consistency checklist (QD-PS / QD-PT / QD
 - **Inspect only cross-artifact relationships** — the three pairs defined by the spec (§0.1.5): QD-PS (Prompt → Skill), QD-PT (Prompt → Tool), QD-ST (Skill ↔ Tool). Do not re-check single-artifact internal defects already owned by QD-P / QD-S / QD-T.
 - **For each rule, output: rule ID + verdict (PASS / FAIL with severity) + evidence quoting BOTH artifact locations** (three-tier localization: relationship level → artifact level → field level, cross.md §6.1.1).
 - **Apply default severities from Appendix A**, then apply the severity upgrade rules (Appendix C) when the Tool is RS-3, the Skill is SS-3, the Agent is L3, or linked defects exist.
-- **Verdict rule**: any P0 defect present → evaluation FAIL (Appendix B.1: *"Any P0 defect present → evaluation FAIL"*). A final report with unremediated P0 defects must follow Step 7: *"Output blocking report; require re-inspection after remediation"*.
+- **Verdict rule**: any P0 defect present → evaluation FAIL (Appendix B.1: *"Any P0 defect present → evaluation FAIL"*). A final report with unremediated P0 defects must follow Step 7: *"Output blocking report; require re-inspection after remediation"*. This FAIL verdict is a cross-stage result only; in this lite skill's non-blocking flow it does **not** halt subsequent stages (Gate-0 / Permission).
 - **Respect the scope exclusions** listed under "Does NOT Check" below — a Cross result says nothing about single-artifact internals, runtime behavior, or system-level permission enforcement.
 
 ## Appendix A — Complete Inspection Item List (19 items)
@@ -111,7 +111,7 @@ Source weights per the §8.3.1 statistics table: **L1** W = 5×4 + 3×3 + 1×1 =
 
 ## Inspection Process (cross.md Part 5.1.1 — Seven Steps)
 
-1. **Prerequisite Verification** — Confirm all three artifacts passed their single-artifact inspections with no undisposed P0, and versions are consistent. Entry condition (§5.2.1, verbatim): *"Inspection Entry Condition: Single-artifact inspection has passed, and no undisposed P0 defects remain."* On failure: *"Output remediation guidance; halt cross-artifact inspection"* — a run stopped here is "NOT EXECUTED due to unfixed upstream P0", not a FAIL.
+1. **Prerequisite Verification** — Confirm artifact version consistency (required). Upstream single-artifact P0 findings do **not** halt the run in this non-blocking lite skill: record them as carried-forward findings and proceed. The source's gating entry condition (§5.2.1) and its *"halt cross-artifact inspection"* failure handling are documented for reference, but this lite skill runs non-blocking and aggregates P0 findings rather than halting.
 2. **Artifact Relationship Identification** — Extract the Skill and Tool declaration lists: from the Prompt's QD-P-2.4.2 resource/tool declaration section, and from the Skill's EXECUTION dimension (allowed_downstream_skills). If extraction fails, flag the missing declaration and continue with an advisory.
 3. **QD-PS Check (Prompt → Skill)** — Run QD-PS-1.1 through 1.6 item-by-item; record inconsistencies mapped to specific locations in both the Prompt and the Skill.
 4. **QD-ST Check (Skill ↔ Tool)** — Run QD-ST-3.1 through 3.7; map findings to Skill and Tool locations.

@@ -1,7 +1,7 @@
 ---
 name: sanityops-inspect-lite
 version: 1.0.0
-description: Lite, zero-install inspector for AI Agent logic artifacts (System Prompt, Skill, Tool Schema) based on the SanityOps Framework v1.0. Runs a five-stage gated flow — single-artifact defect inspection (QD-P/QD-S/QD-T), cross-artifact contract checks (QD-PS/PT/ST), Gate-0 admission, permission proportionality quick check (QD-PM), and a candidate-impact outlook (AS-*/FM-* mapping). Detect-only: it never rewrites the inspected artifacts. Use when the user asks to inspect, audit, or check an agent's system prompt, skill definition, or tool schemas.
+description: Lite, zero-install inspector for AI Agent logic artifacts (System Prompt, Skill, Tool Schema) based on the SanityOps Framework v1.0. Runs a five-stage non-blocking flow — single-artifact defect inspection (QD-P/QD-S/QD-T), cross-artifact contract checks (QD-PS/PT/ST), Gate-0 admission, permission proportionality quick check (QD-PM), and a candidate-impact outlook (AS-*/FM-* mapping). P0 findings are aggregated and reported but never halt the flow. Detect-only: it never rewrites the inspected artifacts. Use when the user asks to inspect, audit, or check an agent's system prompt, skill definition, or tool schemas.
 license: CC BY-SA 4.0
 ---
 
@@ -46,9 +46,9 @@ Edge cases: an archive → expand first, then group files by agent; a script →
 - Only output rule IDs that exist in the references. **Never invent QD IDs, rule names, or levels.**
 - This package is licensed CC BY-SA 4.0, attributed to the SanityOps Framework.
 
-## 4. Inspection flow — five stages, strictly in order
+## 4. Inspection flow — five stages, strictly in order, non-blocking
 
-Run stages **in order, never in parallel, never out of order**. After every stage, emit that stage's report before moving on.
+Run stages **in order, never in parallel, never out of order**. After every stage, emit that stage's report before moving on. P0 findings **never halt the flow**: they are aggregated, reported in the executive summary and status board, and carried forward to later stages. A stage is skipped (Not Executed) only for concrete structural reasons — missing artifacts, or unsatisfied Gate-0 structural conditions (G0-3/G0-4) — never because of P0 findings.
 
 ### Stage A — Single-artifact inspection (QD-P / QD-S / QD-T)
 
@@ -56,20 +56,20 @@ Run stages **in order, never in parallel, never out of order**. After every stag
 2. For the Skill → `references/skill-checklist.md`. **Run the QD-S-0 baseline checks first** (they gate the rest of the Skill checklist).
 3. For each Tool Schema → `references/tool-checklist.md` (tier the Tool first, per the checklist's tier rules).
 4. Verdict per rule: `QD-x-y | PASS/FAIL | evidence: file, section/line`. Every FAIL must quote the offending artifact text (short excerpt).
-5. Collect all P0 findings. If any P0 exists → **stop after Stage A** (Mode 2 blocking). If none → continue to Stage B in the same run (Mode 1), unless the user asked for Stage A only.
+5. Collect all P0 findings and carry them forward. P0 findings do **not** halt the flow — continue to Stage B in the same run, unless the user asked for Stage A only.
 
 ### Stage B — Cross-artifact inspection (QD-PS / QD-PT / QD-ST)
 
 1. Use `references/cross-checklist.md`: evaluate the tier's inspection scope per cross.md §5.4.3 / §8.3.1 (L1 basic / L2 standard 12 / L3 full 19, with the explicit per-tier item composition given in the checklist), applying Appendix B's tier P0 set as the blocking compliance core. The checklist documents the source's own internal count discrepancies; do not resolve them by inventing items.
 2. Inspect only pairwise relationships (Prompt↔Skill, Prompt↔Tool, Skill↔Tool). Do **not** re-check single-artifact internal defects.
-3. Any P0 → stop after Stage B.
+3. Any P0 → record it and continue to Stage C; P0 findings do **not** halt the flow.
 
 ### Stage C — Gate-0 (admission to Permission)
 
-Gate-0 **is not an inspection item**: it produces no numbers and no score; "not passed" ≠ FAIL ≠ permission problems (permission.md §9.2.2). Verify the four admission conditions G0-1..G0-4 defined in `references/permission-checklist.md` §3.2 (no unfixed P0 in Stages A/B; responsibility boundary statements exist and are locatable; each Tool Schema's name/description/parameter descriptions are complete).
+Gate-0 **is not an inspection item**: it produces no numbers and no score; "not passed" ≠ FAIL ≠ permission problems (permission.md §9.2.2). Verify the four admission conditions G0-1..G0-4 defined in `references/permission-checklist.md` §3.2. In this non-blocking flow, G0-1 (no unfixed P0 in Stage A) and G0-2 (no unfixed P0 in Stage B) are **recorded as informational findings and do not gate**; only G0-3 (responsibility boundary statements exist and are locatable) and G0-4 (each Tool Schema's name/description/parameter descriptions are complete) remain structural admission conditions for Stage D.
 
-- All four pass → proceed to Stage D.
-- Any condition fails → for the Permission stage output **only** the "Not Executed" block specified in `references/permission-checklist.md` §3.3 (subset / status / unsatisfied IDs / blocking reasons / remediation actions), and stop. Output nothing else for Permission — no defect list, no score, no partial conclusions.
+- G0-3 and G0-4 both pass → proceed to Stage D (G0-1/G0-2 findings, if any, are carried forward in the report).
+- G0-3 or G0-4 fails → for the Permission stage output **only** the "Not Executed" block specified in `references/permission-checklist.md` §3.3 (subset / status / unsatisfied IDs / blocking reasons / remediation actions), and stop. Output nothing else for Permission — no defect list, no score, no partial conclusions.
 - Wording red line: the Permission stage was **"Not Executed"** — never report it as FAIL, and never write "Permission = ERROR/BLOCKED" at stage level (§9.2.4 hierarchy expression norm; see also §6 of this file).
 
 ### Stage D — Permission proportionality (QD-PM, Quick Mode)
@@ -92,11 +92,9 @@ Gate-0 **is not an inspection item**: it produces no numbers and no score; "not 
 
 ## 5. Run modes
 
-**Mode 1 — One-shot full flow**: 0 P0 after Stage A → run B → C → D → E in one response.
+**Mode 1 — One-shot full flow (non-blocking)**: run A → B → C → D → E in one response. P0 findings are aggregated across stages and reported in the executive summary and status board; they **never** halt the flow. A stage is skipped only for concrete structural reasons (missing artifacts, or Gate-0 G0-3/G0-4 unsatisfied), never for P0 findings.
 
-**Mode 2 — P0 blocking**: any P0 in A or B → output that stage's report plus the status board, with the unexecuted stages marked "Not Executed — not executed because upstream P0 findings are unfixed", and stop.
-
-**Mode 3 — Multi-round iteration**: the user fixes artifacts (outside this skill) and re-runs. Maintain a round ledger:
+**Mode 2 — Multi-round iteration**: the user fixes artifacts (outside this skill) and re-runs. Maintain a round ledger:
 
 - Round number, artifact version, date, per-stage findings count (P0/P1/P2), list of open vs closed findings (matched by rule ID + evidence location).
 - **Ratchet semantics**: for the same artifact version, a finding once recorded may only be closed by re-running its check on the updated artifact — never by user assertion. A version change resets the baseline (record it as a new baseline; keep prior rounds in the ledger).
@@ -118,7 +116,7 @@ Stage D (Permission QD-PM): Executed / Not Executed — <reason>
 Stage E (Impact outlook):   Executed / Not Executed — <reason>
 ```
 
-5. **Blocking wording red line**: a stage that did not run is reported as **Not Executed** with the reason "not executed because upstream P0 findings are unfixed" (or the specific Gate-0 condition IDs). Never report a non-executed stage as FAIL, and never write "Permission = ERROR/BLOCKED" — the correct form is "Permission did not execute due to Gate-0 not satisfied".
+5. **Blocking wording red line**: a stage that did not run is reported as **Not Executed** with a concrete structural reason — the specific Gate-0 condition IDs (G0-3/G0-4) or "incomplete artifact set" (Stage D). P0 findings alone are never a reason for a stage to be Not Executed in this non-blocking flow. Never report a non-executed stage as FAIL, and never write "Permission = ERROR/BLOCKED" — the correct form is "Permission did not execute due to Gate-0 not satisfied".
 6. **Indicative score** only if the user asks: apply the checklist's stated deduction weights; label it "indicative (lite minimal set), not the full-spec score".
 7. **Report header (mandatory on every report and every stage-only report)** — exactly these provenance facts:
    - Host model name (self-declared by the model executing this skill, e.g. `Host model: <vendor/model>`);
