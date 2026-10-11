@@ -17,7 +17,7 @@ Then just say "inspect my system prompt / skill / tool schema" to trigger it.
 git clone https://github.com/sanityops-org/sanityops-inspect-lite.git
 ```
 
-The skill lives in `plugins/sanityops-inspect-lite/skills/sanityops-inspect-lite/` (`SKILL.md` + 6 checklists in `references/`). Install that folder as a skill in your agent.
+The skill lives in `plugins/sanityops-inspect-lite/skills/sanityops-inspect-lite/` (`SKILL.md` + 8 checklists in `references/`). Install that folder as a skill in your agent.
 
 ## Data & privacy
 
@@ -27,6 +27,6 @@ The skill lives in `plugins/sanityops-inspect-lite/skills/sanityops-inspect-lite
 
 ## Boundaries
 
-- ✅ Five-stage defect inspection: single-artifact → cross-artifact → Gate-0 → permission → impact outlook
+- ✅ Six-stage inspection: single-artifact → cross-artifact → Gate-0 → permission → explicit-risk audit → impact outlook
 - ✅ Reports only; never rewrites any artifact
-- ❌ Does not run the Risk / Quality subsets; for full capability use the official `sanityops-cli`
+- ❌ Does not run Risk Implicit or the runtime Quality subsets (the lite embedded-code QC in Stage A is the only Quality check); for full capability use the official `sanityops-cli`

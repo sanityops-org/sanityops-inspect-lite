@@ -1,11 +1,11 @@
 ---
 title: SanityOps Inspect Lite — README
-description: "Orientation for the sanityops-inspect-lite inspector (SanityOps Framework v1.0): what to read first, where the skill sits among the framework's Inspect / Risk / Quality pillars, what it is and is not, the five ordered inspection stages, lite-vs-full comparison, upgrade path, worked samples, and FAQ. Non-normative auxiliary guide."
+description: "Orientation for the sanityops-inspect-lite inspector (SanityOps Framework v1.0): what to read first, where the skill sits among the framework's Inspect / Risk / Quality pillars, what it is and is not, the six ordered inspection stages, lite-vs-full comparison, upgrade path, worked samples, and FAQ. Non-normative auxiliary guide."
 ---
 
 # SanityOps Inspect Lite — README
 
-This file is the **auxiliary guide** for the `sanityops-inspect-lite` inspector. It covers the reading order, where the skill sits in the framework, what the five ordered inspection stages are, how to use it, the lite-vs-full comparison, how to upgrade to the official tooling, worked samples, and FAQ. For the operational rules — inputs, the five-stage flow, run modes, and the output contract — see [SKILL.md](plugins/sanityops-inspect-lite/skills/sanityops-inspect-lite/SKILL.md).
+This file is the **auxiliary guide** for the `sanityops-inspect-lite` inspector. It covers the reading order, where the skill sits in the framework, what the six ordered inspection stages are, how to use it, the lite-vs-full comparison, how to upgrade to the official tooling, worked samples, and FAQ. For the operational rules — inputs, the six-stage flow, run modes, and the output contract — see [SKILL.md](plugins/sanityops-inspect-lite/skills/sanityops-inspect-lite/SKILL.md).
 
 This is a **non-normative** document. It defines no new rules and never overrides the SanityOps Framework specification or the condensed checklists in `references/`.
 
@@ -18,7 +18,7 @@ This package is read by two different audiences, so the entry point differs:
 | Reader | Read first | Then |
 |---|---|---|
 | **A human** adopting, reviewing, or evaluating the package | **this README** — orientation: what it is, where it sits, what it does *not* do | [SKILL.md](plugins/sanityops-inspect-lite/skills/sanityops-inspect-lite/SKILL.md) for the rule-driven flow, then its `references/` and `samples/` |
-| **A host model** executing an inspection | **`SKILL.md`** — the operational contract: inputs, the five ordered stages, run modes, output contract | the `references/*.md` checklists it points to, at the moment each stage runs |
+| **A host model** executing an inspection | **`SKILL.md`** — the operational contract: inputs, the six ordered stages, run modes, output contract | the `references/*.md` checklists it points to, at the moment each stage runs |
 
 The README is not a substitute for `SKILL.md`, and `SKILL.md` is not an introduction: the README answers *"should I use this, and what exactly is it?"*, while `SKILL.md` answers *"what must I do, in what order, and what must I emit?"*. A human can skip the README and still run the skill, but will miss the positioning in the next two sections.
 
@@ -36,9 +36,9 @@ The SanityOps Framework v1.0 is an open specification (CC BY-SA 4.0) for continu
 | **Risk** | Can the agent be *actually exploited*? | Dynamic — Explicit (dangerous-expression classification) and Implicit (shadow-sandbox exploitability validation) |
 | **Quality** | Does the agent *actually perform* well? | Dynamic — RAG-Agent / Tool-Agent metrics measured on real runs |
 
-**`sanityops-inspect-lite` is a lightweight practice of the Inspect pillar only — and only a condensed subset of it.** It never runs the Risk or Quality pillars; where it touches them it emits *candidate* associations, never results (see [The five ordered inspection stages](#the-five-ordered-inspection-stages)). The framework's core disclaimer applies throughout: **Inspect PASS ≠ Risk PASS ≠ Quality PASS.**
+**`sanityops-inspect-lite` is a lightweight practice of the Inspect pillar plus a condensed Risk Explicit subset and a lite static code-contract (QC) check.** It never runs Risk Implicit or the runtime Quality pillar (RAG-Agent / Tool-Agent metrics); where it touches those it emits *candidate* associations, never results (see [The six ordered inspection stages](#the-six-ordered-inspection-stages)). The framework's core disclaimer applies throughout: **Inspect PASS ≠ Risk PASS ≠ Quality PASS.**
 
-Within Inspect itself, the three single-artifact checks (**System Prompt**, **Skill**, **Tool Schema**) are the *starting point*, not the whole subset — Permission is a cross-cutting aspect, and cross-artifact consistency plus the impact outlook are checked as separate stages (see [The five ordered inspection stages](#the-five-ordered-inspection-stages)).
+Within Inspect itself, the three single-artifact checks (**System Prompt**, **Skill**, **Tool Schema**) are the *starting point*, not the whole subset — Permission is a cross-cutting aspect, and cross-artifact consistency, explicit-risk audit, and the impact outlook are checked as separate stages (see [The six ordered inspection stages](#the-six-ordered-inspection-stages)).
 
 ## What it is — and what it is not
 
@@ -47,27 +47,28 @@ Within Inspect itself, the three single-artifact checks (**System Prompt**, **Sk
 **What it is not:**
 
 - **Not the official engine.** A condensed skill-rule package applied by a host model; it covers only the minimal rule sets, not the full specification. The official tooling is `sanityops-cli` and the SanityOps Platform (see [Upgrade path](#upgrade-path)).
-- **Not a security or quality gate.** Inspect PASS ≠ Risk PASS ≠ Quality PASS; the Risk (Explicit / Implicit) and Quality subsets are **not** run by this skill.
+- **Not a security or quality gate.** Inspect PASS ≠ Risk PASS ≠ Quality PASS; the Risk Implicit and runtime Quality subsets (RAG-Agent / Tool-Agent metrics) are **not** run by this skill — only the static embedded-code contract check (QC) is run, as part of Stage A.
 - **Not a repair tool.** It never rewrites, patches, or generates fixed versions of any artifact.
 - **Not a runtime auditor.** Permission quick mode validates only what is *declared in the artifacts* — not IAM/IdP configuration, PEP/PDP enforcement, or runtime monitoring.
 
-## The five ordered inspection stages
+## The six ordered inspection stages
 
-The skill runs **five stages, strictly in this order** — never in parallel, never out of order, and Permission is always last. The three single-artifact checks are the *first* of five, not the whole inspection.
+The skill runs **six stages, strictly in this order** — never in parallel, never out of order. The three single-artifact checks are the *first* of six, not the whole inspection.
 
 | Stage | Subset | What it checks | Gating |
 |---|---|---|---|
-| **A** | QD-P / QD-S / QD-T | **Single-artifact** defects — one System Prompt, one Skill (QD-S-0 baseline runs first), each Tool Schema | any P0 → stop |
-| **B** | QD-PS / QD-PT / QD-ST | **Cross-artifact** contracts — Prompt↔Skill, Prompt↔Tool, Skill↔Tool (pairwise only) | any P0 → stop |
+| **A** | QD-P / QD-S / QD-T / QC | **Single-artifact** defects — one System Prompt, one Skill (QD-S-0 baseline runs first), each Tool Schema, plus embedded-code contract checks (QC-0 baseline runs first) | any P0 → stop |
+| **B** | QD-PS / QD-PT / QD-ST / QD-CYC | **Cross-artifact** contracts — Prompt↔Skill, Prompt↔Tool, Skill↔Tool, plus cross-cutting circular invocation (QD-CYC, L2/L3 only) | any P0 → stop |
 | **C** | Gate-0 | Admission to Permission (conditions G0-1..G0-4). *Not an inspection item* — produces no score and no defect list | any condition fails → Permission is "Not Executed" |
 | **D** | QD-PM | **Permission** proportionality, Quick Mode (the 12 highest-risk of the full 43 items); requires the full artifact set | — |
-| **E** | relevance map | **Impact outlook** — for each FAIL, *candidate* attack surface (`AS-*`), failure mode (`FM-*`), and quality-metric associations. Advisory only, kept physically separate from verdicts | — |
+| **E** | EX (NL-A / NL-B / NR-O / NR-S) | **Explicit-risk audit** — classify dangerous expressions into the 32 subcategories, assess D1/D2/D3, merge into S-level, apply CL/TT/IS deduction. Static text only; never a confirmed exploit | — |
+| **F** | relevance map | **Impact outlook** — for each FAIL, *candidate* attack surface (`AS-*`), failure mode (`FM-*`), and quality-metric associations. Advisory only, kept physically separate from verdicts | — |
 
-**Why the order matters.** A and B gate C; C gates D; E consumes the FAILs from A/B/D. A P0 in A or B halts the run (Mode 2), and every downstream stage is reported as **"Not Executed"** — never as FAIL. Three consequences worth internalizing:
+**Why the order matters.** A and B gate C; C gates D; E is the explicit-risk scan (static, independent of the QD findings); F consumes the FAILs from A/B/D. A P0 in A or B halts the run (Mode 2), and every downstream stage is reported as **"Not Executed"** — never as FAIL. Three consequences worth internalizing:
 
 - A single-artifact PASS does **not** mean the artifact set is consistent — Stage B exists precisely for the conflicts that surface only when artifacts are combined.
 - A Permission PASS is scoped to what is **declared in the artifacts**; it says nothing about IAM/PEP configuration or runtime enforcement.
-- Stages **B, D and E** (cross-artifact, permission, impact outlook) are first-class parts of the inspection, not optional add-ons. Reading this package as "just the three single-artifact checks" is the most common misreading.
+- Stages **B, D, E and F** (cross-artifact, permission, explicit-risk audit, impact outlook) are first-class parts of the inspection, not optional add-ons. Reading this package as "just the three single-artifact checks" is the most common misreading.
 
 ## How to use
 
@@ -98,18 +99,19 @@ For a non-Claude-Code agent, the skill package is `plugins/sanityops-inspect-lit
    - **Agent skill (recommended):** install the `plugins/sanityops-inspect-lite/skills/sanityops-inspect-lite/` folder (or just its `SKILL.md` + `references/`) as a skill. The `description` in `SKILL.md`'s front matter auto-triggers it when the user asks to inspect, audit, or check logic artifacts.
    - **Paste-in fallback:** provide `SKILL.md` together with the `references/` files as instructions — the model reads the checklists while running the flow.
 
-3. **Provide the inputs** (SKILL.md §2): the artifacts to inspect (System Prompt / Skill / Tool Schema), the tier declarations (Prompt/Skill L1/L2/L3 and each Tool's risk level), and a version label. The model then runs the five-stage flow and emits the report.
+3. **Provide the inputs** (SKILL.md §2): the artifacts to inspect (System Prompt / Skill / Tool Schema), the tier declarations (Prompt/Skill L1/L2/L3 and each Tool's risk level), and a version label. The model then runs the six-stage flow and emits the report.
 
 ## Lite vs full comparison
 
 | Capability | Lite inspector (this skill) | Full (CLI / SanityOps Platform) |
 |---|---|---|
-| Inspect rule coverage | Condensed minimal sets (QD-P/QD-S/QD-T L1/L2/L3; Cross L1 7 / L2 12 / L3 19 items) | Full specification |
+| Inspect rule coverage | Condensed minimal sets (QD-P/QD-S/QD-T L1/L2/L3; Cross L1 7 / L2 14 / L3 21 items) | Full specification |
 | Permission check | 12-item Quick Mode | Full 43-item set |
-| Risk Explicit (`EX-*`) | Not run | Run (dangerous-expression classification) |
+| Risk Explicit (`EX-*`) | Lite subset (32-subcategory classification + D1/D2/D3 + S-level + CL/TT/IS deduction) | Run (full dangerous-expression classification) |
 | Risk Implicit | Not run | Run (shadow-sandbox dynamic exploitability validation) |
-| Quality (RAG-Agent / Tool-Agent) | Not run (candidate `FM-*`/metric mapping only) | Run (4-dimension 12 metrics, three-layer gates, Ratchet) |
-| Defect chains (`SC-*` / `QC-*`) | Out of scope | Supported |
+| Quality — static code contract (QC) | Lite subset (embedded-code syntax / resource / pattern checks) | Run (full code-contract rule set) |
+| Quality — runtime (RAG-Agent / Tool-Agent) | Not run (candidate `FM-*`/metric mapping only) | Run (4-dimension 12 metrics, three-layer gates, Ratchet) |
+| Defect chains (`SC-*` / `QC-TA-*` / `QC-RA-*`) | Out of scope | Supported |
 | Remediation / repair | None (detect-only) | CLI `inspect repair` generates fixed artifacts |
 | Version-level evidence chain | None | Platform archives results into a traceable, auditable evidence chain |
 
@@ -145,7 +147,7 @@ No. It is a condensed skill-rule package applied by a host model. For the offici
 No. It is detect-only. The CLI provides remediation via `sanityops-cli inspect repair`.
 
 **Does it check security or quality?**
-No. It only produces *candidate* attack-surface / failure-mode / metric associations for defects it found. Risk (Explicit/Implicit) and Quality are run by the full tooling, not by this skill.
+It runs a lite Risk Explicit scan (static dangerous-expression classification with S-level scoring) and a lite static code-contract check (QC, on embedded code snippets) but not Risk Implicit or the runtime Quality metrics. Risk Explicit findings are static-document risks, never confirmed exploits; Risk Implicit (dynamic exploitability) and the runtime Quality subsets (RAG-Agent / Tool-Agent metrics) are run by the full tooling, not by this skill.
 
 **Where are the authoritative rules?**
 In the nine L1 sub-specifications under `inspect/`, `risk/`, and `quality/`, plus `framework/relevance.md`. The files in `references/` are condensed extractions and define no new rules.

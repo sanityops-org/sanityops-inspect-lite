@@ -1,11 +1,13 @@
 ---
 title: Inspect Cross Checklist (Lite)
-description: "Condensed cross-artifact consistency checklist (QD-PS / QD-PT / QD-ST) for the sanityops-inspect lite inspector, extracted from inspect/cross.md v1.0."
+description: "Condensed cross-artifact consistency checklist (QD-PS / QD-PT / QD-ST / QD-CYC) for the sanityops-inspect lite inspector, extracted from inspect/cross.md v1.0."
 ---
 
 # Cross-Artifact Consistency Checklist (Lite Inspector)
 
 > **Provenance**: Condensed from `inspect/cross.md` v1.0 (SanityOps Framework, CC BY-SA 4.0). This file is a compressed extraction for the sanityops-inspect lite inspector and defines NO new rules. On any conflict, `inspect/cross.md` governs.
+>
+> **Update Note**: Synchronized with framework to include Part 4.5 Circular Invocation (QD-CYC-1.1 / QD-CYC-1.2).
 
 ## How to Use
 
@@ -14,16 +16,17 @@ description: "Condensed cross-artifact consistency checklist (QD-PS / QD-PT / QD
 - **Determine the Agent tier (L1/L2/L3)** and run the corresponding scope (two layers, do not collapse them):
   1. **Evaluation scope — which items get a verdict** — per §5.4.3 inspection intensity, with item composition taken from the Appendix A applicability column in the tables below:
      - **L1 basic** = the 7 items marked applicable at L1 in Appendix A (QD-PS-1.1, QD-PS-1.3, QD-PT-2.1, QD-PT-2.2, QD-PT-2.4, QD-ST-3.1, QD-ST-3.6). Source gap: §5.4.3/§8.3.1 state "8 core items" but never enumerate the 8th item; the lite inspector evaluates the 7 explicitly applicable items and records the source gap — it must not invent an 8th item.
-     - **L2 standard (12 items)** = QD-PS-1.1/1.2/1.3/1.4, QD-PT-2.1/2.2/2.3/2.4, QD-ST-3.1/3.2/3.3/3.6.
-     - **L3 full (19 items)** = all items in Appendix A below.
+     - **L2 standard (14 items)** = QD-PS-1.1/1.2/1.3/1.4, QD-PT-2.1/2.2/2.3/2.4, QD-ST-3.1/3.2/3.3/3.6, plus QD-CYC-1.1/1.2 (circular invocation at L2/L3).
+     - **L3 full (21 items)** = all items in Appendix A below (19 original + 2 QD-CYC).
   2. **Blocking core — which FAILs block release** — the tier's Appendix B P0 minimum set (L1 = 4, L2 = 6, L3 = 9 rows in the B.4 table under an "11 items" heading), plus any item whose severity is upgraded to P0 by Appendix C. Items evaluated at P1/P2 do not block but must still be reported. The source-internal discrepancies between Appendix A applicability, the §8.3.1 statistics (8/12/19 with 4-3-1 / 6-5-1 / 11-6-2 splits), and Appendix B are documented in the note under Appendix B; this file does not adjudicate them.
-- **Inspect only cross-artifact relationships** — the three pairs defined by the spec (§0.1.5): QD-PS (Prompt → Skill), QD-PT (Prompt → Tool), QD-ST (Skill ↔ Tool). Do not re-check single-artifact internal defects already owned by QD-P / QD-S / QD-T.
+- **Inspect only cross-artifact relationships** — the three pairs defined by the spec (§0.1.5): QD-PS (Prompt → Skill), QD-PT (Prompt → Tool), QD-ST (Skill ↔ Tool), plus the cross-cutting QD-CYC (Circular Invocation). Do not re-check single-artifact internal defects already owned by QD-P / QD-S / QD-T.
+- **QD-CYC applies at L2/L3 only** — Circular invocation inspection is not applicable at L1 (§5.4.3, Appendix A).
 - **For each rule, output: rule ID + verdict (PASS / FAIL with severity) + evidence quoting BOTH artifact locations** (three-tier localization: relationship level → artifact level → field level, cross.md §6.1.1).
 - **Apply default severities from Appendix A**, then apply the severity upgrade rules (Appendix C) when the Tool is RS-3, the Skill is SS-3, the Agent is L3, or linked defects exist.
 - **Verdict rule**: any P0 defect present → evaluation FAIL (Appendix B.1: *"Any P0 defect present → evaluation FAIL"*). A final report with unremediated P0 defects must follow Step 7: *"Output blocking report; require re-inspection after remediation"*. This FAIL verdict is a cross-stage result only; in this lite skill's non-blocking flow it does **not** halt subsequent stages (Gate-0 / Permission).
 - **Respect the scope exclusions** listed under "Does NOT Check" below — a Cross result says nothing about single-artifact internals, runtime behavior, or system-level permission enforcement.
 
-## Appendix A — Complete Inspection Item List (19 items)
+## Appendix A — Complete Inspection Item List (21 items)
 
 Default severity and per-level applicability are reproduced from `inspect/cross.md` Appendix A. "A applies at" is the Appendix A applicability mark (the tiers at which the item gets a verdict); "B blocking core" marks the tiers whose Appendix B minimum P0 set includes the item.
 
@@ -60,6 +63,15 @@ Default severity and per-level applicability are reproduced from `inspect/cross.
 | QD-ST-3.5 | Output Structure Match | Whether the Skill's OUTPUT dimension expectations (format, max_total_chars) match the Tool's return value structure (inferred from description or examples) | Skill output expectations do not match Tool return values | P1 | L3 | — |
 | QD-ST-3.6 | Permission Scope Match | Whether the Skill's permission declarations (allowed_operations / forbidden_operations) cover the Tool's side effects (write operations, sensitive data handling) | Tool side effects exceed Skill permission declarations | P0 | L1/L2/L3 | L3 |
 | QD-ST-3.7 | Error Handling Coverage | Whether the Skill's FAILURE dimension (on_empty_input, forbidden_behaviors) covers all possible error types from the Tool | Does not cover all possible Tool errors | P1 | L3 | — |
+
+### QD-CYC — Circular Invocation (2 items, cross-cutting)
+
+| ID | Rule name | Definition (condensed) | Typical manifestation | Level | A applies at | B blocking core |
+| --- | --- | --- | --- | --- | --- | --- |
+| QD-CYC-1.1 | Cross-Artifact Circular Invocation | Whether circular invocation patterns exist across Prompt, Skill, and Tool artifacts (e.g., Skill output re-enters Prompt workflow, Tool callback re-triggers Prompt) | Closed loop across Prompt/Skill/Tool invocation relationships detected by LLM semantic analysis | P1 | L2/L3 | — |
+| QD-CYC-1.2 | Multi-Agent Circular Invocation | Whether circular invocation patterns exist between multiple Agent roles defined in the Prompt orchestration (e.g., Reviewer and Revisor calling each other in an infinite loop) | Closed loop across multiple agent roles in the Prompt orchestration detected by LLM semantic analysis | P1 | L2/L3 | — |
+
+> **Note**: QD-CYC items carry a default severity of P1. A definitive closed loop (explicit bidirectional/cyclic invocation) is determined directly as P0 per the in-item Severity Determination Rules in Part 4.5.2; this P0 is not an Appendix C upgrade and is independent of the RS-3/SS-3, L3, and linked-defect triggers in Appendix C.2.
 
 ## Appendix B — Minimum Rule Sets (P0-only, tiered by Agent level)
 
@@ -103,21 +115,28 @@ Structure per `inspect/cross.md` Appendix B, verbatim tiering and counts. Core p
 | QD-ST-3.3 | Required Parameter Preparation | QD-ST |
 | QD-ST-3.6 | Permission Scope Match | QD-ST |
 
-> **Source count note** (reproduced, not adjudicated): four source-internal discrepancies coexist — (a) the B.4 heading and compliance line state "11 P0 Items", but the B.4 table lists 9 rows, which are exactly the 9 items carrying default P0 in Appendix A; (b) §5.4.3/§8.3.1 state per-level inspection intensity as 8 (L1) / 12 (L2) / 19 (L3) items, while Appendix B minimum sets are P0-only (4 / 6 / heading-11); (c) the Appendix A applicability marks enumerate 7 items at L1 (all default P0) and 12 at L2 (9 P0 / 3 P1), whereas §8.3.1 splits the same tiers as 4 P0/3 P1/1 P2 and 6 P0/5 P1/1 P2; (d) §8.3.1 counts 11 P0 at L3 but Appendix A lists 9 default P0 (and applying Appendix C's blanket "L3: P1→P0" would yield 16, not 11). The lite inspector evaluates the Appendix A-applicable items, applies Appendix C upgrades as written, and treats Appendix B as the blocking core; it does not adjudicate these discrepancies — defer to `inspect/cross.md`.
+> **Source count note** (reproduced, not adjudicated): four source-internal discrepancies coexist — (a) the B.4 heading and compliance line state "11 P0 Items", but the B.4 table lists 9 rows, which are exactly the 9 items carrying default P0 in Appendix A; (b) §5.4.3/§8.3.1 state per-level inspection intensity as 8 (L1) / 12 (L2) / 19 (L3) items, while Appendix B minimum sets are P0-only (4 / 6 / heading-11); (c) the Appendix A applicability marks enumerate 7 items at L1 (all default P0) and 14 at L2 (9 P0 / 5 P1), whereas §8.3.1 splits the same tiers as 4 P0/3 P1/1 P2 and 6 P0/5 P1/1 P2; (d) §8.3.1 counts 11 P0 at L3 but Appendix A lists 9 default P0 (and applying Appendix C's blanket "L3: P1→P0" would yield 18, not 11). The lite inspector evaluates the Appendix A-applicable items, applies Appendix C upgrades as written, and treats Appendix B as the blocking core; it does not adjudicate these discrepancies — defer to `inspect/cross.md`.
 
 ## Scoring note (§8.3, optional)
 
-Source weights per the §8.3.1 statistics table: **L1** W = 5×4 + 3×3 + 1×1 = **30**, base = 100/30 ≈ **3.333**; **L2** W = 5×6 + 3×5 + 1×1 = **46**, base = 100/46 ≈ **2.174**; **L3** W = 5×11 + 3×6 + 1×2 = **75**, base = 100/75 ≈ **1.333**. Per failed item deduct base × 5 / 3 / 1 (once per item regardless of instance count); any P0 → FAIL (score still output). **These statistics are not derivable from Appendix A + Appendix C as written (see source count note)**; compute an indicative score only if the user asks, use the source's §8.3.1 values verbatim, and label it "indicative (lite minimal set), not the full-spec score".
+Source weights per the §8.3.1 statistics table: **L1** W = 5×4 + 3×3 + 1×1 = **30**, base = 100/30 ≈ **3.333**; **L2** W = 5×6 + 3×5 + 1×1 = **46**, base = 100/46 ≈ **2.174**; **L3** W = 5×11 + 3×6 + 1×2 = **75**, base = 100/75 ≈ **1.333**. Per failed item deduct base × 5 / 3 / 1 (once per item regardless of instance count); any P0 → FAIL (score still output). **These statistics are not derivable from Appendix A + Appendix C as written (see source count note)**; compute an indicative score only if the user asks, use the source's §8.3.1 values verbatim (they cover only the 19 non-QD-CYC items — QD-CYC carries no weight, so report QD-CYC findings as unscored; never invent a weight), and label it "indicative (lite minimal set), not the full-spec score".
 
-## Inspection Process (cross.md Part 5.1.1 — Seven Steps)
+## Inspection Process (cross.md Part 5.1.1 — Eight Steps: the source's seven steps plus QD-CYC inserted as step 6)
 
 1. **Prerequisite Verification** — Confirm artifact version consistency (required). Upstream single-artifact P0 findings do **not** halt the run in this non-blocking lite skill: record them as carried-forward findings and proceed. The source's gating entry condition (§5.2.1) and its *"halt cross-artifact inspection"* failure handling are documented for reference, but this lite skill runs non-blocking and aggregates P0 findings rather than halting.
 2. **Artifact Relationship Identification** — Extract the Skill and Tool declaration lists: from the Prompt's QD-P-2.4.2 resource/tool declaration section, and from the Skill's EXECUTION dimension (allowed_downstream_skills). If extraction fails, flag the missing declaration and continue with an advisory.
 3. **QD-PS Check (Prompt → Skill)** — Run QD-PS-1.1 through 1.6 item-by-item; record inconsistencies mapped to specific locations in both the Prompt and the Skill.
 4. **QD-ST Check (Skill ↔ Tool)** — Run QD-ST-3.1 through 3.7; map findings to Skill and Tool locations.
 5. **QD-PT Check (Prompt → Tool)** — Run QD-PT-2.1 through 2.6; map findings to Prompt and Tool locations.
-6. **Impact Assessment** — Identify linked defects (defects involving multiple artifacts); upgrade severity where applicable and adjust remediation priority.
-7. **Output Report** — Produce the defect list and remediation guidance. If unremediated P0 defects remain (§5.1.2, Step 7, verbatim): *"Output blocking report; require re-inspection after remediation"*.
+6. **QD-CYC Check (Circular Invocation, L2/L3 only)** — Run QD-CYC-1.1 and QD-CYC-1.2; detect cross-artifact and multi-agent circular invocation patterns via LLM semantic analysis:
+   - Read Prompt workflow/orchestration definitions
+   - Read Skill declarations (TRIGGER / OUTPUT / EXECUTION dimensions) and Tool declarations
+   - Perform semantic analysis of invocation chains to detect closed loops
+   - **QD-CYC-1.1**: Analyze whether Skill output/trigger re-enters Prompt workflow, Tool callback re-triggers Prompt, or Tool side effects re-trigger Skill
+   - **QD-CYC-1.2**: Analyze whether Agent roles defined in Prompt orchestration have circular invocation relationships (e.g., Agent A calls Agent B, Agent B calls Agent A)
+   - Map findings to Prompt workflow/orchestration definitions (and Skill/Tool sides where applicable for QD-CYC-1.1)
+7. **Impact Assessment** — Identify linked defects (defects involving multiple artifacts); upgrade severity where applicable and adjust remediation priority. For QD-CYC, a definitive closed loop (explicit bidirectional/cyclic invocation) is determined directly as P0 per Part 4.5.2.
+8. **Output Report** — Produce the defect list and remediation guidance. If unremediated P0 defects remain (§5.1.2, Step 7, verbatim): *"Output blocking report; require re-inspection after remediation"*.
 
 ## Severity and Level Tables
 
@@ -147,7 +166,7 @@ Source weights per the §8.3.1 statistics table: **L1** W = 5×4 + 3×3 + 1×1 =
 | Linked defect | Associated inspection items may upgrade |
 | Cross-Skill/Tool | Associated inspection items P1→P0 |
 
-Per-item upgrade mapping (Appendix C.2) — applies only to these 7 upgradable items:
+Per-item upgrade mapping (Appendix C.2) — applies only to these 9 upgradable items:
 
 | Inspection Item | Default | RS-3/SS-3 | L3 Agent | Linked Defect |
 | --- | --- | --- | --- | --- |
@@ -158,6 +177,10 @@ Per-item upgrade mapping (Appendix C.2) — applies only to these 7 upgradable i
 | QD-PT-2.5 | P1 | P1 | P0 | P1 |
 | QD-ST-3.5 | P1 | P0 | P0 | P1 |
 | QD-ST-3.7 | P1 | P0 | P0 | P1 |
+| QD-CYC-1.1 | P1 | P0 | P0 | P0 |
+| QD-CYC-1.2 | P1 | P0 | P0 | P0 |
+
+> **Note**: QD-CYC items have special severity determination: a definitive closed loop (explicit bidirectional/cyclic invocation) is determined directly as P0 per Part 4.5.2, independent of Appendix C triggers.
 
 ## Does NOT Check (Scope Exclusions, cross.md's Own Wording)
 
