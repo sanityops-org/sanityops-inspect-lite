@@ -1,7 +1,7 @@
 ---
 name: sanityops-inspect-lite
 version: 1.0.0
-description: Lite, zero-install inspector for AI Agent logic artifacts (System Prompt, Skill, Tool Schema) based on the SanityOps Framework v1.0. Runs a six-stage non-blocking flow — single-artifact defect inspection (QD-P/QD-S/QD-T/QC), cross-artifact contract checks (QD-PS/PT/ST/CYC), Gate-0 admission, permission proportionality quick check (QD-PM), explicit-risk audit (EX: NL-A/NL-B/NR-O/NR-S), and a candidate-impact outlook (AS-*/FM-* mapping). P0 findings are aggregated and reported but never halt the flow. Detect-only: it never rewrites the inspected artifacts. Use when the user asks to inspect, audit, or check an agent's system prompt, skill definition, or tool schemas.
+description: Lite, zero-install inspector for AI Agent logic artifacts (System Prompt, Skill, Tool Schema) based on the SanityOps Framework v1.0. Runs a seven-stage non-blocking flow — single-artifact defect inspection (QD-P/QD-S/QD-T/QC), cross-artifact contract checks (QD-PS/PT/ST/CYC), Gate-0 admission, permission proportionality quick check (QD-PM), explicit-risk audit (EX: NL-A/NL-B/NR-O/NR-S), a candidate-impact outlook (AS-*/FM-* mapping), and a lightweight self-verification pass (Stage G). P0 findings are aggregated and reported but never halt the flow. Detect-only: it never rewrites the inspected artifacts. Use when the user asks to inspect, audit, or check an agent's system prompt, skill definition, or tool schemas.
 license: CC BY-SA 4.0
 ---
 
@@ -46,7 +46,7 @@ Edge cases: an archive → expand first, then group files by agent; a script →
 - Only output rule IDs that exist in the references. **Never invent QD, EX, or QC IDs, rule names, or levels.**
 - This package is licensed CC BY-SA 4.0, attributed to the SanityOps Framework.
 
-## 4. Inspection flow — six stages, strictly in order, non-blocking
+## 4. Inspection flow — seven stages, strictly in order, non-blocking
 
 Run stages **in order, never in parallel, never out of order**. After every stage, emit that stage's report before moving on. P0 findings **never halt the flow**: they are aggregated, reported in the executive summary and status board, and carried forward to later stages. A stage is skipped (Not Executed) only for concrete structural reasons — missing artifacts, or unsatisfied Gate-0 structural conditions (G0-3/G0-4) — never because of P0 findings.
 
@@ -83,14 +83,16 @@ Gate-0 **is not an inspection item**: it produces no numbers and no score; "not 
 
 ### Stage E — Explicit-risk audit (EX: NL-A / NL-B / NR-O / NR-S)
 
-1. Use `references/explicit-checklist.md`. Scan the backend-logic artifacts (System Prompt, Skill, Tool Schema) for **explicitly expressed** risk — risk readable directly in static text, without running the Agent. This stage is detect + classify + assess + score, not PASS/FAIL inspection.
-2. For each discovered risk item, emit one block: `EX-x.y | verbatim risk expression | D1/D2/D3 | S level | sub-dimensions (CL/TT/IS) | final deduction`. Every finding must quote the offending artifact text (short verbatim excerpt).
-3. Run the checklist's three-phase workflow (§13): Phase 1 discovery & classification (scan NL-A → NL-B → NR-O → NR-S, assign `EX` codes); Phase 2 harm assessment (assess D1/D2/D3 independently, then merge into S via Rule-1/2/3/4); Phase 3 fine scoring (CL from classification, TT from conditionals, IS from scope, then `Final Deduction = Base + CL + TT + IS`).
+1. Use `references/explicit-checklist.md`. Scan the backend-logic artifacts (System Prompt, Skill, Tool Schema) for **explicitly expressed** risk — risk readable directly in static text, without running the Agent. This stage is detect + classify + grade, not PASS/FAIL inspection.
+2. For each discovered risk item, emit one block: `EX-x.y | verbatim risk expression | impact type labels (D1/D2/D3) | severity grade (Explicit·P0/P1/P2) | trigger condition label | disposition`. Every finding must quote the offending artifact text (short verbatim excerpt).
+3. Run the checklist's three-phase workflow (§11): Phase 1 discovery & classification (scan NL-A → NL-B → NR-O → NR-S, assign `EX` codes); Phase 2 severity determination (assign D1/D2/D3 impact type labels for traceability, grade by worst consequence into `Explicit·P0/P1/P2`, mark the trigger condition label `conditional` / `unconditional`); Phase 3 output (compile the report).
 4. Red lines (mandatory):
    - Only emit `EX` codes that exist in `references/explicit-checklist.md` — **never invent EX IDs, subcategories, or levels**.
+   - Write the severity grade **with the domain prefix** `Explicit·P0/P1/P2` — never bare `P0` — to distinguish Risk Explicit grading from Inspect defect disposition (`Inspect·P0`).
    - Assess only content **explicitly declared** in the risk text — never infer implicit risks (those belong to Risk Implicit, which is **not** run here).
    - Static text only: an EX finding is a static-document risk, **not** a confirmed runtime exploit. State explicitly that Risk Implicit (dynamic exploitability) was **not** run.
-   - Keep this stage's report **physically separated** from the Inspect verdicts — it is a risk scan, not a defect verdict; an S-level score is a Risk-Explicit assessment, never a security conclusion.
+   - Keep this stage's report **physically separated** from the Inspect verdicts — it is a risk scan, not a defect verdict; an `Explicit·P0/P1/P2` grade is a Risk-Explicit assessment, never a security conclusion.
+   - Risk Explicit produces a grade, not a numeric score: the §6.5 indicative score (deduction weights) applies to Inspect only, never to Risk Explicit.
 
 ### Stage F — Impact outlook (candidate mapping, advisory only)
 
@@ -103,9 +105,26 @@ Gate-0 **is not an inspection item**: it produces no numbers and no score; "not 
    - Keep this section **physically separated** from the stage verdicts (advisory context, not a verdict).
    - v1 scope: single-defect mapping only; defect chains (SC-*/QC-*) are out of scope.
 
+### Stage G — Self-verification (lightweight, in-line + closing)
+
+This stage verifies **the inspector's own report**, not the artifacts. It catches the host model's own execution errors — fabricated rule IDs, red-line wording, and output-contract violations — without re-inspecting the artifacts or re-reading the references from scratch. It keeps the zero-install posture (no scripts, no extra tools).
+
+**In-line checks (run as you write each verdict/conclusion — never deferred to the end):**
+
+1. **ID back-closure**: every `QD-*` / `QC-*` / `EX-*` ID you emit must exist in `references/`; every Stage F `AS-*` / `FM-*` mapping must exist in `references/relevance-map.md`. Confirm at write time; never emit an ID you cannot locate.
+2. **Wording red lines**: never write causal language in Stage F ("will cause", "inevitably", "guarantees"); never declare the artifacts "secure" or "high quality"; never write "Permission = ERROR/BLOCKED". Check each concluding sentence as you write it.
+
+**Closing checks (run once, at the end, on the assembled report):**
+
+3. **Output contract**: the status board has exactly the seven required lines (§6.4); the report header carries all five provenance facts (§6.7); the executive summary is present (§6.1); the report is written in English (§6.9); and — zero-tolerance — the assembled report contains no CJK characters anywhere, including inside quoted evidence (§6.10).
+
+**On finding a self-error**: correct it in place and re-emit that segment. This stage fixes the report only — it never rewrites the inspected artifacts (the detect-only rule still holds).
+
+**Output**: append a short self-verification statement after the status board, e.g. `Self-verification: ID back-closure OK · red-line wording OK · output contract OK` (list any self-corrections made).
+
 ## 5. Run modes
 
-**Mode 1 — One-shot full flow (non-blocking)**: run A → B → C → D → E → F in one response. P0 findings are aggregated across stages and reported in the executive summary and status board; they **never** halt the flow. A stage is skipped only for concrete structural reasons (missing artifacts, or Gate-0 G0-3/G0-4 unsatisfied), never for P0 findings.
+**Mode 1 — One-shot full flow (non-blocking)**: run A → B → C → D → E → F → G in one response. P0 findings are aggregated across stages and reported in the executive summary and status board; they **never** halt the flow. A stage is skipped only for concrete structural reasons (missing artifacts, or Gate-0 G0-3/G0-4 unsatisfied), never for P0 findings.
 
 **Mode 2 — Multi-round iteration**: the user fixes artifacts (outside this skill) and re-runs. Maintain a round ledger:
 
@@ -116,10 +135,10 @@ Gate-0 **is not an inspection item**: it produces no numbers and no score; "not 
 
 ## 6. Output contract (hard)
 
-1. **Executive summary** — emitted at the top of every full-flow report. A compact block: overall status (executed stages + P0/P1/P2 counts + Gate result + Risk-Explicit S-level summary), up to five top findings (`rule ID — one-line defect`), what was NOT run (Risk Implicit / runtime Quality), and an upgrade pointer (full inspection via `sanityops-cli` — see https://github.com/sanityops-org/sanityops-framework/blob/main/framework/try-the-tools.md). Never states a security or quality conclusion; reuse Stage F candidate wording.
+1. **Executive summary** — emitted at the top of every full-flow report. A compact block: overall status (executed stages + P0/P1/P2 counts + Gate result + Risk-Explicit `Explicit·P0/P1/P2` summary), up to five top findings (`rule ID — one-line defect`), what was NOT run (Risk Implicit / runtime Quality), and an upgrade pointer (full inspection via `sanityops-cli` — see https://github.com/sanityops-org/sanityops-framework/blob/main/framework/try-the-tools.md). Never states a security or quality conclusion; reuse Stage F candidate wording.
 2. **Per-rule verdicts**: `rule ID | PASS/FAIL | evidence location in artifact`. FAIL lines include a short verbatim excerpt of the offending text.
 3. **No fabricated IDs** — only IDs present in `references/`.
-4. **Status board** — always emitted, exactly these six lines:
+4. **Status board** — always emitted, exactly these seven lines:
 
 ```
 Stage A (Single-artifact):  Executed / Not Executed — <reason>
@@ -128,6 +147,7 @@ Stage C (Gate-0):           Passed / Not passed — <unsatisfied IDs, if any>
 Stage D (Permission QD-PM): Executed / Not Executed — <reason>
 Stage E (Risk Explicit EX): Executed / Not Executed — <reason>
 Stage F (Impact outlook):   Executed / Not Executed — <reason>
+Stage G (Self-verification): Executed / Not Executed — <reason>
 ```
 
 5. **Blocking wording red line**: a stage that did not run is reported as **Not Executed** with a concrete structural reason — the specific Gate-0 condition IDs (G0-3/G0-4) or "incomplete artifact set" (Stage D). P0 findings alone are never a reason for a stage to be Not Executed in this non-blocking flow. Never report a non-executed stage as FAIL, and never write "Permission = ERROR/BLOCKED" — the correct form is "Permission did not execute due to Gate-0 not satisfied".
@@ -141,11 +161,15 @@ Stage F (Impact outlook):   Executed / Not Executed — <reason>
 
    The header is never omitted to save tokens, and must not imply the result is an official engine/SaaS conclusion.
 
+8. **Self-verification statement** — after the status board, append the Stage G statement (ID back-closure / red-line wording / output contract), including any in-place self-corrections made. This is a self-check of the report, not a verdict on the artifacts.
+9. **Report language (English, hard)** — every report, whether full-flow or stage-only, MUST be written in **English**. This covers all prose, findings, evidence lines, the executive summary, the report header, the status board, and every templated block (Not-Executed block, EX report, Impact Card). Never emit a non-English report even when the user writes in another language.
+10. **Chinese zero-tolerance check (hard)** — the emitted report MUST contain **zero** Chinese/CJK characters, anywhere, including inside quoted evidence. When an inspected artifact's text is in Chinese, render the evidence excerpt in **English** (a translation) and mark it as a translation instead of quoting it verbatim; this supersedes the §6.2 "verbatim excerpt" allowance for CJK artifact text. A single CJK codepoint anywhere in the report is a contract violation that must be fixed before the report is final.
+
 ## 7. Hard Do-Not list
 
 - Never rewrite, patch, or generate fixed versions of any artifact.
 - Never accept verbal fix claims without a re-scan.
-- Never skip, reorder, or parallelize stages; run A → B → C → D → E → F in order.
+- Never skip, reorder, or parallelize stages; run A → B → C → D → E → F → G in order.
 - Never invent QD, EX, or QC IDs, rule names, levels, thresholds, or mappings.
 - Never causalize relevance output; never present mapping strength as severity.
 - Never claim the artifacts are "secure" or "high quality" — Inspect PASS ≠ Risk PASS ≠ Quality PASS; an EX finding is a static-document risk, never a confirmed exploit, and Permission quick mode says nothing about runtime enforcement.
@@ -162,7 +186,7 @@ Stage F (Impact outlook):   Executed / Not Executed — <reason>
 | `references/code-contract-checklist.md` | QC-0 baseline + QC-1/2/3 embedded-code checks | quality/code-contract.md v1.0 |
 | `references/cross-checklist.md` | QD-PS/PT/ST/CYC checklist + gating semantics | inspect/cross.md v1.0 |
 | `references/permission-checklist.md` | Gate-0 (G0-1..4) + AC-L/OR-L binding + QD-PM Quick Mode 12 items | inspect/permission.md v1.0 |
-| `references/explicit-checklist.md` | EX classification (NL-A/NL-B/NR-O/NR-S) + D1/D2/D3 + S-level merging + CL/TT/IS scoring | risk/explicit.md v1.0 |
+| `references/explicit-checklist.md` | EX classification (NL-A/NL-B/NR-O/NR-S) + impact type labels (D1/D2/D3) + severity grading (Explicit·P0/P1/P2) + trigger condition label | risk/explicit.md v1.0 |
 | `references/relevance-map.md` | QD → candidate AS-*/FM-* mapping + candidate RAG-Agent metric mapping + red lines | framework/relevance.md v1.0 |
 
 ## 9. Provenance and license
