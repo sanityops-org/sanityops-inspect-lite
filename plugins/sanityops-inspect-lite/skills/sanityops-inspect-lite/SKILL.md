@@ -30,19 +30,30 @@ Permission quick mode additionally requires the **full artifact set** (Prompt + 
 
 ### Input preparation (not a Stage)
 
-Before Stage A, inventory every provided file and classify each into one of the three types by structural signature — record the type and the basis:
+**Step 0 — Fidelity classification (run first, per object).** For each candidate object, determine its fidelity tier before type classification:
+
+- **`full`** — provably the original artifact: the user declares "this is the original file", or the object is a verbatim artifact with no summary/meta/framework signals.
+- **`summary`** — any of: **S1** self-declared summary/excerpt/transcribed (meta-level wording such as `Collection Method: summary`, `structure analysis`, `This is a summary`, `文档摘要`, `结构分析`); **S2** the object contains non-artifact sections (e.g. `Evaluation Dimensions`, `Scoring Criteria`, `Test Suggestions`, `Collection Date`/`Method`, `Relationship`); or **S3** the object has no complete structural signature.
+- **Default fallback**: when `full` cannot be confirmed, treat as `summary`.
+- **Hard rules**: do not keyword-scan artifact *content* for "summary" (only meta-level self-description counts); a user declaration of "original file" overrides S1/S2/S3; apply per-object, never as a single whole-batch verdict.
+
+**Fidelity consequence (rule scope).**
+- `full` → run all rules.
+- `summary` → run only **contradiction-based** findings (FAIL reason = "A conflicts with / is inconsistent with / forms an unterminated loop"); **skip absence-based** findings (FAIL reason = "missing / not declared / undefined / no X"). This skips e.g. QD-T-1.1/1.2/1.4/2.1/4.1, QD-P-2.2.2/2.2.3/2.7.x, QC-0.3/3.2 and like absence rules.
+
+**Type classification.** Inventory every provided file and classify each into one of the three types by structural signature — record the type and the basis:
 
 - **Skill** → markdown with `name`/`description` front matter (e.g. `SKILL.md`).
 - **Tool Schema** → JSON Schema / function-calling definition (`parameters` + `description`).
 - **System Prompt** → otherwise, prose/markdown instructions.
 
-Edge cases: an archive → expand first, then group files by agent; a script → treat as a referenced file, not an artifact. If a file cannot be unambiguously classified, or the inputs appear to mix multiple agents, ask the user before starting Stage A. Never run Stage B/C/D/E across different agents' artifacts.
+Edge cases: an archive → expand first, then group files by agent; a script → treat as a referenced file, not an artifact, **except** when it embeds an in-scope logic-artifact literal (e.g. `system_message = """..."""`), which is classified as the corresponding artifact type and tiered by Step 0. If a file cannot be unambiguously classified, or the inputs appear to mix multiple agents, ask the user before starting Stage A. Never run Stage B/C/D/E across different agents' artifacts.
 
 ## 3. Governing sources and hard precedence
 
 - The eight files in `references/` are **condensed extractions** of the SanityOps sub-specifications. They define **no new rules**.
 - On any conflict (numbering, definitions, levels, thresholds, wording), the source sub-specification governs:
-  - QD-P ← `inspect/prompt.md` · QD-S ← `inspect/skill.md` · QD-T ← `inspect/tool.md` · QD-PS/PT/ST/CYC ← `inspect/cross.md` · QD-PM ← `inspect/permission.md` · QC ← `quality/code-contract.md` · EX ← `risk/explicit.md` · impact mapping ← `framework/relevance.md`
+  - QD-P ← `inspect/prompt.md` · QD-S ← `inspect/skill.md` · QD-T ← `inspect/tool.md` · QD-PS/PT/ST/SS/TT/CYC ← `inspect/cross.md` · QD-PM ← `inspect/permission.md` · QC ← `quality/code-contract.md` (DRAFT — the lite `code-contract-checklist.md` is the operational source) · EX ← `risk/explicit.md` · impact mapping ← `framework/relevance.md`
 - Only output rule IDs that exist in the references. **Never invent QD, EX, or QC IDs, rule names, or levels.**
 - This package is licensed CC BY-SA 4.0, attributed to the SanityOps Framework.
 
@@ -55,15 +66,15 @@ Run stages **in order, never in parallel, never out of order**. After every stag
 1. For the System Prompt → `references/prompt-checklist.md`.
 2. For the Skill → `references/skill-checklist.md`. **Run the QD-S-0 baseline checks first** (they gate the rest of the Skill checklist).
 3. For each Tool Schema → `references/tool-checklist.md` (tier the Tool first, per the checklist's tier rules).
-4. For code snippets embedded in any artifact (Prompt text, Skill steps, Tool Schema description/default/example fields) → `references/code-contract-checklist.md`. **Run the QC-0 baseline first** (it gates QC-1 through QC-3). QC inspects embedded snippets only — never standalone source files.
+4. For code snippets embedded in any artifact (Prompt text, Skill steps, Tool Schema description/default/example fields) → `references/code-contract-checklist.md`. **Run the QC-0 baseline first** (it gates QC-1 through QC-4). QC inspects embedded snippets only — never standalone source files.
 5. Verdict per rule: `QD-x-y | PASS/FAIL | evidence: file, section/line`. Every FAIL must quote the offending artifact text (short excerpt).
 6. **Single-artifact boundary (hard)**: inspect each artifact in isolation. A declaration missing from the artifact under inspection is a defect of *that* artifact — do not treat a declaration present in a different artifact as satisfying it. Evidence for every FAIL must quote the inspected artifact itself, never a sibling artifact.
 7. Collect all P0 findings and carry them forward. P0 findings do **not** halt the flow — continue to Stage B in the same run, unless the user asked for Stage A only.
 
-### Stage B — Cross-artifact inspection (QD-PS / QD-PT / QD-ST / QD-CYC)
+### Stage B — Cross-artifact inspection (QD-PS / QD-PT / QD-ST / QD-SS / QD-TT / QD-CYC)
 
-1. Use `references/cross-checklist.md`: evaluate the tier's inspection scope per cross.md §5.4.3 / §8.3.1 (L1 basic 7 / L2 standard 14 / L3 full 21, with the explicit per-tier item composition given in the checklist), applying Appendix B's tier P0 set as the blocking compliance core. The checklist documents the source's own internal count discrepancies; do not resolve them by inventing items.
-2. Inspect only pairwise relationships (Prompt↔Skill, Prompt↔Tool, Skill↔Tool) plus the cross-cutting QD-CYC circular-invocation check (L2/L3 only). Do **not** re-check single-artifact internal defects.
+1. Use `references/cross-checklist.md`: evaluate the tier's inspection scope per cross.md §5.4.3 / §8.3.1 (AC-L1 = 7 items, AC-L2 = 20, AC-L3 = 29, with the explicit per-tier item composition given in the checklist), applying Appendix B's tier P0 set (7/9/9) as the blocking compliance core. The checklist documents the source's stale version label (v1.0 header vs expanded 29-item content); do not resolve it by inventing items.
+2. Inspect only cross-artifact relationships — the six relationships defined by the spec (Prompt↔Skill, Prompt↔Tool, Skill↔Tool, Skill↔Skill, Tool↔Tool, and the cross-cutting QD-CYC circular-invocation check at L2/L3). Do **not** re-check single-artifact internal defects.
 3. Any P0 → record it and continue to Stage C; P0 findings do **not** halt the flow.
 
 ### Stage C — Gate-0 (admission to Permission)
@@ -77,7 +88,7 @@ Gate-0 **is not an inspection item**: it produces no numbers and no score; "not 
 ### Stage D — Permission proportionality (QD-PM, Quick Mode)
 
 1. Confirm the **full artifact set** is present (Prompt + Skill + all Tool Schemas); if not, record NOT EXECUTED — "incomplete artifact set".
-2. Run the **12-item Quick Mode set** defined in `references/permission-checklist.md` §4 (the lite scope; the full spec has 43 items). For each item output `QD-PM-x.y | Applicable or N/A | PASS/FAIL | evidence`, and mark every verdict **"provisional (lite quick mode)"**.
+2. Run the **17-item Quick Mode set** defined in `references/permission-checklist.md` §4 (the lite scope; the full spec has 43 items). For each item output `QD-PM-x.y | Applicable or N/A | PASS/FAIL | evidence`, and mark every verdict **"provisional (lite quick mode)"**.
 3. Apply the checklist's classification binding (its §2): applicability is a structural fact from AC-L; severity is a risk fact from OR-L (basic mapping OR-L3→P0 / OR-L2→P1 / OR-L1→P2, with fixed-P0 items 3.4/5.4/6.3/6.5 and each item's inline severity rule). Never use AC-L to grade severity or OR-L to decide applicability. Every FAIL carries the classification-basis line `<operation> → <OR-L> → <rule> → <severity>`. N/A verdicts record the determination basis (a basis-less N/A is treated as failure per the checklist).
 4. Include the checklist's mandatory scope statement (its §5): declared proportionality only — not IAM/PEP/runtime enforcement.
 
@@ -118,9 +129,20 @@ This stage verifies **the inspector's own report**, not the artifacts. It catche
 
 3. **Output contract**: the status board has exactly the seven required lines (§6.4); the report header carries all five provenance facts (§6.7); the executive summary is present (§6.1); the report is written in English (§6.9); and — zero-tolerance — the assembled report contains no CJK characters anywhere, including inside quoted evidence (§6.10).
 
+**Closing reconciliation — judgment-quality pass (run once, at the end, on the report's own verdicts):**
+
+This pass re-reads **the report's verdicts** — not the artifacts, not the references from scratch — to catch over-inspection and grading errors that the in-line checks miss. It applies only rules already present in the checklists (the five-state N/A discipline, conditional-trigger preconditions, OR-L3 upgrade mapping, instance-upgrade branches, same-source dedup). It never invents rules, never re-scores, and never rewrites artifacts. On an inconsistency, append a reconciliation note and re-emit that segment — never silently change a verdict.
+
+4. **Tier self-audit**: re-confirm the AC-L (complexity → which items apply) vs OR-L (risk → severity) determination against the tiering rules. Flag mixed cases (e.g. an AC-L2 Agent carrying OR-L3 Tools) and any place one model was used where the other was required.
+5. **N/A basis re-verification**: for every N/A, confirm a determination basis is recorded. Flag (a) a FAIL on a rule whose applicability precondition ("only when …") was not met, and (b) a conditional item left N/A without basis when its trigger was actually present.
+6. **Upgrade justification audit**: for every P0 reached by an upgrade (OR-L3 mapping, or a rule's `→ P0` instance branch), confirm the trigger actually fired; conversely, flag a P1/P2 that a recorded trigger should have lifted.
+7. **Cross-stage consistency**: a fact graded in more than one stage (e.g. a Skill permission boundary in Stage A QD-S-5.x vs Stage D QD-PM) must carry the same severity, respecting INHERITED and same-source dedup; flag any divergence.
+
+Reconciliation notes are **non-blocking**: they do not re-open or re-run stages, and they are not new findings — they only flag an already-recorded verdict as over- or under-applied.
+
 **On finding a self-error**: correct it in place and re-emit that segment. This stage fixes the report only — it never rewrites the inspected artifacts (the detect-only rule still holds).
 
-**Output**: append a short self-verification statement after the status board, e.g. `Self-verification: ID back-closure OK · red-line wording OK · output contract OK` (list any self-corrections made).
+**Output**: append a short self-verification statement after the status board, e.g. `Self-verification: ID back-closure OK · red-line wording OK · output contract OK · reconciliation OK` (list any self-corrections and reconciliation notes made).
 
 ## 5. Run modes
 
@@ -155,9 +177,10 @@ Stage G (Self-verification): Executed / Not Executed — <reason>
 7. **Report header (mandatory on every report and every stage-only report)** — exactly these provenance facts:
    - Host model name (self-declared by the model executing this skill, e.g. `Host model: <vendor/model>`);
    - Skill package: `sanityops-inspect-lite v1.0.0` (the `version` value of this SKILL.md front matter);
-   - Specification baseline: `SanityOps Framework v1.0 (September 2026)`;
+   - Specification baseline: `SanityOps Framework v1.0 (2026-10 revision)`;
    - The non-official-result statement, verbatim in substance: *"This result is produced by the skill rule package applied by the host model; it is NOT a conclusion of the official SanityOps engine. For a full inspection use sanityops-cli."*
-   - Inspection date and the artifact version label supplied by the user.
+   - Inspection date and the artifact version label supplied by the user;
+   - Fidelity tier per artifact set: `full` or `summary` (per-object) — when `summary`, state that absence-based rules were not run.
 
    The header is never omitted to save tokens, and must not imply the result is an official engine/SaaS conclusion.
 
@@ -180,18 +203,18 @@ Stage G (Self-verification): Executed / Not Executed — <reason>
 
 | File | Content | Source of authority |
 |---|---|---|
-| `references/prompt-checklist.md` | QD-P minimal sets (L1/L2/L3) + tiered checklist | inspect/prompt.md v1.0 |
-| `references/skill-checklist.md` | QD-S-0 baseline + minimal set + six-step flow + Review Schema | inspect/skill.md v1.0 |
-| `references/tool-checklist.md` | Tool tiering + QD-T minimal sets (L1/L2/L3) | inspect/tool.md v1.0 |
-| `references/code-contract-checklist.md` | QC-0 baseline + QC-1/2/3 embedded-code checks | quality/code-contract.md v1.0 |
-| `references/cross-checklist.md` | QD-PS/PT/ST/CYC checklist + gating semantics | inspect/cross.md v1.0 |
-| `references/permission-checklist.md` | Gate-0 (G0-1..4) + AC-L/OR-L binding + QD-PM Quick Mode 12 items | inspect/permission.md v1.0 |
-| `references/explicit-checklist.md` | EX classification (NL-A/NL-B/NR-O/NR-S) + impact type labels (D1/D2/D3) + severity grading (Explicit·P0/P1/P2) + trigger condition label | risk/explicit.md v1.0 |
-| `references/relevance-map.md` | QD → candidate AS-*/FM-* mapping + candidate RAG-Agent metric mapping + red lines | framework/relevance.md v1.0 |
+| `references/prompt-checklist.md` | QD-P tiered checklist (AC-L1/2/3) + minimum rule sets (7/17/25 P0) | inspect/prompt.md v1.1 |
+| `references/skill-checklist.md` | QD-S-0 baseline (9 items) + minimum rule sets (8/23/24) + six-step flow + Review Schema | inspect/skill.md v1.1 |
+| `references/tool-checklist.md` | Tool operation-risk tiering (OR-L) + QD-T rule set + minimum rule sets (20/25/25) | inspect/tool.md v1.0 (2026-10 revision) |
+| `references/code-contract-checklist.md` | QC-0 baseline + QC-1/2/3/4 embedded-code checks | quality/code-contract.md (DRAFT; checklist is the operational source) |
+| `references/cross-checklist.md` | QD-PS/PT/ST/SS/TT/CYC checklist (29 items, 6 groups) + P0 minimum sets (7/9/9) | inspect/cross.md v1.0 (2026-10, content ahead of version label) |
+| `references/permission-checklist.md` | Gate-0 (G0-1..4) + AC-L/OR-L binding + QD-PM Quick Mode 17 items | inspect/permission.md v1.0.2 |
+| `references/explicit-checklist.md` | EX classification (NL-A/NL-B/NR-O/NR-S) + impact type labels (D1/D2/D3) + severity grading (Explicit·P0/P1/P2) + trigger condition label | risk/explicit.md v1.0 (2026-10 revision) |
+| `references/relevance-map.md` | QD → candidate AS-*/FM-* mapping + candidate RAG-Agent metric mapping + red lines | framework/relevance.md v1.1 |
 
 ## 9. Provenance and license
 
-Condensed from the SanityOps Framework v1.0 (September 2026), maintained by Sanity AI Labs, license **CC BY-SA 4.0**. This package is a derived work under the same license; it defines no new rules. Specification source: `sanityops-org/sanityops-framework` — the implementing CLI (`sanityops-org/sanityops-cli`, Apache 2.0) is NOT required by this skill.
+Condensed from the SanityOps Framework v1.0 (2026-10 revision), maintained by Sanity AI Labs, license **CC BY-SA 4.0**. This package is a derived work under the same license; it defines no new rules. Specification source: `sanityops-org/sanityops-framework` — the implementing CLI (`sanityops-org/sanityops-cli`, Apache 2.0) is NOT required by this skill.
 
 ## 10. Further reading & upgrade
 

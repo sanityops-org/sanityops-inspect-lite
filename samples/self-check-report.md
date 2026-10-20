@@ -5,6 +5,8 @@ description: Dogfooding inspection record — the sanityops-inspect lite inspect
 
 # Self-Check Report — sanityops-inspect (Round 1)
 
+> **Stale-notice (2026-10)**: produced against an earlier skill revision — the skill is now **seven-stage and non-blocking** (P0 findings never halt the flow), and the impact-outlook stage is now **Stage F** (Stage E = Risk Explicit). Some cited rule IDs have since been deleted/transferred/merged; see the current checklists in `references/`.
+
 **Date**: 2026-10-06
 
 **Inspected object**: `inspect-skill/` package (SKILL.md + 5 reference files), build 2026-10-06

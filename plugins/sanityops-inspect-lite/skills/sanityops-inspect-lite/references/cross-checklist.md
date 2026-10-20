@@ -1,192 +1,172 @@
 ---
 title: Inspect Cross Checklist (Lite)
-description: "Condensed cross-artifact consistency checklist (QD-PS / QD-PT / QD-ST / QD-CYC) for the sanityops-inspect lite inspector, extracted from inspect/cross.md v1.0."
+description: "Condensed cross-artifact consistency checklist (QD-PS / QD-PT / QD-ST / QD-SS / QD-TT / QD-CYC) for the sanityops-inspect lite inspector — 29 items across six relationship groups, AC-L tiering (7/20/29 applicable items), P0 minimum rule sets (7/9/9), five-state judgment, same-source deduplication, and the scoring note. Extracted from inspect/cross.md v1.0 (2026-10); defines no new rules."
 ---
 
 # Cross-Artifact Consistency Checklist (Lite Inspector)
 
 > **Provenance**: Condensed from `inspect/cross.md` v1.0 (SanityOps Framework, CC BY-SA 4.0). This file is a compressed extraction for the sanityops-inspect lite inspector and defines NO new rules. On any conflict, `inspect/cross.md` governs.
 >
-> **Update Note**: Synchronized with framework to include Part 4.5 Circular Invocation (QD-CYC-1.1 / QD-CYC-1.2).
+> **Source note (reproduced, not adjudicated)**: the source's version header and §0.3 version history still read `v1.0 / 首次发布`, but the working-tree content has been expanded to **29 items across six relationship groups** (QD-SS and QD-TT added, plus QD-PS-1.7 / QD-PT-2.7 / QD-CYC-1.3) and its terminology was unified from `L1/L2/L3` + `RS/SS` to `AC-L` + `OR-L` — a "version-evidence drift" (content ahead of the version label). This checklist reproduces the **current content** and records the stale version label as-is.
 
 ## How to Use
 
-- **Non-blocking mode (lite skill).** Cross runs regardless of upstream single-artifact P0 findings: upstream P0 defects are recorded and carried forward, but they do **not** prevent this checklist from executing, and they are not a reason to mark the run "NOT EXECUTED". (The upstream source spec cross.md §5.2.1 states an entry condition *"Single-artifact inspection has passed, and no undisposed P0 defects remain"* with failure handling *"halt cross-artifact inspection"*; this lite skill deliberately runs non-blocking and aggregates P0 findings instead of halting.)
-- **Confirm artifact version consistency before starting** (§5.2.2): Prompt, Skill, and Tool version numbers, update timestamps, and sources must be consistent; if not, ask the user for confirmation before proceeding.
-- **Determine the Agent tier (L1/L2/L3)** and run the corresponding scope (two layers, do not collapse them):
-  1. **Evaluation scope — which items get a verdict** — per §5.4.3 inspection intensity, with item composition taken from the Appendix A applicability column in the tables below:
-     - **L1 basic** = the 7 items marked applicable at L1 in Appendix A (QD-PS-1.1, QD-PS-1.3, QD-PT-2.1, QD-PT-2.2, QD-PT-2.4, QD-ST-3.1, QD-ST-3.6). Source gap: §5.4.3/§8.3.1 state "8 core items" but never enumerate the 8th item; the lite inspector evaluates the 7 explicitly applicable items and records the source gap — it must not invent an 8th item.
-     - **L2 standard (14 items)** = QD-PS-1.1/1.2/1.3/1.4, QD-PT-2.1/2.2/2.3/2.4, QD-ST-3.1/3.2/3.3/3.6, plus QD-CYC-1.1/1.2 (circular invocation at L2/L3).
-     - **L3 full (21 items)** = all items in Appendix A below (19 original + 2 QD-CYC).
-  2. **Blocking core — which FAILs block release** — the tier's Appendix B P0 minimum set (L1 = 4, L2 = 6, L3 = 9 rows in the B.4 table under an "11 items" heading), plus any item whose severity is upgraded to P0 by Appendix C. Items evaluated at P1/P2 do not block but must still be reported. The source-internal discrepancies between Appendix A applicability, the §8.3.1 statistics (8/12/19 with 4-3-1 / 6-5-1 / 11-6-2 splits), and Appendix B are documented in the note under Appendix B; this file does not adjudicate them.
-- **Inspect only cross-artifact relationships** — the three pairs defined by the spec (§0.1.5): QD-PS (Prompt → Skill), QD-PT (Prompt → Tool), QD-ST (Skill ↔ Tool), plus the cross-cutting QD-CYC (Circular Invocation). Do not re-check single-artifact internal defects already owned by QD-P / QD-S / QD-T.
-- **QD-CYC applies at L2/L3 only** — Circular invocation inspection is not applicable at L1 (§5.4.3, Appendix A).
-- **For each rule, output: rule ID + verdict (PASS / FAIL with severity) + evidence quoting BOTH artifact locations** (three-tier localization: relationship level → artifact level → field level, cross.md §6.1.1).
-- **Apply default severities from Appendix A**, then apply the severity upgrade rules (Appendix C) when the Tool is RS-3, the Skill is SS-3, the Agent is L3, or linked defects exist.
-- **Verdict rule**: any P0 defect present → evaluation FAIL (Appendix B.1: *"Any P0 defect present → evaluation FAIL"*). A final report with unremediated P0 defects must follow Step 7: *"Output blocking report; require re-inspection after remediation"*. This FAIL verdict is a cross-stage result only; in this lite skill's non-blocking flow it does **not** halt subsequent stages (Gate-0 / Permission).
-- **Respect the scope exclusions** listed under "Does NOT Check" below — a Cross result says nothing about single-artifact internals, runtime behavior, or system-level permission enforcement.
+- **Non-blocking mode (lite skill).** Cross runs regardless of upstream single-artifact P0 findings: upstream P0 defects are recorded and carried forward, but do **not** prevent this checklist from executing, and are not a reason to mark the run "NOT EXECUTED". (The upstream source §5.2.1 states an entry condition *"single-artifact inspection passed, no undisposed P0 defects"* with failure handling *"halt cross-artifact inspection"*; this lite skill deliberately runs non-blocking and aggregates P0 findings instead of halting.)
+- **Confirm artifact version consistency before starting** (§5.2.2): Prompt, Skill, and Tool version numbers, update timestamps, and sources must be consistent; if not, ask the user before proceeding.
+- **Determine the Agent tier (AC-L1/2/3)** and run two layers, do not collapse them:
+  1. **Evaluation scope — which items get a verdict** — per §8.3.1 / Appendix A: **AC-L1 = 7 items, AC-L2 = 20, AC-L3 = 29** (the applicable items marked `✓` in Appendix A). Higher tier ⊇ lower tier.
+  2. **Blocking core — which FAILs block release** — the tier's P0 minimum rule set (Appendix B): **AC-L1 = 7, AC-L2 = 9, AC-L3 = 9** (the same 9 P0 items for L2/L3). Items evaluated at P1/P2 do not block but must still be reported.
+- **Inspect only cross-artifact relationships** — the six relationships defined by the spec (§1.3): QD-PS (Prompt → Skill), QD-PT (Prompt → Tool), QD-ST (Skill ↔ Tool), plus three extended relationships QD-SS (Skill ↔ Skill), QD-TT (Tool ↔ Tool), QD-CYC (circular invocation). Do not re-check single-artifact internal defects owned by QD-P / QD-S / QD-T.
+- **For each rule, output: rule ID + verdict (PASS / FAIL with severity) + evidence quoting BOTH artifact locations** (three-tier localization: relationship → artifact → field, §6.1.1).
+- **Five-state result per rule** (§5.3.8): **通过 / 缺陷 / 不适用(N/A) / 证据不足 / 未检查**. "证据不足" and "未检查" must never be recorded as pass; N/A must record its basis (e.g. "no Tool Schema", "Agent has only 1 Skill"); a **basis-less N/A is treated as unchecked** and counted as a failure at the item's default level (N/A discipline).
+- **Severity = default level + two upgrades** (§5.4.5, Appendix C): the default level is the Appendix A "严重等级（默认）" value; upgrades come from (a) the rule body's `→ P0` instance-upgrade branch (record the reason + evidence), and (b) the Appendix C.2 `OR-L3` mapping. When Appendix A and a body branch conflict, **Appendix A is the default, the body branch is the upgrade condition**.
+- **Verdict rule**: any P0 defect → evaluation FAIL (Appendix B.1). A final report with unremediated P0 defects must follow Step 7: *"Output blocking report; require re-inspection after remediation"*. This FAIL is a cross-stage result only; in this lite non-blocking flow it does **not** halt subsequent stages.
+- **Respect the scope exclusions** (below) — a Cross result says nothing about single-artifact internals, runtime behavior, or system-level permission enforcement.
 
-## Appendix A — Complete Inspection Item List (21 items)
-
-Default severity and per-level applicability are reproduced from `inspect/cross.md` Appendix A. "A applies at" is the Appendix A applicability mark (the tiers at which the item gets a verdict); "B blocking core" marks the tiers whose Appendix B minimum P0 set includes the item.
-
-### QD-PS — Prompt → Skill (6 items)
-
-| ID | Rule name | Definition (condensed) | Typical manifestation | Level | A applies at | B blocking core |
-| --- | --- | --- | --- | --- | --- | --- |
-| QD-PS-1.1 | Skill Authorization Consistency | Whether the available Skills declared in the Prompt match the defined Skills (whether a Skill is defined but outside the Prompt's authorization scope) | Skill defined but not authorized by Prompt | P0 | L1/L2/L3 | L1/L2/L3 |
-| QD-PS-1.2 | Trigger Condition Consistency | Whether the Prompt workflow's trigger conditions match the Skill's TRIGGER dimension (allowed_when / forbidden_when) | Trigger conditions inconsistent or contradictory | P1 | L2/L3 | — |
-| QD-PS-1.3 | Permission Boundary Consistency | Whether the permission scope authorized by the Prompt covers the Skill's allowed_operations | Skill permissions exceed Prompt authorization | P0 | L1/L2/L3 | L1/L2/L3 |
-| QD-PS-1.4 | Resource Access Consistency | Whether the resources declared by the Prompt align with the Skill's allowed_resources | Skill resources exceed Prompt authorization | P1 | L2/L3 | — |
-| QD-PS-1.5 | Failure Handling Consistency | Whether the Prompt's exception handling strategy aligns with the Skill's FAILURE dimension (on_empty_input, on_insufficient_input, forbidden_behaviors) | Failure handling strategy contradiction | P1 | L3 | — |
-| QD-PS-1.6 | Output Constraint Consistency | Whether the Prompt's output requirements are satisfied by the Skill's OUTPUT dimension (max_total_chars, format, partial_result_allowed) | Output constraints inconsistent | P2 | L3 | — |
-
-### QD-PT — Prompt → Tool (6 items)
-
-| ID | Rule name | Definition (condensed) | Typical manifestation | Level | A applies at | B blocking core |
-| --- | --- | --- | --- | --- | --- | --- |
-| QD-PT-2.1 | Tool Existence | Whether the Tools declared in the Prompt exist in the known Tool Schema list and names are consistent | Tool declared in Prompt does not exist | P0 | L1/L2/L3 | L1/L2/L3 |
-| QD-PT-2.2 | Invocation Specification Consistency | Whether the Prompt's tool invocation specification (QD-P-2.4.3) matches the Tool's Schema (name, description, inputSchema) | Invocation method does not match Tool Schema | P0 | L1/L2/L3 | L2/L3 |
-| QD-PT-2.3 | Parameter Constraint Consistency | Whether the Prompt's parameter constraints align with the Tool's inputSchema (required, properties, maxLength, pattern, etc.) | Parameter constraints inconsistent | P1 | L2/L3 | — |
-| QD-PT-2.4 | Permission Granularity Consistency | Whether the Prompt's permission declarations match the Tool's Risk Level — high-risk Tools (RS-3) must have security boundary declarations in the Prompt | High-risk Tool has no security boundary declaration | P0 | L1/L2/L3 | L1/L2/L3 |
-| QD-PT-2.5 | Error Handling Completeness | Whether the Prompt's exception handling covers all possible error types from the Tool (inferred from description and side effect documentation) | Does not cover all possible Tool errors | P1 | L3 | — |
-| QD-PT-2.6 | Invocation Frequency Reasonableness | Whether the Prompt's invocation frequency limits are reasonable, in combination with the Tool's capabilities | Frequency limit missing or unreasonable | P2 | L3 | — |
-
-### QD-ST — Skill ↔ Tool (7 items)
-
-| ID | Rule name | Definition (condensed) | Typical manifestation | Level | A applies at | B blocking core |
-| --- | --- | --- | --- | --- | --- | --- |
-| QD-ST-3.1 | Tool Existence | Whether the Tools declared by the Skill (if any, in the EXECUTION dimension or allowed_downstream_skills) exist in the known Tool Schema list and names are consistent | Tool declared in Skill does not exist | P0 | L1/L2/L3 | L2/L3 |
-| QD-ST-3.2 | Input Constraint Consistency | Whether the Skill's INPUT dimension constraints (max_items, format, if_exceeds) are supported by the Tool's inputSchema (maxLength, pattern, maxItems, etc.) | Skill input constraint not supported by Tool | P0 | L2/L3 | L3 |
-| QD-ST-3.3 | Required Parameter Preparation | Whether the Tool's required parameters (inputSchema.required) have source declarations in the Skill (e.g., from user input or other tool output) | Tool required parameter has no source in Skill | P0 | L2/L3 | L3 |
-| QD-ST-3.4 | Invocation Frequency Match | Whether the Skill's max_tool_calls (EXECUTION dimension) is reasonable, in combination with the Tool's capability scope | Frequency declaration missing or unreasonable | P2 | L3 | — |
-| QD-ST-3.5 | Output Structure Match | Whether the Skill's OUTPUT dimension expectations (format, max_total_chars) match the Tool's return value structure (inferred from description or examples) | Skill output expectations do not match Tool return values | P1 | L3 | — |
-| QD-ST-3.6 | Permission Scope Match | Whether the Skill's permission declarations (allowed_operations / forbidden_operations) cover the Tool's side effects (write operations, sensitive data handling) | Tool side effects exceed Skill permission declarations | P0 | L1/L2/L3 | L3 |
-| QD-ST-3.7 | Error Handling Coverage | Whether the Skill's FAILURE dimension (on_empty_input, forbidden_behaviors) covers all possible error types from the Tool | Does not cover all possible Tool errors | P1 | L3 | — |
-
-### QD-CYC — Circular Invocation (2 items, cross-cutting)
-
-| ID | Rule name | Definition (condensed) | Typical manifestation | Level | A applies at | B blocking core |
-| --- | --- | --- | --- | --- | --- | --- |
-| QD-CYC-1.1 | Cross-Artifact Circular Invocation | Whether circular invocation patterns exist across Prompt, Skill, and Tool artifacts (e.g., Skill output re-enters Prompt workflow, Tool callback re-triggers Prompt) | Closed loop across Prompt/Skill/Tool invocation relationships detected by LLM semantic analysis | P1 | L2/L3 | — |
-| QD-CYC-1.2 | Multi-Agent Circular Invocation | Whether circular invocation patterns exist between multiple Agent roles defined in the Prompt orchestration (e.g., Reviewer and Revisor calling each other in an infinite loop) | Closed loop across multiple agent roles in the Prompt orchestration detected by LLM semantic analysis | P1 | L2/L3 | — |
-
-> **Note**: QD-CYC items carry a default severity of P1. A definitive closed loop (explicit bidirectional/cyclic invocation) is determined directly as P0 per the in-item Severity Determination Rules in Part 4.5.2; this P0 is not an Appendix C upgrade and is independent of the RS-3/SS-3, L3, and linked-defect triggers in Appendix C.2.
-
-## Appendix B — Minimum Rule Sets (P0-only, tiered by Agent level)
-
-Structure per `inspect/cross.md` Appendix B, verbatim tiering and counts. Core principles (B.1):
-
-- L1 Minimum Rule Set ⊂ L2 Minimum Rule Set ⊂ L3 Minimum Rule Set
-- Minimum Rule Sets contain only P0 inspection items
-- Any P0 defect present → evaluation FAIL
-
-**L1 Minimum Rule Set (4 P0 Items)** — *"MUST pass the above 4 P0 inspection items."*
-
-| ID | Inspection Item Name | Relationship |
-| --- | --- | --- |
-| QD-PS-1.1 | Skill Authorization Consistency | QD-PS |
-| QD-PS-1.3 | Permission Boundary Consistency | QD-PS |
-| QD-PT-2.1 | Tool Existence | QD-PT |
-| QD-PT-2.4 | Permission Granularity Consistency | QD-PT |
-
-**L2 Minimum Rule Set (6 P0 Items)** — *"MUST pass the above 6 P0 inspection items (includes L1's 4 items)."*
-
-| ID | Inspection Item Name | Relationship |
-| --- | --- | --- |
-| QD-PS-1.1 | Skill Authorization Consistency | QD-PS |
-| QD-PS-1.3 | Permission Boundary Consistency | QD-PS |
-| QD-PT-2.1 | Tool Existence | QD-PT |
-| QD-PT-2.2 | Invocation Specification Consistency | QD-PT |
-| QD-PT-2.4 | Permission Granularity Consistency | QD-PT |
-| QD-ST-3.1 | Tool Existence | QD-ST |
-
-**L3 Minimum Rule Set (11 P0 Items)** — *"MUST pass the above 11 P0 inspection items (includes L2's 6 items)."*
-
-| ID | Inspection Item Name | Relationship |
-| --- | --- | --- |
-| QD-PS-1.1 | Skill Authorization Consistency | QD-PS |
-| QD-PS-1.3 | Permission Boundary Consistency | QD-PS |
-| QD-PT-2.1 | Tool Existence | QD-PT |
-| QD-PT-2.2 | Invocation Specification Consistency | QD-PT |
-| QD-PT-2.4 | Permission Granularity Consistency | QD-PT |
-| QD-ST-3.1 | Tool Existence | QD-ST |
-| QD-ST-3.2 | Input Constraint Consistency | QD-ST |
-| QD-ST-3.3 | Required Parameter Preparation | QD-ST |
-| QD-ST-3.6 | Permission Scope Match | QD-ST |
-
-> **Source count note** (reproduced, not adjudicated): four source-internal discrepancies coexist — (a) the B.4 heading and compliance line state "11 P0 Items", but the B.4 table lists 9 rows, which are exactly the 9 items carrying default P0 in Appendix A; (b) §5.4.3/§8.3.1 state per-level inspection intensity as 8 (L1) / 12 (L2) / 19 (L3) items, while Appendix B minimum sets are P0-only (4 / 6 / heading-11); (c) the Appendix A applicability marks enumerate 7 items at L1 (all default P0) and 14 at L2 (9 P0 / 5 P1), whereas §8.3.1 splits the same tiers as 4 P0/3 P1/1 P2 and 6 P0/5 P1/1 P2; (d) §8.3.1 counts 11 P0 at L3 but Appendix A lists 9 default P0 (and applying Appendix C's blanket "L3: P1→P0" would yield 18, not 11). The lite inspector evaluates the Appendix A-applicable items, applies Appendix C upgrades as written, and treats Appendix B as the blocking core; it does not adjudicate these discrepancies — defer to `inspect/cross.md`.
-
-## Scoring note (§8.3, optional)
-
-Source weights per the §8.3.1 statistics table: **L1** W = 5×4 + 3×3 + 1×1 = **30**, base = 100/30 ≈ **3.333**; **L2** W = 5×6 + 3×5 + 1×1 = **46**, base = 100/46 ≈ **2.174**; **L3** W = 5×11 + 3×6 + 1×2 = **75**, base = 100/75 ≈ **1.333**. Per failed item deduct base × 5 / 3 / 1 (once per item regardless of instance count); any P0 → FAIL (score still output). **These statistics are not derivable from Appendix A + Appendix C as written (see source count note)**; compute an indicative score only if the user asks, use the source's §8.3.1 values verbatim (they cover only the 19 non-QD-CYC items — QD-CYC carries no weight, so report QD-CYC findings as unscored; never invent a weight), and label it "indicative (lite minimal set), not the full-spec score".
-
-## Inspection Process (cross.md Part 5.1.1 — Eight Steps: the source's seven steps plus QD-CYC inserted as step 6)
-
-1. **Prerequisite Verification** — Confirm artifact version consistency (required). Upstream single-artifact P0 findings do **not** halt the run in this non-blocking lite skill: record them as carried-forward findings and proceed. The source's gating entry condition (§5.2.1) and its *"halt cross-artifact inspection"* failure handling are documented for reference, but this lite skill runs non-blocking and aggregates P0 findings rather than halting.
-2. **Artifact Relationship Identification** — Extract the Skill and Tool declaration lists: from the Prompt's QD-P-2.4.2 resource/tool declaration section, and from the Skill's EXECUTION dimension (allowed_downstream_skills). If extraction fails, flag the missing declaration and continue with an advisory.
-3. **QD-PS Check (Prompt → Skill)** — Run QD-PS-1.1 through 1.6 item-by-item; record inconsistencies mapped to specific locations in both the Prompt and the Skill.
-4. **QD-ST Check (Skill ↔ Tool)** — Run QD-ST-3.1 through 3.7; map findings to Skill and Tool locations.
-5. **QD-PT Check (Prompt → Tool)** — Run QD-PT-2.1 through 2.6; map findings to Prompt and Tool locations.
-6. **QD-CYC Check (Circular Invocation, L2/L3 only)** — Run QD-CYC-1.1 and QD-CYC-1.2; detect cross-artifact and multi-agent circular invocation patterns via LLM semantic analysis:
-   - Read Prompt workflow/orchestration definitions
-   - Read Skill declarations (TRIGGER / OUTPUT / EXECUTION dimensions) and Tool declarations
-   - Perform semantic analysis of invocation chains to detect closed loops
-   - **QD-CYC-1.1**: Analyze whether Skill output/trigger re-enters Prompt workflow, Tool callback re-triggers Prompt, or Tool side effects re-trigger Skill
-   - **QD-CYC-1.2**: Analyze whether Agent roles defined in Prompt orchestration have circular invocation relationships (e.g., Agent A calls Agent B, Agent B calls Agent A)
-   - Map findings to Prompt workflow/orchestration definitions (and Skill/Tool sides where applicable for QD-CYC-1.1)
-7. **Impact Assessment** — Identify linked defects (defects involving multiple artifacts); upgrade severity where applicable and adjust remediation priority. For QD-CYC, a definitive closed loop (explicit bidirectional/cyclic invocation) is determined directly as P0 per Part 4.5.2.
-8. **Output Report** — Produce the defect list and remediation guidance. If unremediated P0 defects remain (§5.1.2, Step 7, verbatim): *"Output blocking report; require re-inspection after remediation"*.
-
-## Severity and Level Tables
-
-**Defect severity** (cross.md §5.4.1, as defined in Inspect Skill v1.0):
-
-| Level | Symbol | Definition | Disposition Priority |
-| --- | --- | --- | --- |
-| P0 | 🔴 | Prevents Agent functionality or introduces security risk | MUST be fixed |
-| P1 | 🟡 | May cause behavioral instability or functional defects | SHOULD be fixed |
-| P2 | 🟢 | Affects readability or efficiency, but does not impact functionality | MAY be fixed |
-
-**Agent complexity levels** (cross.md §5.4.2, as defined in Inspect Prompt v1.0):
+## Agent complexity levels (AC-L, §5.4.2, per Inspect Prompt)
 
 | Level | Name | Definition |
 | --- | --- | --- |
-| L1 | Single-turn Task | Single invocation completes the task; no state retention |
-| L2 | Multi-turn Interactive | Requires multi-turn dialogue or simple tool invocations |
-| L3 | Complex Agent | Complex workflow, multi-tool collaboration, strong constraints |
+| AC-L1 | Single-turn Task | Single invocation completes; no state retention |
+| AC-L2 | Multi-turn Interactive | Multi-turn dialogue or simple tool invocations |
+| AC-L3 | Complex Agent | Complex workflow, multi-tool collaboration, strong constraints |
 
-**Severity upgrade triggers** (cross.md Appendix C.1):
+> `AC-L4` (multi-Agent collaboration) is defined in core.md §4.2 but not yet refined here; AC-L4 Agents are inspected as AC-L3 (full 29 items) (§5.4.3 note).
 
-| Trigger Condition | Upgrade Rule |
-| --- | --- |
-| Tool is RS-3 | Associated inspection items P1→P0 |
-| Skill is SS-3 | Associated inspection items P1→P0 |
-| Agent is L3 | Global P2→P1, P1→P0 |
-| Linked defect | Associated inspection items may upgrade |
-| Cross-Skill/Tool | Associated inspection items P1→P0 |
+## Complete Inspection Item List (29 items, six groups)
 
-Per-item upgrade mapping (Appendix C.2) — applies only to these 9 upgradable items:
+Default severity and AC-L applicability are reproduced from `inspect/cross.md` Appendix A. `✓` = the item gets a verdict at that tier; `-` = not applicable.
 
-| Inspection Item | Default | RS-3/SS-3 | L3 Agent | Linked Defect |
-| --- | --- | --- | --- | --- |
-| QD-PS-1.2 | P1 | P0 | P0 | P0 |
-| QD-PS-1.4 | P1 | P0 | P0 | P1 |
-| QD-PS-1.5 | P1 | P1 | P0 | P1 |
-| QD-PT-2.3 | P1 | P0 | P0 | P1 |
-| QD-PT-2.5 | P1 | P1 | P0 | P1 |
-| QD-ST-3.5 | P1 | P0 | P0 | P1 |
-| QD-ST-3.7 | P1 | P0 | P0 | P1 |
-| QD-CYC-1.1 | P1 | P0 | P0 | P0 |
-| QD-CYC-1.2 | P1 | P0 | P0 | P0 |
+### QD-PS — Prompt → Skill (7 items)
 
-> **Note**: QD-CYC items have special severity determination: a definitive closed loop (explicit bidirectional/cyclic invocation) is determined directly as P0 per Part 4.5.2, independent of Appendix C triggers.
+| ID | Rule name | Definition (condensed) | Default | AC-L1 | AC-L2 | AC-L3 |
+| --- | --- | --- | --- | --- | --- | --- |
+| QD-PS-1.1 | Skill Authorization Consistency | Skills declared in the Prompt match the defined Skills (a Skill defined but outside the Prompt's authorization scope) | P0 | ✓ | ✓ | ✓ |
+| QD-PS-1.2 | Trigger Condition Consistency | Prompt workflow trigger conditions match the Skill's TRIGGER dimension (allowed_when / forbidden_when) | P1 | - | ✓ | ✓ |
+| QD-PS-1.3 | Permission Boundary Consistency | Permission scope authorized by the Prompt covers the Skill's allowed_operations | P0 | ✓ | ✓ | ✓ |
+| QD-PS-1.4 | Resource Access Consistency | Resources declared by the Prompt align with the Skill's allowed_resources | P1 | - | ✓ | ✓ |
+| QD-PS-1.5 | Failure Handling Consistency | Prompt's exception handling aligns with the Skill's FAILURE dimension (on_empty_input, on_insufficient_input, forbidden_behaviors) | P1 | - | - | ✓ |
+| QD-PS-1.6 | Output Constraint Consistency | Prompt's output requirements satisfied by the Skill's OUTPUT dimension (max_total_chars, format, partial_result_allowed) | P2 | - | - | ✓ |
+| QD-PS-1.7 | Orchestration Order & Precondition Consistency | The Skill's declared precondition set is satisfied by a prior Prompt workflow step before the Skill is invoked | P1 | - | ✓ | ✓ |
 
-## Does NOT Check (Scope Exclusions, cross.md's Own Wording)
+### QD-PT — Prompt → Tool (7 items)
 
-- *"it does not duplicate the inspection content of Inspect Prompt, Inspect Tool, or Inspect Skill"* (§0.1.2) — no re-checking of single-artifact internal defects already owned by QD-P / QD-S / QD-T.
-- *"It does not re-discover defects already covered by single-artifact inspection"* (§0.1.3) — Cross focuses on **Hidden Defects Under Reasonable Expression**: each artifact individually valid, but semantic conflicts or constraint gaps emerge when combined.
-- *"it does not prescribe how to design 'good' cross-artifact relationships"* (§0.1.2) — not a development guide.
-- *"it does not address cross-artifact behavior monitoring during Agent execution"* / *"It does not cover dynamic monitoring of cross-artifact behavior at runtime"* (§0.1.2 / §0.1.3) — no runtime behavior monitoring.
-- *"it does not replace system-level permission control mechanisms"* (§0.1.2) — not a permission management specification.
-- Tool/Skill existence checks are declaration-only: *"Static inspection only verifies 'declaration existence.' Runtime verification of 'actual availability' occurs during Risk Implicit validation."* (notes to QD-PT-2.1 and QD-ST-3.1).
+| ID | Rule name | Definition (condensed) | Default | AC-L1 | AC-L2 | AC-L3 |
+| --- | --- | --- | --- | --- | --- | --- |
+| QD-PT-2.1 | Tool Existence | Tools declared in the Prompt exist in the known Tool Schema list and names are consistent | P0 | ✓ | ✓ | ✓ |
+| QD-PT-2.2 | Invocation Specification Consistency | The Prompt's tool invocation spec matches the Tool's Schema (name, description, inputSchema) | P0 | ✓ | ✓ | ✓ |
+| QD-PT-2.3 | Parameter Constraint Consistency | The Prompt's parameter constraints align with the Tool's inputSchema (required, properties, maxLength, pattern, …) | P1 | - | ✓ | ✓ |
+| QD-PT-2.4 | Permission Granularity Consistency | The Prompt's permission declarations match the Tool's risk level — high-risk Tools (OR-L3) need security boundary declarations in the Prompt | P0 | ✓ | ✓ | ✓ |
+| QD-PT-2.5 | Key Error Handling Coverage | The Prompt's exception handling covers all key error types from the Tool | P1 | - | - | ✓ |
+| QD-PT-2.6 | Business-Level Frequency Expectation | The Prompt declares a reasonable business-level call frequency / batch expectation for the Tool | P2 | - | - | ✓ |
+| QD-PT-2.7 | Parameter Semantics & Unit Consistency | The Prompt's parameter semantics/unit (name, unit, currency, timezone) match the Tool's inputSchema semantics | P1 | - | ✓ | ✓ |
+
+### QD-ST — Skill ↔ Tool (7 items)
+
+| ID | Rule name | Definition (condensed) | Default | AC-L1 | AC-L2 | AC-L3 |
+| --- | --- | --- | --- | --- | --- | --- |
+| QD-ST-3.1 | Tool Existence | Tools declared by the Skill (EXECUTION dimension or allowed_downstream_skills) exist in the known Tool Schema list and names are consistent | P0 | ✓ | ✓ | ✓ |
+| QD-ST-3.2 | Input Constraint Consistency | The Skill's INPUT constraints (max_items, format, if_exceeds) are supported by the Tool's inputSchema (maxLength, pattern, maxItems, …) | P0 | - | ✓ | ✓ |
+| QD-ST-3.3 | Required Parameter Preparation | The Tool's required parameters (inputSchema.required) have a source declaration in the Skill (user input or another tool's output) | P0 | - | ✓ | ✓ |
+| QD-ST-3.4 | Business-Level Frequency Expectation | The Skill's call-frequency/batch expectation is reasonable in combination with the Tool's capability | P2 | - | - | ✓ |
+| QD-ST-3.5 | Output Structure Match | The Skill's OUTPUT expectations (format, max_total_chars) match the Tool's return structure | P1 | - | - | ✓ |
+| QD-ST-3.6 | Permission Scope Match | The Skill's permission declarations (allowed_operations / forbidden_operations) cover the Tool's side effects (writes, sensitive data) | P0 | ✓ | ✓ | ✓ |
+| QD-ST-3.7 | Key Error Handling Coverage | The Skill's FAILURE dimension covers all key error types from the Tool | P1 | - | - | ✓ |
+
+### QD-CYC — Circular Invocation (3 items, cross-cutting)
+
+| ID | Rule name | Definition (condensed) | Default | AC-L1 | AC-L2 | AC-L3 |
+| --- | --- | --- | --- | --- | --- | --- |
+| QD-CYC-1.1 | Cross-Artifact Circular Invocation | A closed loop across Prompt/Skill/Tool invocation relationships (Skill output re-enters Prompt workflow, Tool callback re-triggers Prompt, Tool side effect re-triggers Skill) | P1 | - | ✓ | ✓ |
+| QD-CYC-1.2 | Multi-Agent Circular Invocation | A closed loop across multiple Agent roles in the Prompt orchestration (Agent A ↔ Agent B) | P1 | - | - | ✓ |
+| QD-CYC-1.3 | Inter-Skill Handoff Loop | Multiple Skills route to each other via handoff forming a non-terminating loop | P1 | - | ✓ | ✓ |
+
+> QD-CYC note (Appendix A.4): default P1. A **definitive closed loop** (explicit bidirectional/cyclic invocation) is determined directly as P0 per Part 4.5.2 — this P0 is not an Appendix C upgrade and is independent of the OR-L3 trigger. QD-CYC-1.2 applies only when the Prompt orchestration declares ≥2 Agent roles, else N/A (record basis).
+
+### QD-SS — Skill ↔ Skill (2 items)
+
+| ID | Rule name | Definition (condensed) | Default | AC-L1 | AC-L2 | AC-L3 |
+| --- | --- | --- | --- | --- | --- | --- |
+| QD-SS-4.1 | Trigger Condition Conflict | Multiple Skills' triggers overlap, activating several Skills on the same input | P1 | - | ✓ | ✓ |
+| QD-SS-4.2 | Name Uniqueness | Multiple Skills share the same or near-identical name, causing mis-invocation | P2 | - | ✓ | ✓ |
+
+> QD-SS note (Appendix A.5): QD-SS-4.1 default P1, upgrades to P0 when an OR-L3 Skill is involved; QD-SS-4.2 default P2, upgrades to P1 when OR-L3 is involved, and to P0 when the near-identity would mis-invoke an OR-L3 Skill.
+
+### QD-TT — Tool ↔ Tool (3 items)
+
+| ID | Rule name | Definition (condensed) | Default | AC-L1 | AC-L2 | AC-L3 |
+| --- | --- | --- | --- | --- | --- | --- |
+| QD-TT-5.1 | Cross-Tool Data Flow | A Tool's sensitive output is consumed by another Tool for a dangerous operation, forming a data-leak chain | P1 | - | ✓ | ✓ |
+| QD-TT-5.2 | Multi-Tool Semantic Competition | Multiple Tools' name/description are near-identical, causing mis-invocation | P1 | - | ✓ | ✓ |
+| QD-TT-5.3 | Cross-Tool Data Structure Bridging | A Tool's output/inputSchema types are incompatible and the Skill has no conversion step | P2 | - | - | ✓ |
+
+> QD-TT note (Appendix A.6): QD-TT-5.1 default P1, upgrades to P0 when "sensitive output + dangerous consumption" co-occur; QD-TT-5.2 default P1, upgrades to P0 when behavioral difference is large.
+
+## Minimum Rule Sets (Appendix B, P0-only)
+
+Core principles (B.1): AC-L1 ⊂ AC-L2 ⊆ AC-L3 (P0 set is monotonic; AC-L3's P0 set equals AC-L2's because all L3-added items are P1/P2); minimum sets contain only P0 items; any P0 defect → FAIL.
+
+**AC-L1 minimum rule set (7 P0)** — QD-PS-1.1, 1.3 · QD-PT-2.1, 2.2, 2.4 · QD-ST-3.1, 3.6
+
+**AC-L2 minimum rule set (9 P0)** — the above 7 + QD-ST-3.2, 3.3
+
+**AC-L3 minimum rule set (9 P0)** — same as AC-L2 (no new P0 items at L3).
+
+## Severity upgrade (Appendix C)
+
+Default levels are the Appendix A values. Two upgrade channels apply (record the reason + evidence in the report):
+
+- **OR-L3 upgrade (Appendix C.2)** — when the Tool or Skill is OR-L3:
+  - P1 → P0: QD-PS-1.2, 1.4, 1.5, 1.7 · QD-PT-2.3, 2.7 · QD-ST-3.5 · QD-SS-4.1 · QD-TT-5.1, 5.2 · QD-CYC-1.1, 1.2, 1.3
+  - QD-SS-4.2: P2 → P1 (→ P0 when it would mis-invoke an OR-L3 Skill)
+  - No upgrade (`—`): QD-PT-2.5, QD-ST-3.7 (P1 stays P1)
+  - P2 items with no OR-L3 upgrade (stay P2): QD-PS-1.6, QD-PT-2.6, QD-ST-3.4, QD-TT-5.3
+- **Instance upgrade (each rule body's `→ P0` branch, §5.4.5)** — e.g. a definitive QD-CYC closed loop is P0 directly.
+
+> General rule (Appendix C.2 note): a default-P2 item caps at P1 under OR-L3; it rises to P0 only when the item's own rule declares "would mis-invoke an OR-L3 operation" (currently only QD-SS-4.2).
+
+## Same-source deduplication (§8.5.2)
+
+When one fact hits multiple IDs in the same group below, charge once at the highest level; keep all IDs and evidence, mark the primary ID, and record the group. The denominator is unchanged (always the tier's applicable-item count).
+
+| Group | IDs | Merge condition (same fact) |
+| --- | --- | --- |
+| Tool existence | QD-PT-2.1 ↔ QD-ST-3.1 | The same nonexistent Tool name referenced by both Prompt and Skill |
+| Permission boundary | QD-PS-1.3 ↔ 1.4 ↔ QD-ST-3.6 | Evidence on the same `allowed_operations`/`allowed_resources` declaration, closable by one fix |
+| Parameter constraint | QD-PT-2.3 ↔ QD-ST-3.2 | The same constraint gap on the same parameter |
+| Output contract | QD-PS-1.6 ↔ QD-ST-3.5 | The same structural mismatch on the same output (primary: QD-ST-3.5) |
+| Error handling | QD-PT-2.5 ↔ QD-ST-3.7 | The same key error type uncovered on both sides |
+
+> QD-PT-2.7 has no Skill-side same-source counterpart and is excluded from dedup. Outside these groups, items are scored separately; when uncertain, treat as not-same-source and note the basis.
+
+## Scoring note (§8.3, optional)
+
+Weights **P0 : P1 : P2 = 5 : 3 : 1**; base = 100 / total weight. Per failed item deduct base × 5 / 3 / 1 (once per item number regardless of instance count, §8.5.1); any P0 → FAIL (score still output). Cross scoring is independent of single-artifact scoring and is never combined with it (§8.3 note).
+
+| AC-L | Applicable items | P0 | P1 | P2 | Total weight | Base |
+| --- | --- | --- | --- | --- | --- | --- |
+| **AC-L1** | 7 | 7 | 0 | 0 | 5×7 = 35 | 100/35 ≈ 2.857 |
+| **AC-L2** | 20 | 9 | 10 | 1 | 5×9 + 3×10 + 1×1 = 76 | 100/76 ≈ 1.316 |
+| **AC-L3** | 29 | 9 | 15 | 5 | 5×9 + 3×15 + 1×5 = 95 | 100/95 ≈ 1.053 |
+
+Compute an indicative score only if the user asks, and label it "indicative (lite minimal set), not the full-spec score".
+
+## Inspection Process (cross.md Part 5.1.1 — eight steps)
+
+1. **Prerequisite Verification** — confirm artifact version consistency. Upstream single-artifact P0 findings do **not** halt this lite run (record and carry forward).
+2. **Artifact Relationship Identification** — extract Skill and Tool declaration lists (Prompt QD-P-2.4.2; Skill EXECUTION dimension / allowed_downstream_skills). On extraction failure, flag and continue as advisory.
+3. **QD-PS Check (Prompt → Skill)** — QD-PS-1.1–1.7.
+4. **QD-ST Check (Skill ↔ Tool)** — QD-ST-3.1–3.7.
+5. **QD-PT Check (Prompt → Tool)** — QD-PT-2.1–2.7.
+6. **Extended-relationship checks (L2/L3)** — QD-CYC-1.1/1.2/1.3, QD-SS-4.1/4.2, QD-TT-5.1/5.2/5.3.
+7. **Impact Assessment** — identify linked defects; apply OR-L3 upgrade and instance-upgrade; adjust remediation priority.
+8. **Output Report** — defect list + remediation guidance; unremediated P0 → *"Output blocking report; require re-inspection after remediation"*.
+
+## Does NOT Check (Scope Exclusions)
+
+- Does not duplicate single-artifact inspection content owned by QD-P / QD-S / QD-T (§0.1.2).
+- Does not re-discover defects already covered by single-artifact inspection; Cross focuses on **hidden defects under reasonable expression** — each artifact individually valid, but semantic conflicts/gaps emerge when combined (§0.1.3).
+- Does not prescribe how to design "good" cross-artifact relationships (§0.1.2).
+- Does not monitor cross-artifact behavior at runtime (§0.1.2 / §0.1.3).
+- Does not replace system-level permission control mechanisms (§0.1.2).
+- Tool/Skill existence checks are declaration-only: static inspection verifies "declaration existence"; runtime "actual availability" is verified by Risk Implicit (notes to QD-PT-2.1 / QD-ST-3.1).

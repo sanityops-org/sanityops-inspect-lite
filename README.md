@@ -57,15 +57,15 @@ The skill runs **seven stages, strictly in this order** — never in parallel, n
 
 | Stage | Subset | What it checks | Gating |
 |---|---|---|---|
-| **A** | QD-P / QD-S / QD-T / QC | **Single-artifact** defects — one System Prompt, one Skill (QD-S-0 baseline runs first), each Tool Schema, plus embedded-code contract checks (QC-0 baseline runs first) | any P0 → stop |
-| **B** | QD-PS / QD-PT / QD-ST / QD-CYC | **Cross-artifact** contracts — Prompt↔Skill, Prompt↔Tool, Skill↔Tool, plus cross-cutting circular invocation (QD-CYC, L2/L3 only) | any P0 → stop |
-| **C** | Gate-0 | Admission to Permission (conditions G0-1..G0-4). *Not an inspection item* — produces no score and no defect list | any condition fails → Permission is "Not Executed" |
-| **D** | QD-PM | **Permission** proportionality, Quick Mode (the 12 highest-risk of the full 43 items); requires the full artifact set | — |
+| **A** | QD-P / QD-S / QD-T / QC | **Single-artifact** defects — one System Prompt, one Skill (QD-S-0 baseline runs first), each Tool Schema, plus embedded-code contract checks (QC-0 baseline runs first) | — |
+| **B** | QD-PS / QD-PT / QD-ST / QD-SS / QD-TT / QD-CYC | **Cross-artifact** contracts — Prompt↔Skill, Prompt↔Tool, Skill↔Tool, Skill↔Skill, Tool↔Tool, plus cross-cutting circular invocation (QD-CYC, L2/L3 only) | — |
+| **C** | Gate-0 | Admission to Permission (conditions G0-1..G0-4). *Not an inspection item* — produces no score and no defect list | G0-3/G0-4 fail → Permission is "Not Executed" |
+| **D** | QD-PM | **Permission** proportionality, Quick Mode (the 17 highest-risk of the full 43 items); requires the full artifact set | — |
 | **E** | EX (NL-A / NL-B / NR-O / NR-S) | **Explicit-risk audit** — classify dangerous expressions into the 34 subcategories, assign impact type labels (D1/D2/D3), grade by worst consequence into `Explicit·P0/P1/P2`, mark the trigger condition label. Static text only; never a confirmed exploit | — |
 | **F** | relevance map | **Impact outlook** — for each FAIL, *candidate* attack surface (`AS-*`), failure mode (`FM-*`), and quality-metric associations. Advisory only, kept physically separate from verdicts | — |
 | **G** | self-verification | **Self-verification** — verifies the inspector's own report (ID back-closure, red-line wording, output contract), in-line as each verdict is written plus a closing pass. Fixes the report only, never the artifacts | — |
 
-**Why the order matters.** A and B gate C; C gates D; E is the explicit-risk scan (static, independent of the QD findings); F consumes the FAILs from A/B/D; G then self-verifies the emitted report (it never re-inspects the artifacts). A P0 in A or B halts the run (Mode 2), and every downstream stage is reported as **"Not Executed"** — never as FAIL. Three consequences worth internalizing:
+**Why the order matters.** C (Gate-0) gates D; E is the explicit-risk scan (static, independent of the QD findings); F consumes the FAILs from A/B/D; G then self-verifies the emitted report (it never re-inspects the artifacts). The flow is **non-blocking**: P0 findings are aggregated and reported but never halt the flow — a stage is reported **"Not Executed"** only for structural reasons (missing artifacts, or Gate-0 G0-3/G0-4 unsatisfied), never because of P0 findings. Three consequences worth internalizing:
 
 - A single-artifact PASS does **not** mean the artifact set is consistent — Stage B exists precisely for the conflicts that surface only when artifacts are combined.
 - A Permission PASS is scoped to what is **declared in the artifacts**; it says nothing about IAM/PEP configuration or runtime enforcement.
@@ -100,14 +100,14 @@ For a non-Claude-Code agent, the skill package is `plugins/sanityops-inspect-lit
    - **Agent skill (recommended):** install the `plugins/sanityops-inspect-lite/skills/sanityops-inspect-lite/` folder (or just its `SKILL.md` + `references/`) as a skill. The `description` in `SKILL.md`'s front matter auto-triggers it when the user asks to inspect, audit, or check logic artifacts.
    - **Paste-in fallback:** provide `SKILL.md` together with the `references/` files as instructions — the model reads the checklists while running the flow.
 
-3. **Provide the inputs** (SKILL.md §2): the artifacts to inspect (System Prompt / Skill / Tool Schema), the tier declarations (Prompt/Skill L1/L2/L3 and each Tool's risk level), and a version label. The model then runs the seven-stage flow and emits the report.
+3. **Provide the inputs** (SKILL.md §2): the artifacts to inspect (System Prompt / Skill / Tool Schema), the tier declarations (Prompt/Skill complexity level AC-L and each Tool's operation-risk level OR-L), and a version label. The model then runs the seven-stage flow and emits the report.
 
 ## Lite vs full comparison
 
 | Capability | Lite inspector (this skill) | Full (CLI / SanityOps Platform) |
 |---|---|---|
-| Inspect rule coverage | Condensed minimal sets (QD-P/QD-S/QD-T L1/L2/L3; Cross L1 7 / L2 14 / L3 21 items) | Full specification |
-| Permission check | 12-item Quick Mode | Full 43-item set |
+| Inspect rule coverage | Condensed minimal sets (QD-P/QD-S/QD-T; Cross AC-L1 7 / AC-L2 20 / AC-L3 29 items) | Full specification |
+| Permission check | 17-item Quick Mode | Full 43-item set |
 | Risk Explicit (`EX-*`) | Lite subset (34-subcategory classification + D1/D2/D3 impact labels + `Explicit·P0/P1/P2` grading + trigger condition label) | Run (full dangerous-expression classification) |
 | Risk Implicit | Not run | Run (shadow-sandbox dynamic exploitability validation) |
 | Quality — static code contract (QC) | Lite subset (embedded-code syntax / resource / pattern checks) | Run (full code-contract rule set) |
