@@ -31,7 +31,7 @@ Source definition sentence: "Mapping strength reflects 'whether validation or su
 | **Conditional** | Requires external knowledge bases, runtime environments, model behaviors, or business rules | As candidate investigation direction, no automatic conclusion |
 | **Not Applicable** | Current Agent type, artifact type, or runtime conditions lack association prerequisites | Do not output this recommendation |
 
-**Strength assignment rule for the lite inspector:** the source Appendix A now carries **per-row strength ratings** (`强`→Strong / `中`→Medium / `条件`→Conditional); the tables below reproduce them. When emitting an Impact Card, copy the row's strength and label it "provisional (lite)". Never present a strength as severity.
+**Strength assignment rule for the lite inspector:** the source Appendix A now carries **per-row strength ratings** (`Strong` / `Medium` / `Conditional`); the tables below reproduce them. When emitting an Impact Card, copy the row's strength and label it "provisional (lite)". Never present a strength as severity.
 
 ## Attack surface legend (verbatim, relevance.md §2.2)
 
@@ -110,7 +110,7 @@ Impact-dimension codes used below: `D1` = Confidentiality Harm, `D2` = Integrity
 | `QD-P-2.7.2` | Counter-Example Coverage (rec.) | AC-L1~3 | AS-01, AS-05 | D2 | Conditional | Counter-example coverage, dangerous-request testing |
 | `QD-P-2.7.3` | Boundary-Case Examples Missing (rec.) | AC-L1~3 | AS-01, AS-05 | D2 | Conditional | Boundary cases, dangerous-request regression |
 
-> **Notes** (relevance.md A.1): recommendation items (不定级) carry only optimization value and are uniformly rated `Conditional`. Deprecated/deleted/merged rules are **not mapped**: `QD-P-2.5.5` (deprecated), `QD-P-2.1.1` (deleted, injection point folded into 2.5.6), `QD-P-1.4.2` (deleted), `QD-P-2.3.3` (deleted), `QD-P-2.1.4` (merged into 1.4.1).
+> **Notes** (relevance.md A.1): recommendation items (ungraded) carry only optimization value and are uniformly rated `Conditional`. Deprecated/deleted/merged rules are **not mapped**: `QD-P-2.5.5` (deprecated), `QD-P-2.1.1` (deleted, injection point folded into 2.5.6), `QD-P-1.4.2` (deleted), `QD-P-2.3.3` (deleted), `QD-P-2.1.4` (merged into 1.4.1).
 
 ## A.2 Skill Defect Mapping (QD-S-*)
 

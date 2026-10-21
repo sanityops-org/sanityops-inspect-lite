@@ -46,7 +46,7 @@ Permission quick mode runs on whichever artifact types are present (Prompt, Skil
 **Step 0 — Fidelity classification (run first, per object).** For each candidate object, determine its fidelity tier before type classification:
 
 - **`full`** — provably the original artifact: the user declares "this is the original file", or the object is a verbatim artifact with no summary/meta/framework signals.
-- **`summary`** — any of: **S1** self-declared summary/excerpt/transcribed (meta-level wording such as `Collection Method: summary`, `structure analysis`, `This is a summary`, `文档摘要`, `结构分析`); **S2** the object contains non-artifact sections (e.g. `Evaluation Dimensions`, `Scoring Criteria`, `Test Suggestions`, `Collection Date`/`Method`, `Relationship`); or **S3** the object has no complete structural signature.
+- **`summary`** — any of: **S1** self-declared summary/excerpt/transcribed (meta-level wording such as `Collection Method: summary`, `structure analysis`, `This is a summary`, or the equivalent meta-level wording in the artifact's own language); **S2** the object contains non-artifact sections (e.g. `Evaluation Dimensions`, `Scoring Criteria`, `Test Suggestions`, `Collection Date`/`Method`, `Relationship`); or **S3** the object has no complete structural signature.
 - **Default fallback**: when `full` cannot be confirmed, treat as `summary`.
 - **Hard rules**: do not keyword-scan artifact *content* for "summary" (only meta-level self-description counts); a user declaration of "original file" overrides S1/S2/S3; apply per-object, never as a single whole-batch verdict.
 
