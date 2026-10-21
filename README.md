@@ -102,6 +102,16 @@ For a non-Claude-Code agent, the skill package is `plugins/sanityops-inspect-lit
 
 3. **Provide the inputs** (SKILL.md §2): the artifacts to inspect (System Prompt / Skill / Tool Schema), the tier declarations (Prompt/Skill complexity level AC-L and each Tool's operation-risk level OR-L), and a version label. The model then runs the seven-stage flow and emits the report.
 
+## What can be inspected — and the input limits
+
+Three things are worth knowing *before* you hand artifacts over; ignoring them is the main way to get misleading output.
+
+**1. Only three artifact types qualify.** The skill inspects a System Prompt, a Skill (Markdown with `name`/`description` front matter, e.g. `SKILL.md`), and Tool Schemas (JSON Schema / function-calling definitions with `parameters` + `description`). A `## Skills` list, a bare function call, or prose that merely *describes* a capability is documentation, not an artifact — it has no structural header, so it cannot be loaded, and the skill skips it rather than reporting phantom defects against it (SKILL.md §2 "Type classification").
+
+**2. One agent at a time, with bounded inputs.** All artifacts in a run must belong to the same agent; the cross-artifact, permission, and risk stages never mix agents. Input budget (SKILL.md §2 "Input budget"): up to **50 artifacts** (1 Prompt + 1 Skill + up to 48 Tool Schemas); per-type size caps — Tool Schema ≤ 2,000 tokens, System Prompt ≤ 30,000 tokens, Skill definition (incl. its referenced files) ≤ 100,000 tokens; a run total up to **200,000 tokens** on a 1M-token host window (scaled down on smaller windows). Over the limit, split the run into rounds, or the artifact is treated as `summary` fidelity.
+
+**3. Fidelity decides how much is checked.** A provably original, verbatim artifact (`full`) runs every rule. A summary, excerpt, or transcription (`summary`) is checked for contradictions only — absence-based findings are skipped (SKILL.md §2 "Step 0"). Submitting a summary and expecting a full verdict will mislead. Output size is not capped; the report is emitted in full.
+
 ## Lite vs full comparison
 
 | Capability | Lite inspector (this skill) | Full (CLI / SanityOps Platform) |

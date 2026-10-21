@@ -17,18 +17,31 @@ It is **not**:
 - A security or quality gate — Inspect PASS ≠ Risk PASS ≠ Quality PASS (core.md §1.4); the Risk Implicit and runtime Quality subsets are **not** run (the lite embedded-code QC in Stage A is the only Quality check).
 - A repair tool — it never rewrites, patches, or generates fixed versions.
 - A runtime auditor — Permission quick mode validates only what is *declared in the artifacts*, not IAM/IdP configuration, PEP/PDP enforcement, or runtime monitoring (permission.md §0.1.4).
+- An executing permission — it declares no write, delete, or environment-elevation scope; the skill is read-only static inspection of authorized artifacts and performs no production operation of any kind.
 
 ## 2. Inputs
+
+Only the **Artifacts** are mandatory from the user's side. Tier declarations and the version label are optional: when the user cannot provide them, determine tiers from the checklist rules and record the version as "undeclared" — never block the run on their absence.
 
 Ask the user for (do not start until you have them, or record explicitly what is missing):
 
 1. **Artifacts** — any of: System Prompt (text/markdown), Skill definition (e.g. SKILL.md and its referenced files), Tool Schema(s) (JSON Schema / function-calling definitions).
-2. **Tier declarations** — Prompt/Skill artifact level (L1/L2/L3) and each Tool's risk level (per the tier rules in the checklists). If the user cannot declare a tier, apply the tiering rules from the checklists and state the determination.
+2. **Tier declarations** — the Prompt's Agent Complexity Level (AC-L1/L2/L3), the Skill's risk level (OR-L1/L2/L3), and each Tool's risk level (OR-L1/L2/L3) (per the tier rules in the checklists). If the user cannot declare a tier, apply the tiering rules from the checklists and state the determination.
 3. **Version label** for the artifact set (required for the multi-round ledger).
 
-Permission quick mode additionally requires the **full artifact set** (Prompt + Skill + all Tool Schemas); if any is missing, record Permission as NOT EXECUTED with reason "incomplete artifact set".
+Permission quick mode runs on whichever artifact types are present (Prompt, Skill, and/or Tool Schema), not on a required three-artifact set. Record Permission as NOT EXECUTED with reason "no permission-evidence artifact" only when none of the three types is present at all.
+
+**Input budget (configurable default).** One Agent per run; up to 50 artifacts (1 Prompt + 1 Skill + up to 48 Tool Schemas); per-type size caps — a Tool Schema up to 2,000 tokens, a System Prompt up to 30,000 tokens, a Skill definition (with its referenced files) up to 100,000 tokens; a run total up to 200,000 tokens on a 1M-token host window (scale down proportionally on smaller windows). If exceeded, split the run across rounds, or record the over-limit artifact as `summary` fidelity (Step 0 below).
 
 ### Input preparation (not a Stage)
+
+**Object segmentation (before Step 0).** When one input file packages several artifacts — e.g. a test-case document that embeds multiple verbatim artifacts (each marked `### N. <name> (verbatim in full)`) plus container scaffolding — split it first:
+
+- **Artifact segment** — each marked verbatim block is one candidate object.
+- **Container scaffolding** — metadata blocks, `Project Structure`, `Logical Artifact Inventory` headers, `Evaluation Dimensions`, `Scoring Criteria`, `Test Suggestions`, `Notes`, and other non-artifact sections — is not an artifact and is not inspected.
+- Apply Step 0 and type classification **per artifact segment**, never to the container as a whole. Container scaffolding does not trigger S1/S2/S3 against any segment.
+- The term "artifact" in Stages A–E refers to these segments.
+- If the file has no explicit segment boundary, treat the whole file as one candidate object (existing behavior).
 
 **Step 0 — Fidelity classification (run first, per object).** For each candidate object, determine its fidelity tier before type classification:
 
@@ -37,15 +50,18 @@ Permission quick mode additionally requires the **full artifact set** (Prompt + 
 - **Default fallback**: when `full` cannot be confirmed, treat as `summary`.
 - **Hard rules**: do not keyword-scan artifact *content* for "summary" (only meta-level self-description counts); a user declaration of "original file" overrides S1/S2/S3; apply per-object, never as a single whole-batch verdict.
 
-**Fidelity consequence (rule scope).**
-- `full` → run all rules.
-- `summary` → run only **contradiction-based** findings (FAIL reason = "A conflicts with / is inconsistent with / forms an unterminated loop"); **skip absence-based** findings (FAIL reason = "missing / not declared / undefined / no X"). This skips e.g. QD-T-1.1/1.2/1.4/2.1/4.1, QD-P-2.2.2/2.2.3/2.7.x, QC-0.3/3.2 and like absence rules.
+**Fidelity consequence (global — applies to every stage A–G, not just Stage A).**
+- `full` → run all rules in every stage.
+- `summary` → in every stage, run only **contradiction-based** findings (FAIL reason = "A conflicts with / is inconsistent with / forms an unterminated loop"); **skip absence-based** findings (FAIL reason = "missing / not declared / undefined / no X"). This skips e.g. QD-T-1.1/1.2/1.4/2.1/4.1, QD-P-2.2.2/2.2.3/2.7.x, QC-0.3/3.2 and like absence rules.
+- **Stage E (EX) is bound by the same gate**: under `summary`, the risk audit must not read example code, safety measures, or missing declarations as "explicit risk"; only a risk expression that is verbatim, self-contained, and itself contradicts a declared boundary qualifies. Inference-based findings (cross-object chains, "read-only is only natural language", "scope undefined", etc.) are skipped under `summary`.
 
-**Type classification.** Inventory every provided file and classify each into one of the three types by structural signature — record the type and the basis:
+**Type classification.** After object segmentation, classify each artifact segment (or each file, when no segmentation applies) into one of the three types by structural signature — record the type and the basis:
 
 - **Skill** → markdown with `name`/`description` front matter (e.g. `SKILL.md`).
 - **Tool Schema** → JSON Schema / function-calling definition (`parameters` + `description`).
 - **System Prompt** → otherwise, prose/markdown instructions.
+
+**Why a structural header is required (not optional).** A Skill or Tool without its header cannot be loaded by the runtime — it cannot run, so there is no production-grade artifact to inspect. A `## Skills` list (e.g. `- browser: search docs`) only *describes* a capability; a bare function call (e.g. `await fetchTickets({...})`) only *invokes* a tool. Both are documentation, not artifacts. Inspecting them for a "missing contract" is a category error: it reports phantom defects against text that was never meant to be run, and the real production artifact (which does carry a header) will differ from this description anyway. Such prose is therefore skipped, not inspected.
 
 Edge cases: an archive → expand first, then group files by agent; a script → treat as a referenced file, not an artifact, **except** when it embeds an in-scope logic-artifact literal (e.g. `system_message = """..."""`), which is classified as the corresponding artifact type and tiered by Step 0. If a file cannot be unambiguously classified, or the inputs appear to mix multiple agents, ask the user before starting Stage A. Never run Stage B/C/D/E across different agents' artifacts.
 
@@ -59,7 +75,11 @@ Edge cases: an archive → expand first, then group files by agent; a script →
 
 ## 4. Inspection flow — seven stages, strictly in order, non-blocking
 
-Run stages **in order, never in parallel, never out of order**. After every stage, emit that stage's report before moving on. P0 findings **never halt the flow**: they are aggregated, reported in the executive summary and status board, and carried forward to later stages. A stage is skipped (Not Executed) only for concrete structural reasons — missing artifacts, or unsatisfied Gate-0 structural conditions (G0-3/G0-4) — never because of P0 findings.
+Run stages **in order, never in parallel, never out of order**. After every stage, emit that stage's report before moving on. P0 findings **never halt the flow**: they are aggregated, reported in the executive summary and status board, and carried forward to later stages.
+
+Plain-language note for the end user: **P0 = "must fix before release" (a severity level)**; **non-blocking = the inspection does not stop mid-run** — every stage still runs and all P0s are summarized at the end. A P0 is still a real defect to fix; "non-blocking" only means the scan completes instead of halting at the first problem.
+
+A stage is skipped (Not Executed) only for concrete structural reasons — missing artifacts, or the unsatisfied Gate-0 structural condition (G0-4) — never because of P0 findings.
 
 ### Stage A — Single-artifact inspection (QD-P / QD-S / QD-T / QC)
 
@@ -68,7 +88,7 @@ Run stages **in order, never in parallel, never out of order**. After every stag
 3. For each Tool Schema → `references/tool-checklist.md` (tier the Tool first, per the checklist's tier rules).
 4. For code snippets embedded in any artifact (Prompt text, Skill steps, Tool Schema description/default/example fields) → `references/code-contract-checklist.md`. **Run the QC-0 baseline first** (it gates QC-1 through QC-4). QC inspects embedded snippets only — never standalone source files.
 5. Verdict per rule: `QD-x-y | PASS/FAIL | evidence: file, section/line`. Every FAIL must quote the offending artifact text (short excerpt).
-6. **Single-artifact boundary (hard)**: inspect each artifact in isolation. A declaration missing from the artifact under inspection is a defect of *that* artifact — do not treat a declaration present in a different artifact as satisfying it. Evidence for every FAIL must quote the inspected artifact itself, never a sibling artifact.
+6. **Single-artifact boundary (hard)**: inspect each artifact segment in isolation. A declaration missing from the segment under inspection is a defect of *that* segment — do not treat a declaration present in a different segment as satisfying it. Evidence for every FAIL must quote the inspected segment itself, never a sibling segment.
 7. Collect all P0 findings and carry them forward. P0 findings do **not** halt the flow — continue to Stage B in the same run, unless the user asked for Stage A only.
 
 ### Stage B — Cross-artifact inspection (QD-PS / QD-PT / QD-ST / QD-SS / QD-TT / QD-CYC)
@@ -79,15 +99,16 @@ Run stages **in order, never in parallel, never out of order**. After every stag
 
 ### Stage C — Gate-0 (admission to Permission)
 
-Gate-0 **is not an inspection item**: it produces no numbers and no score; "not passed" ≠ FAIL ≠ permission problems (permission.md §9.2.2). Verify the four admission conditions G0-1..G0-4 defined in `references/permission-checklist.md` §3.2. In this non-blocking flow, G0-1 (no unfixed P0 in Stage A) and G0-2 (no unfixed P0 in Stage B) are **recorded as informational findings and do not gate**; only G0-3 (responsibility boundary statements exist and are locatable) and G0-4 (each Tool Schema's name/description/parameter descriptions are complete) remain structural admission conditions for Stage D.
+Gate-0 **is not an inspection item**: it produces no numbers and no score; "not passed" ≠ FAIL ≠ permission problems (permission.md §9.2.2). Verify the four admission conditions G0-1..G0-4 defined in `references/permission-checklist.md` §3.2. In this non-blocking flow, G0-1 (no unfixed P0 in Stage A) and G0-2 (no unfixed P0 in Stage B) are **recorded as informational findings and do not gate**; G0-3 (responsibility boundary statements exist and are locatable) is **non-blocking** — its absence only downgrades the 1.x items to N/A; G0-4 (each Tool Schema's name/description are complete, tool-level only) remains the only structural admission condition for Stage D.
 
-- G0-3 and G0-4 both pass → proceed to Stage D (G0-1/G0-2 findings, if any, are carried forward in the report).
-- G0-3 or G0-4 fails → for the Permission stage output **only** the "Not Executed" block specified in `references/permission-checklist.md` §3.3 (subset / status / unsatisfied IDs / blocking reasons / remediation actions), and stop. Output nothing else for Permission — no defect list, no score, no partial conclusions.
+- **Report every G0 condition with its result and reason, whether it passes or fails** — never a bare `Passed`. G0-4 is reported as `complete` / `vacuous (no Tool)` / `incomplete`; G0-3 as `locatable` / `absent → 1.x N/A`. A reader must be able to tell *how* each condition passed, not just that the gate opened.
+- G0-4 passes → proceed to Stage D (G0-1/G0-2 findings and any G0-3 absence, if any, are carried forward in the report; a G0-3 absence N/A's the 1.x items).
+- G0-4 fails → for the Permission stage output **only** the "Not Executed" block specified in `references/permission-checklist.md` §3.3 (subset / status / unsatisfied IDs / blocking reasons / remediation actions), and stop. Output nothing else for Permission — no defect list, no score, no partial conclusions.
 - Wording red line: the Permission stage was **"Not Executed"** — never report it as FAIL, and never write "Permission = ERROR/BLOCKED" at stage level (§9.2.4 hierarchy expression norm; see also §6 of this file).
 
 ### Stage D — Permission proportionality (QD-PM, Quick Mode)
 
-1. Confirm the **full artifact set** is present (Prompt + Skill + all Tool Schemas); if not, record NOT EXECUTED — "incomplete artifact set".
+1. Run Permission on the artifact types that are present (Prompt, Skill, and/or Tool Schema), not on a required three-artifact set. Items that depend on an absent type are N/A with basis (e.g. "no Tool Schema"). Record NOT EXECUTED only when no permission-evidence artifact exists at all.
 2. Run the **17-item Quick Mode set** defined in `references/permission-checklist.md` §4 (the lite scope; the full spec has 43 items). For each item output `QD-PM-x.y | Applicable or N/A | PASS/FAIL | evidence`, and mark every verdict **"provisional (lite quick mode)"**.
 3. Apply the checklist's classification binding (its §2): applicability is a structural fact from AC-L; severity is a risk fact from OR-L (basic mapping OR-L3→P0 / OR-L2→P1 / OR-L1→P2, with fixed-P0 items 3.4/5.4/6.3/6.5 and each item's inline severity rule). Never use AC-L to grade severity or OR-L to decide applicability. Every FAIL carries the classification-basis line `<operation> → <OR-L> → <rule> → <severity>`. N/A verdicts record the determination basis (a basis-less N/A is treated as failure per the checklist).
 4. Include the checklist's mandatory scope statement (its §5): declared proportionality only — not IAM/PEP/runtime enforcement.
@@ -146,7 +167,7 @@ Reconciliation notes are **non-blocking**: they do not re-open or re-run stages,
 
 ## 5. Run modes
 
-**Mode 1 — One-shot full flow (non-blocking)**: run A → B → C → D → E → F → G in one response. P0 findings are aggregated across stages and reported in the executive summary and status board; they **never** halt the flow. A stage is skipped only for concrete structural reasons (missing artifacts, or Gate-0 G0-3/G0-4 unsatisfied), never for P0 findings.
+**Mode 1 — One-shot full flow (non-blocking)**: run A → B → C → D → E → F → G in one response. P0 findings are aggregated across stages and reported in the executive summary and status board; they **never** halt the flow. A stage is skipped only for concrete structural reasons (missing artifacts, or Gate-0 G0-4 unsatisfied), never for P0 findings.
 
 **Mode 2 — Multi-round iteration**: the user fixes artifacts (outside this skill) and re-runs. Maintain a round ledger:
 
@@ -165,14 +186,14 @@ Reconciliation notes are **non-blocking**: they do not re-open or re-run stages,
 ```
 Stage A (Single-artifact):  Executed / Not Executed — <reason>
 Stage B (Cross):            Executed / Not Executed — <reason>
-Stage C (Gate-0):           Passed / Not passed — <unsatisfied IDs, if any>
+Stage C (Gate-0):           Passed / Not passed — G0-4: <complete | vacuous (no Tool) | incomplete>; G0-3: <locatable | absent → 1.x N/A>
 Stage D (Permission QD-PM): Executed / Not Executed — <reason>
 Stage E (Risk Explicit EX): Executed / Not Executed — <reason>
 Stage F (Impact outlook):   Executed / Not Executed — <reason>
 Stage G (Self-verification): Executed / Not Executed — <reason>
 ```
 
-5. **Blocking wording red line**: a stage that did not run is reported as **Not Executed** with a concrete structural reason — the specific Gate-0 condition IDs (G0-3/G0-4) or "incomplete artifact set" (Stage D). P0 findings alone are never a reason for a stage to be Not Executed in this non-blocking flow. Never report a non-executed stage as FAIL, and never write "Permission = ERROR/BLOCKED" — the correct form is "Permission did not execute due to Gate-0 not satisfied".
+5. **Blocking wording red line**: a stage that did not run is reported as **Not Executed** with a concrete structural reason — the specific Gate-0 condition ID (G0-4) or "no permission-evidence artifact" (Stage D). P0 findings alone are never a reason for a stage to be Not Executed in this non-blocking flow. Never report a non-executed stage as FAIL, and never write "Permission = ERROR/BLOCKED" — the correct form is "Permission did not execute due to Gate-0 not satisfied".
 6. **Indicative score** only if the user asks: apply the checklist's stated deduction weights; label it "indicative (lite minimal set), not the full-spec score".
 7. **Report header (mandatory on every report and every stage-only report)** — exactly these provenance facts:
    - Host model name (self-declared by the model executing this skill, e.g. `Host model: <vendor/model>`);
@@ -185,8 +206,9 @@ Stage G (Self-verification): Executed / Not Executed — <reason>
    The header is never omitted to save tokens, and must not imply the result is an official engine/SaaS conclusion.
 
 8. **Self-verification statement** — after the status board, append the Stage G statement (ID back-closure / red-line wording / output contract), including any in-place self-corrections made. This is a self-check of the report, not a verdict on the artifacts.
-9. **Report language (English, hard)** — every report, whether full-flow or stage-only, MUST be written in **English**. This covers all prose, findings, evidence lines, the executive summary, the report header, the status board, and every templated block (Not-Executed block, EX report, Impact Card). Never emit a non-English report even when the user writes in another language.
-10. **Chinese zero-tolerance check (hard)** — the emitted report MUST contain **zero** Chinese/CJK characters, anywhere, including inside quoted evidence. When an inspected artifact's text is in Chinese, render the evidence excerpt in **English** (a translation) and mark it as a translation instead of quoting it verbatim; this supersedes the §6.2 "verbatim excerpt" allowance for CJK artifact text. A single CJK codepoint anywhere in the report is a contract violation that must be fixed before the report is final.
+9. **Report language (follow the user, hard)** — the report is written in the same language the user used to make the request. This covers all prose, findings, evidence explanations, the executive summary, the report header, the status board, and every templated block. **Rule IDs and labels are identifiers and are never translated**: `QD-*`, `QC-*`, `EX-*`, `AS-*`, `FM-*`, `G0-*`, severity labels `P0/P1/P2`, and tier labels `AC-L*`/`OR-L*` stay as-is regardless of the report language.
+10. **Evidence excerpt language** — quote artifact text verbatim in its original language; render any explanatory gloss or finding summary in the report's language. (This replaces the former English-only and zero-CJK hard rules.)
+11. **Terminology quick reference (mandatory)** — every report opens, directly after the executive summary, with a compact glossary mapping the ID families to plain language in the report's language (see Appendix A): `QD-*` = single/cross/permission defect · `QC-*` = embedded-code defect · `EX-*` = explicit risk · `AS-*`/`FM-*` = candidate impact mapping · `AC-L*`/`OR-L*` = agent/operation risk level · `P0/P1/P2` = blocking/warning/advisory.
 
 ## 7. Hard Do-Not list
 
@@ -220,3 +242,35 @@ Condensed from the SanityOps Framework v1.0 (2026-10 revision), maintained by Sa
 
 - **Upgrade to the full inspection**: the open-source `sanityops-cli` and the SanityOps Platform provide the complete Inspect ruleset plus the Risk (Explicit/Implicit) and Quality subsets, remediation, and version-level evidence chains. See https://github.com/sanityops-org/sanityops-framework/blob/main/framework/try-the-tools.md.
 - **Background, lite-vs-full comparison, worked samples, FAQ**: see `README.md` (ships with this skill package).
+
+## Appendix A — Terminology quick reference
+
+| Family | Means | Plain meaning |
+|---|---|---|
+| `QD-P` / `QD-S` / `QD-T` | Inspect defect IDs | a defect in the Prompt / Skill / Tool Schema |
+| `QD-PS/PT/ST/SS/TT/CYC` | Cross-artifact defect IDs | a conflict between two artifacts |
+| `QD-PM` | Permission defect IDs | a permission-proportionality problem |
+| `QC-*` | Code-contract defect IDs | a defect in an embedded code snippet |
+| `EX-*` | Risk Explicit IDs | an explicitly-expressed risk (static text) |
+| `AS-*` / `FM-*` | Impact-map IDs | candidate attack surface / failure mode (advisory) |
+| `AC-L1/L2/L3` | Agent complexity level | how complex the agent is (drives which rules apply) |
+| `OR-L1/L2/L3` | Operation risk level | how risky the operations are (drives severity) |
+| `P0 / P1 / P2` | Severity | blocking / warning / advisory |
+| `full` / `summary` | Fidelity | original file (all rules) vs summary (contradictions only) |
+
+## Appendix B — Minimal example
+
+**Input (what the user provides):** a single `system_prompt.md` — the only mandatory input; tiers/version are optional.
+
+**Output (what the report looks like, condensed):**
+
+```
+Executive summary: Stage A executed (B/C/D vacuous). P0: 0 · P1: 2 · P2: 1.
+Top findings:
+  QD-P-2.2.1 — input source not declared
+  QD-P-2.5.2 — security boundary constraints missing
+...
+Status board: Stage A Executed · Stage B Not Executed (no Tool/Skill) · ...
+```
+
+The user only needs to read the executive summary; the per-rule verdicts and Impact Cards are the detail behind it.

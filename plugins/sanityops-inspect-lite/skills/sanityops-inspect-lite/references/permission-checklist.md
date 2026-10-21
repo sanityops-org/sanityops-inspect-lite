@@ -10,7 +10,7 @@ description: Condensed QD-PM checklist for the sanityops-inspect lite inspector 
 ## 1. How to use
 
 - **Entry precondition**: this checklist runs only after Gate-0 (Section 3 below) is satisfied. Gate-0 itself is verified in Stage C of the lite flow; this file owns its condition definitions and output norm.
-- **Artifact-set precondition**: the full artifact set is required — System Prompt + Skill + all Tool Schemas. If any is missing, record the Permission stage as NOT EXECUTED with reason **"incomplete artifact set"**; do not run items against a partial set.
+- **Artifact-set precondition**: Permission does **not** require the full three-artifact set. It runs on whichever artifact types are present — System Prompt, Skill, and/or Tool Schema — using each present type's declarations as permission evidence (permission.md §0.1.3: Prompt → responsibility boundary / prohibitions; Skill → allowed operation scope / permission boundaries; Tool → operation semantics). Items that depend on an absent artifact type are marked **N/A with basis** (e.g. "no Tool Schema"), never a basis-less N/A. Record NOT EXECUTED with reason "no permission-evidence artifact" only when none of the three types is present at all.
 - **Scope**: the lite inspector runs the **Quick Mode set — 17 items** (source Appendix D.1): a hand-picked first-pass screening set covering prerequisite (3.3/4.8/6.5), fixed-P0 (3.4/5.4/6.3/6.5), structural-escalation P0 (4.4), and statically-decidable P0-reachable items across alignment/breadth/environment/propagation/boundary. The full specification has **43 items** (plus a 23–32 item Must-Inspect Set); items outside these 17 are out of lite scope — never emit IDs not listed in Section 4.
 - **One verdict line per item**: `QD-PM-x.y | Applicable or N/A | PASS/FAIL | evidence: file, section/line`. Every verdict is marked **"provisional (lite quick mode)"**. Every FAIL must also carry the classification-basis line of §2.4.
 - **Two kinds of N/A must be distinguished** (§9.3.2): (a) morphology not introduced by this AC-L (excluded by level); (b) morphology may exist but this Agent factually does not have it (condition not triggered) — this kind **must annotate the determination basis**. `N/A` items are not scored and not counted in the denominator, but a **basis-less `N/A` is counted in the denominator and treated as a failure** (R-N3, Appendix D.3 note).
@@ -91,16 +91,20 @@ Gate-0 **is not an inspection item**: it produces no numbers, does not participa
 | --- | --- | --- | --- |
 | G0-1 | Single-artifact inspection has no unfixed P0 | Read upstream Stage A conclusion | Responsibility and capability declarations are not yet trustworthy |
 | G0-2 | Cross-artifact inspection has no unfixed P0 | Read upstream Stage B conclusion | Unresolved contradictions between artifacts; determination baseline not unique |
-| G0-3 | Responsibility boundary statements exist and are locatable | Locatability verification; must cite specific locations | No responsibility baseline; proportionality has no reference |
-| G0-4 | Each Tool Schema's `name`, `description`, and parameter descriptions are complete | Field-by-field completeness verification | Operation semantics undeterminable; permission items cannot be categorized |
+| G0-3 | Responsibility boundary statements exist and are locatable | Locatability verification; must cite specific locations | Non-blocking — when absent, the 1.x items (1.1/1.2/1.3) are N/A with basis "no responsibility baseline"; all other items run |
+| G0-4 | Each Tool Schema's `name` and `description` are complete | Field-by-field completeness verification (tool-level only) | Tool operation semantics undeterminable; permission items cannot be categorized |
 
-**Non-blocking note (lite skill)**: In this lite skill's non-blocking flow, G0-1 and G0-2 (no unfixed P0 upstream) are **recorded as informational findings and do not gate** admission; G0-3 and G0-4 remain the structural admission conditions. See SKILL.md §4 Stage C.
+**G0-4 vacuous satisfaction**: when the Agent has **no Tool Schema**, G0-4 is vacuously satisfied (there is no Tool to verify). Permission then runs on the Prompt and/or Skill evidence that is present; Tool-dependent QD-PM items are marked N/A with basis "no Tool Schema". A missing Tool Schema is therefore **not** a Gate-0 failure by itself.
 
-Admission layer vs substance layer (§9.2.3): G0-3 verifies statements **exist** (QD-PM-1.4 then judges discriminative power — outside lite scope); G0-4 verifies fields **are complete** (QD-PM-1.5 then judges whether they express operation semantics — outside lite scope); permission-set enumerability has no admission condition — it is judged by QD-PM-6.5 itself.
+**Parameter-level `description` is not a Gate-0 condition**: a parameter `description` is an optional field in function-calling schemas — a schema loads and runs without it. G0-4 therefore checks only tool-level `name`/`description`. A parameter missing `description` does not block admission; instead, parameter-semantic QD-PM items (e.g. 2.2 ownership, 2.3 field-level scope, 2.8 declared-vs-reachable scope) record "parameter semantics insufficient" where they cannot determine the parameter's role, never a basis-less PASS.
+
+**Non-blocking note (lite skill)**: In this lite skill's non-blocking flow, G0-1 and G0-2 (no unfixed P0 upstream) are **recorded as informational findings and do not gate** admission; G0-3 is **non-blocking** — its absence only downgrades the 1.x items (1.1/1.2/1.3) to N/A, never blocks the stage; **G0-4 remains the only structural admission condition**. See SKILL.md §4 Stage C.
+
+Admission layer vs substance layer (§9.2.3): G0-3 verifies statements **exist** (QD-PM-1.4 then judges discriminative power — outside lite scope); G0-4 verifies the tool-level `name`/`description` **are complete** (QD-PM-1.5 then judges whether they express operation semantics — outside lite scope); permission-set enumerability has no admission condition — it is judged by QD-PM-6.5 itself.
 
 ### 3.3 Output norm when not passed (§9.2.4)
 
-When G0-3 or G0-4 fails, output **only**:
+When G0-4 fails, output **only**:
 
 ```text
 Subset: Inspect Permission Governance Specification (QD-PM)
@@ -148,6 +152,6 @@ This stage validates **declared proportionality within the Logic Artifacts only*
 - INHERITED is a source-defined case relationship (4.2↔Cross, 6.5↔3.3/4.8), not a severity or verdict: record the owning item and mark the inheriting item INHERITED with its location.
 - The source's full machinery — extraction layer (baseline/permission-item/mapping three-table output), fingerprinting, Must-Inspect Set (23–32 items), scoring — is outside lite scope. Quick Mode verdicts are inventory-grade screening, marked "provisional (lite quick mode)".
 - **Execution order** (source D.1): group 2 items (2.x) run only on permissions already determined "suited" by group 1 (1.1/1.2/1.3). If 3.3 hits, affected 1.x/2.x conclusions are void and re-run after granularity repair; if 4.8 hits, all subset conclusions are marked incomplete until re-run. A 2.x conclusion is a first-pass result, not granularity-validated.
-- **Deduplication** (source D.1, §4.2): 2.1/2.2/2.8 hitting the same permission fact are counted once (§9.6 overlap adjudication).
+- **Deduplication** (source §9.6 overlap adjudication): the same item number is charged once regardless of how many times it is triggered. 2.1 / 2.2 / 2.8 are distinct item numbers; they may all hit the same permission fact, but each is counted once and they are not merged. Cross-item merging applies only to the INHERITED pairs listed in §9.6 (1.6↔3.6, 6.5↔3.3/4.8, 3.1↔3.2).
 - **Deferred items** (source D.1, out of Quick Mode, covered by Must-Inspect): 4.1/4.7 (cross-layer/runtime-identity reasoning), 5.1/5.6 (depend on groups 1–4), 1.6 (combination reasoning, R3), 3.1/3.2 (granularity).
 - **Parameterized-tool non-enumerable set** (source §2.2.5, v1.0.1): the "operation whitelist for parameterized/open-ended tools" (`sql_query`/`exec`/`http_request`/`eval` etc.) is adjudicated to **QD-T-3.7** in Inspect Tool, not re-checked here. Permission keeps a linkage only: when QD-T-3.7 hits, this subset treats the set as "not enumerable" (source §2.5.1 priority 2), feeding §9.5's blocking point.
