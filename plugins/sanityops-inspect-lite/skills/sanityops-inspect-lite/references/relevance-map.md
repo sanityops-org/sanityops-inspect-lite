@@ -263,7 +263,7 @@ The source Appendix B.1 provides FM associations at **QD-category-group granular
 
 1. Find the B.1 row below whose category description matches the defect's QD family.
 2. Copy that row's FM codes as **candidate** failure modes.
-3. If a QD ID does not clearly fall into any B.1 group (notably `QD-PM-*`, which B.1 does not cover), write "no category-level FM association defined in Appendix B.1" — do not guess.
+3. If a QD ID does not clearly fall into any B.1 group, write "no category-level FM association defined in Appendix B.1" — do not guess.
 
 FM-* code names are defined in `quality/tool-agent.md` (L1); Appendix B.1 uses FM-01 through FM-10. RAG-Agent metric associations are reproduced in condensed form in the "Candidate RAG-Agent quality metrics" section below (from relevance.md Appendix C.1).
 
@@ -285,6 +285,10 @@ FM-* code names are defined in `quality/tool-agent.md` (L1); Appendix B.1 uses F
 | Tool semantic competition defects | FM-03, FM-05 |
 | Tool Schema change defects | FM-04, FM-05, FM-06 |
 | Cross contract defects | FM-04, FM-05, FM-06, FM-08 |
+| Inter-Skill trigger conflict and name similarity (`QD-SS`) | FM-02, FM-03, FM-07 |
+| Cross-Tool data structure incompatibility (`QD-TT-5.3`) | FM-05, FM-06 |
+| Skill-to-Skill handoff loop (`QD-CYC-1.3`) | FM-08, FM-10 |
+| Permission proportionality defects (`QD-PM`) | FM-05, FM-09, FM-10 |
 
 > **Wildcard convention** (relevance.md Appendix B note): category wildcards (e.g. `QD-P-1.x`, `QD-T-4.x`) refer only to **currently active** members, excluding deleted (`QD-P-2.1.1`, `QD-P-1.4.2`, `QD-P-2.3.3`), deprecated (`QD-P-2.5.5`), merged (`QD-T-4.2`), and transferred (`QD-T-3.5`→`QD-TT-5.1`, `QD-T-4.3`→`QD-TT-5.2`) IDs. The authoritative active-member list is Appendix A above.
 
