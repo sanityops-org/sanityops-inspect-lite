@@ -27,6 +27,6 @@ The skill lives in `plugins/sanityops-inspect-lite/skills/sanityops-inspect-lite
 
 ## Boundaries
 
-- ✅ Six-stage inspection: single-artifact → cross-artifact → Gate-0 → permission → explicit-risk audit → impact outlook
+- ✅ Seven-stage inspection: single-artifact → cross-artifact → Gate-0 → permission → explicit-risk audit → impact outlook → self-verification
 - ✅ Reports only; never rewrites any artifact
 - ❌ Does not run Risk Implicit or the runtime Quality subsets (the lite embedded-code QC in Stage A is the only Quality check); for full capability use the official `sanityops-cli`

@@ -1,8 +1,10 @@
 ---
 name: sanityops-inspect-lite
 version: 1.0.0
+owner: Sanity AI Labs
 description: Lite, zero-install inspector for AI Agent logic artifacts (System Prompt, Skill, Tool Schema) based on the SanityOps Framework v1.0. Runs a seven-stage non-blocking flow — single-artifact defect inspection (QD-P/QD-S/QD-T/QC), cross-artifact contract checks (QD-PS/PT/ST/CYC), Gate-0 admission, permission proportionality quick check (QD-PM), explicit-risk audit (EX: NL-A/NL-B/NR-O/NR-S), a candidate-impact outlook (AS-*/FM-* mapping), and a lightweight self-verification pass (Stage G). P0 findings are aggregated and reported but never halt the flow. Detect-only: it never rewrites the inspected artifacts. Use when the user asks to inspect, audit, or check an agent's system prompt, skill definition, or tool schemas.
 license: CC BY-SA 4.0
+changelog: https://github.com/sanityops-org/sanityops-inspect-lite/releases
 ---
 
 # SanityOps Inspect Lite
@@ -31,7 +33,7 @@ Ask the user for (do not start until you have them, or record explicitly what is
 
 Permission quick mode runs on whichever artifact types are present (Prompt, Skill, and/or Tool Schema), not on a required three-artifact set. Record Permission as NOT EXECUTED with reason "no permission-evidence artifact" only when none of the three types is present at all.
 
-**Input budget (configurable default).** One Agent per run; up to 50 artifacts (1 Prompt + 1 Skill + up to 48 Tool Schemas); per-type size caps — a Tool Schema up to 2,000 tokens, a System Prompt up to 30,000 tokens, a Skill definition (with its referenced files) up to 100,000 tokens; a run total up to 200,000 tokens on a 1M-token host window (scale down proportionally on smaller windows). If exceeded, split the run across rounds, or record the over-limit artifact as `summary` fidelity (Step 0 below).
+**Input budget (configurable default).** One Agent per run; up to 50 artifacts (1 Prompt + 1 Skill + up to 48 Tool Schemas); per-type size caps — a Tool Schema up to 2,000 tokens, a System Prompt up to 30,000 tokens, a Skill definition (with its referenced files) up to 100,000 tokens; a run total up to 200,000 tokens on a 1M-token host window (scale down proportionally on smaller windows). If exceeded, split the run across rounds, or record the over-limit artifact as `summary` fidelity (Step 0 below). In collection mode (§5 Mode 3), the `1 Prompt + 1 Skill + up to 48 Tool Schemas` composition does not apply — any mix up to the 50-artifact cap is accepted; the per-type size caps and the run total still hold.
 
 ### Input preparation (not a Stage)
 
@@ -63,7 +65,9 @@ Permission quick mode runs on whichever artifact types are present (Prompt, Skil
 
 **Why a structural header is required (not optional).** A Skill or Tool without its header cannot be loaded by the runtime — it cannot run, so there is no production-grade artifact to inspect. A `## Skills` list (e.g. `- browser: search docs`) only *describes* a capability; a bare function call (e.g. `await fetchTickets({...})`) only *invokes* a tool. Both are documentation, not artifacts. Inspecting them for a "missing contract" is a category error: it reports phantom defects against text that was never meant to be run, and the real production artifact (which does carry a header) will differ from this description anyway. Such prose is therefore skipped, not inspected.
 
-Edge cases: an archive → expand first, then group files by agent; a script → treat as a referenced file, not an artifact, **except** when it embeds an in-scope logic-artifact literal (e.g. `system_message = """..."""`), which is classified as the corresponding artifact type and tiered by Step 0. If a file cannot be unambiguously classified, or the inputs appear to mix multiple agents, ask the user before starting Stage A. Never run Stage B/C/D/E across different agents' artifacts.
+Edge cases: an archive → expand first, then group files by agent; a script → treat as a referenced file, not an artifact, **except** when it embeds an in-scope logic-artifact literal (e.g. `system_message = """..."""`), which is classified as the corresponding artifact type and tiered by Step 0. If a file cannot be unambiguously classified, or the inputs appear to mix multiple agents, ask the user before starting Stage A — unless the user has explicitly declared collection mode (§5 Mode 3), in which case each artifact segment is checked in isolation and cross-artifact / Permission / cross-object checks are skipped. Never run Stage B/C/D/E across different agents' artifacts.
+
+**Input from the pre-inspection layer (pre-inspect-extract).** When artifacts are carried inside code that this skill's own segmentation cannot fully extract (Zod `z.object`, f-string prompts with variables, docstring signatures, Go builders), run `pre-inspect-extract` first and feed its output here. When the artifacts are produced by the pre-inspection layer, read its output's **agent membership declaration** before starting. If it is `pending confirmation` (the layer could not confirm the artifacts belong to one agent), do **not** run Stage B / Permission (Stage C–D) / Stage E NL-B by default — require the user to explicitly choose one of: (a) confirm the artifacts are one agent's → run the full seven-stage flow, or (b) declare collection mode → run single-artifact only (Mode 3). Never silently run cross checks on a `pending confirmation` collection. The layer's completeness labels (`full original` / `assembled` / `incomplete` / `summary` / `not inspectable`) are advisory provenance hints, not this skill's fidelity determination — apply Step 0 per object and derive `full` / `summary` yourself.
 
 ## 3. Governing sources and hard precedence
 
@@ -148,7 +152,7 @@ This stage verifies **the inspector's own report**, not the artifacts. It catche
 
 **Closing checks (run once, at the end, on the assembled report):**
 
-3. **Output contract**: the status board has exactly the seven required lines (§6.4); the report header carries all five provenance facts (§6.7); the executive summary is present (§6.1); the report is written in English (§6.9); and — zero-tolerance — the assembled report contains no CJK characters anywhere, including inside quoted evidence (§6.10).
+3. **Output contract**: the status board has exactly the seven required lines (§6.4); the report header carries all six provenance facts (§6.7); the executive summary is present (§6.1); the report follows the user's language (§6.9); and evidence excerpts are quoted verbatim in their original language (§6.10).
 
 **Closing reconciliation — judgment-quality pass (run once, at the end, on the report's own verdicts):**
 
@@ -174,9 +178,23 @@ Reconciliation notes are **non-blocking**: they do not re-open or re-run stages,
 - Round number, artifact version, date, per-stage findings count (P0/P1/P2), list of open vs closed findings (matched by rule ID + evidence location).
 - **Ratchet semantics**: for the same artifact version, a finding once recorded may only be closed by re-running its check on the updated artifact — never by user assertion. A version change resets the baseline (record it as a new baseline; keep prior rounds in the ledger).
 
+**Mode 3 — Collection mode (single-artifact only, user-declared).** Enter this mode **only** when the user explicitly declares that the inputs are a collection of unrelated logic artifacts (not one agent's set) and asks to validate each in isolation. It is never entered from the inspector's or the pre-inspection layer's own inference. In collection mode:
+
+- **Stage A** — Executed per artifact segment, each in strict single-artifact isolation (the Stage A single-artifact boundary applies).
+- **Stage B** (cross-artifact) — Not Executed: collection mode.
+- **Stage C** (Gate-0) — Not passed: Permission not run in collection mode.
+- **Stage D** (Permission) — Not Executed: collection mode (proportionality is a single-agent concept).
+- **Stage E** (Risk Explicit) — Executed for single-object classification only (NL-A / NR-O / NR-S); NL-B cross-object is skipped: collection mode.
+- **Stage F** (impact outlook) — Executed, mapping only Stage A FAILs.
+- **Stage G** (self-verification) — Executed as normal; the status board still carries all seven lines with the reasons above.
+
+If the user has not declared collection mode and the inputs appear to mix agents, do not enter this mode — ask the user (§2).
+
 **Anti-bypass rule (applies to all modes)**: a verbal "already fixed" never closes a P0 — only a re-scan of the updated artifact passing the same rule does. And in **no mode** does this skill generate fixed artifacts.
 
 ## 6. Output contract (hard)
+
+> **Output size**: the report is emitted in full — no explicit output-size cap is imposed (an intentional choice: completeness over bounded size). Report length is therefore proportional to the number of findings, not pre-limited.
 
 1. **Executive summary** — emitted at the top of every full-flow report. A compact block: overall status (executed stages + P0/P1/P2 counts + Gate result + Risk-Explicit `Explicit·P0/P1/P2` summary), up to five top findings (`rule ID — one-line defect`), what was NOT run (Risk Implicit / runtime Quality), and an upgrade pointer (full inspection via `sanityops-cli` — see https://github.com/sanityops-org/sanityops-framework/blob/main/framework/try-the-tools.md). Never states a security or quality conclusion; reuse Stage F candidate wording.
 2. **Per-rule verdicts**: `rule ID | PASS/FAIL | evidence location in artifact`. FAIL lines include a short verbatim excerpt of the offending text.
