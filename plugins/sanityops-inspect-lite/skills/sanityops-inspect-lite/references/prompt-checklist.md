@@ -42,18 +42,18 @@ Severity per tier: 🔴 = P0, 🟡 = P1, 🟢 = P2, — = not inspected at that 
 | **QD-P-1.1.2** | Priority Conflict | 🟡 | 🟡 | 🔴 | L1/L2 P1; L3 P0 |
 | **QD-P-1.1.3** | Example-Rule Contradiction | 🔴 | 🔴 | 🔴 | P0 at all levels |
 | **QD-P-1.2.1** | Role-Responsibility Mismatch | 🔴 | 🔴 | 🔴 | P0 at all levels |
-| **QD-P-1.2.2** | Role-Output Style Mismatch | 🟡 | 🟡 | 🟡 | P1 at all levels |
+| **QD-P-1.2.2** | Role-Output Style Mismatch | 🟡 | 🟡 | 🟡 | P1; only when the style requirement is explicitly incompatible |
 | **QD-P-1.2.3** | Constraint-Responsibility Mismatch | 🔴 | 🔴 | 🔴 | P0 at all levels |
-| **QD-P-1.2.4** | Identity & Anthropomorphism Boundary | 🟡 | 🟡 | 🟡 | P1 at all levels; P0 when user-facing (C-end) |
-| **QD-P-1.3.1** | Quantifier Misuse | 🟡 | 🟡 | 🟡 | P1 at all levels |
-| **QD-P-1.3.2** | Vague Qualifiers | 🟡 | 🟡 | 🟡 | P1 at all levels |
+| **QD-P-1.2.4** | Identity & Anthropomorphism Boundary | 🟡 | 🟡 | 🟡 | P1 at all levels; P0 when user-facing (C-end). FAIL when the Prompt permits impersonating a real person/organization, or omits the AI-identity declaration |
+| **QD-P-1.3.1** | Quantifier Misuse | 🟡 | 🟡 | 🟡 | P1; only when quantifier misuse produces a logical conflict with other rules (being "overly absolute" alone is not reported) |
+| **QD-P-1.3.2** | Vague Qualifiers | 🟡 | 🟡 | 🟡 | P1; only when vague words blur a critical-decision boundary (stylistic descriptions may leave discretion) |
 | **QD-P-1.3.3** | Undefined Boundaries | 🟡 | 🔴 | 🔴 | L1 P1; L2/L3 P0 |
 | **QD-P-1.4.3** | Invalid Skill Definitions | — | 🟡 | 🔴 | L1 has no Skills; L2 P1; L3 P0 |
 | **QD-P-1.5.1** | Responsibilities Do Not Support Objective | 🔴 | 🔴 | 🔴 | P0 at all levels |
 | **QD-P-1.5.2** | Resources Do Not Support Workflow | — | 🔴 | 🔴 | L1 has no workflow; L2/L3 P0 |
-| **QD-P-1.6.1** | Critical Decision Word Vagueness | 🟡 | 🟡 | 🟡 | P1 at all levels; P0 when the vague word carries a security/permission decision |
+| **QD-P-1.6.1** | Critical Decision Word Vagueness | 🟡 | 🟡 | 🟡 | P1 at all levels; P0 when the vague word carries a security/permission decision. Distinct from 1.3.2: here the vague word is the *decision basis*, not a descriptive modifier |
 | **QD-P-1.6.2** | Rules Depending on Model Internal State | 🟡 | 🟡 | 🟡 | P1; only when a critical decision relies solely on model self-evaluation with no observable trigger |
-| **QD-P-1.6.3** | Soft Rule Interweaving Without Arbitration | 🟡 | 🟡 | 🟡 | P1; P0 when the conflict involves security/permission |
+| **QD-P-1.6.3** | Soft Rule Interweaving Without Arbitration | 🟡 | 🟡 | 🟡 | P1 only when a concrete incompatible scenario can be given; P0 when the conflict involves security/permission |
 | **QD-P-1.6.4** | Reasoning Method Constraints | 🟡 | 🟡 | 🟡 | P1; only when an unverifiable internal reasoning method is used as compliance assurance |
 | **QD-P-1.6.5** | Self-Referential or Recursive Constraints | 🟡 | 🟡 | 🟡 | P1; only non-terminating / unsatisfiable / circular recursion |
 | **QD-P-1.6.6** | Implicit Assumption Dependency | 🟡 | 🟡 | 🟡 | P1; only critical, non-obvious, externally-unguaranteed assumptions |
@@ -77,7 +77,7 @@ Severity per tier: 🔴 = P0, 🟡 = P1, 🟢 = P2, — = not inspected at that 
 | **QD-P-2.3.7** | Output Localization & Conventions | — | — | — | Multi-region P1; single-region N/A |
 | **QD-P-2.4.1** | Incomplete Workflow Steps | — | 🟡 | 🔴 | L1 has no workflow; L2 P1; L3 P0 |
 | **QD-P-2.4.2** | Undeclared Resources/Tools | — | 🔴 | 🔴 | L1 has no tools; L2/L3 P0 |
-| **QD-P-2.4.3** | Tool Invocation Parameter/Order Error | — | 🟡 | 🟡 | L2/L3 P1; only wrong parameters/order written in the prompt body |
+| **QD-P-2.4.3** | Tool Invocation Parameter/Order Error | — | 🟡 | 🟡 | L2/L3 P1; only wrong parameters/order written in the prompt body — post-invocation failure handling belongs to 2.6.1 |
 | **QD-P-2.4.4** | Multi-turn Context & Memory Boundary | — | 🟡 | 🟡 | Multi-turn/cross-session only; L2/L3 P1 |
 | **QD-P-2.5.1** | Missing Termination Constraints | — | 🟡 | 🔴 | L1 has no retries; L2 P1; L3 P0 |
 | **QD-P-2.5.2** | Missing Security Boundary Constraints | 🔴 | 🔴 | 🔴 | P0 at all levels |
@@ -89,7 +89,7 @@ Severity per tier: 🔴 = P0, 🟡 = P1, 🟢 = P2, — = not inspected at that 
 | **QD-P-2.5.9** | Industry Compliance & Disclaimer Boundary | — | — | — | Conditional: P0 in medical/financial/legal domains, else N/A |
 | **QD-P-2.6.1** | Runtime Exceptions Not Covered | — | 🟡 | 🔴 | L1 has no tools; L2 P1; L3 P0 |
 | **QD-P-2.6.2** | Missing Degradation & Recovery Strategy | — | — | 🟡 | L3 only; P1; "stop and report" is a legitimate disposition |
-| **QD-P-2.6.3** | Unreasonable Retry Mechanism | — | — | 🟡 | L3 only; P1 (cap / blind-write retry / unqueried timeout state) |
+| **QD-P-2.6.3** | Unreasonable Retry Mechanism | — | — | 🟡 | L3 only; P1 (cap / blind-write retry / unqueried timeout state); the final "stop and report" disposition belongs to 2.6.2 — do not double-charge |
 | **QD-P-2.6.4** | Out-of-scope Rejection & Human Escalation | 🟡 | 🟡 | 🔴 | L1/L2 P1; L3 P0 (rejection template / referral / escalation) |
 
 > **Recommendation items (ungraded — 6)**: QD-P-1.4.1 (redundant constraints), QD-P-2.1.3 (structural hierarchy), QD-P-2.1.5 (context budget squeeze), QD-P-2.7.1 (positive-example representativeness), QD-P-2.7.2 (counter-example coverage), QD-P-2.7.3 (boundary-case examples). These carry only optimization value — not scored, not blocking, waiver-free (§3.3.2 note).
@@ -150,11 +150,11 @@ The sets are **cumulative**: L2 ⊇ L1, L3 ⊇ L2 (§A.4.2). Every listed item i
 
 ### Conditional P0 items (§A.3.1, not in the fixed 7/17/25 count)
 
-| ID | Defect Name | Trigger condition | When not triggered |
-| --- | --- | --- | --- |
-| QD-P-2.3.4 | Missing Security/Privacy Filtering | Processing involves personal data (PII) | N/A |
-| QD-P-2.5.7 | High-Risk Operation Human Confirmation | Has side-effect ops (funds/delete/send/production change) at L2/L3 | N/A |
-| QD-P-2.5.9 | Industry Compliance & Disclaimer Boundary | Medical/financial/legal regulated domain | N/A |
+| ID | Defect Name | Definition (condensed) | Trigger condition | When not triggered |
+| --- | --- | --- | --- | --- |
+| QD-P-2.3.4 | Missing Security/Privacy Filtering | Security/privacy filtering (sensitive-data masking, minimal-fields output) not declared | Processing involves personal data (PII) | N/A |
+| QD-P-2.5.7 | High-Risk Operation Human Confirmation | No declaration that high-risk/irreversible ops require prior user confirmation | Has side-effect ops (funds/delete/send/production change) at L2/L3 | N/A |
+| QD-P-2.5.9 | Industry Compliance & Disclaimer Boundary | Industry compliance constraints, disclaimers, and qualification boundaries not declared | Medical/financial/legal regulated domain | N/A |
 
 Triggered → P0, must fix; not triggered → N/A, removed from the denominator (§3.3.4).
 
