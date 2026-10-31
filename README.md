@@ -142,7 +142,6 @@ Instance outputs of the lite inspector (non-normative `F-*`-level records) live 
 
 | Sample | Subject |
 |---|---|
-| [anthropics-skills-pdf.md](samples/anthropics-skills-pdf.md) | anthropics/skills `pdf` Skill — Stage A QD-S |
 | [gpt-researcher.md](samples/gpt-researcher.md) | gpt-researcher Prompt + Tool — Stage A QD-P / QD-T |
 | [crewai-markdown-validator.md](samples/crewai-markdown-validator.md) | crewAI-examples markdown_validator Prompt + Tool |
 | [tau-bench-airline.md](samples/tau-bench-airline.md) | sierra-research/tau-bench airline (Prompt + 14 Tool Schemas) |
