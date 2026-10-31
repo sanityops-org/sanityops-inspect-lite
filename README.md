@@ -149,7 +149,7 @@ The extraction layer's design rationale is in [pre-inspect-harvester-spec.md](pr
 A condensed report looks like this (from SKILL.md Appendix B):
 
 ```
-Executive summary: Stage A executed (B/C/D vacuous). P0: 0 · P1: 2 · P2: 1.
+Executive summary: Stage A executed (B not executed — no Tool/Skill; C passed — G0-4 vacuous; D executed on Prompt). P0: 2 · P1: 0 · P2: 1.
 Top findings:
   QD-P-2.2.1 — input source not declared
   QD-P-2.5.2 — security boundary constraints missing
