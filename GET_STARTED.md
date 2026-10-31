@@ -17,7 +17,7 @@ Then just say "inspect my system prompt / skill / tool schema" to trigger it.
 git clone https://github.com/sanityops-org/sanityops-inspect-lite.git
 ```
 
-The skill lives in `plugins/sanityops-inspect-lite/skills/sanityops-inspect-lite/` (`SKILL.md` + 8 checklists in `references/`). Install that folder as a skill in your agent.
+The plugin ships two skills under `plugins/sanityops-inspect-lite/skills/` — `pre-inspect-extract/` (extraction layer) and `sanityops-inspect-lite/` (the seven-stage inspector, with its condensed checklists in `references/`). Install both folders as skills in your agent.
 
 ## Data & privacy
 

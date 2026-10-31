@@ -2,7 +2,7 @@
 name: sanityops-inspect-lite
 version: 1.0.0
 owner: Sanity AI Labs
-description: Lite, zero-install inspector for AI Agent logic artifacts (System Prompt, Skill, Tool Schema) based on the SanityOps Framework v1.0. Runs a seven-stage non-blocking flow — single-artifact defect inspection (QD-P/QD-S/QD-T/QC), cross-artifact contract checks (QD-PS/PT/ST/CYC), Gate-0 admission, permission proportionality quick check (QD-PM), explicit-risk audit (EX: NL-A/NL-B/NR-O/NR-S), a candidate-impact outlook (AS-*/FM-* mapping), and a lightweight self-verification pass (Stage G). P0 findings are aggregated and reported but never halt the flow. Detect-only: it never rewrites the inspected artifacts. Use when the user asks to inspect, audit, or check an agent's system prompt, skill definition, or tool schemas.
+description: Lite, dependency-free inspector for AI Agent logic artifacts (System Prompt, Skill, Tool Schema) based on the SanityOps Framework v1.0. Runs a seven-stage non-blocking flow — single-artifact defect inspection (QD-P/QD-S/QD-T/QC), cross-artifact contract checks (QD-PS/PT/ST/CYC), Gate-0 admission, permission proportionality quick check (QD-PM), explicit-risk audit (EX: NL-A/NL-B/NR-O/NR-S), a candidate-impact outlook (AS-*/FM-* mapping), and a lightweight self-verification pass (Stage G). P0 findings are aggregated and reported but never halt the flow. Detect-only: it never rewrites the inspected artifacts. Use when the user asks to inspect, audit, or check an agent's system prompt, skill definition, or tool schemas.
 license: CC BY-SA 4.0
 changelog: https://github.com/sanityops-org/sanityops-inspect-lite/releases
 ---
@@ -143,7 +143,7 @@ Gate-0 **is not an inspection item**: it produces no numbers and no score; "not 
 
 ### Stage G — Self-verification (lightweight, in-line + closing)
 
-This stage verifies **the inspector's own report**, not the artifacts. It catches the host model's own execution errors — fabricated rule IDs, red-line wording, and output-contract violations — without re-inspecting the artifacts or re-reading the references from scratch. It keeps the zero-install posture (no scripts, no extra tools).
+This stage verifies **the inspector's own report**, not the artifacts. It catches the host model's own execution errors — fabricated rule IDs, red-line wording, and output-contract violations — without re-inspecting the artifacts or re-reading the references from scratch. It keeps the dependency-free posture (no scripts, no extra tools).
 
 **In-line checks (run as you write each verdict/conclusion — never deferred to the end):**
 
@@ -259,7 +259,7 @@ Condensed from the SanityOps Framework v1.0 (2026-10 revision), maintained by Sa
 ## 10. Further reading & upgrade
 
 - **Upgrade to the full inspection**: the open-source `sanityops-cli` and the SanityOps Platform provide the complete Inspect ruleset plus the Risk (Explicit/Implicit) and Quality subsets, remediation, and version-level evidence chains. See https://github.com/sanityops-org/sanityops-framework/blob/main/framework/try-the-tools.md.
-- **Background, lite-vs-full comparison, worked samples, FAQ**: see `README.md` (ships with this skill package).
+- **Background, lite-vs-full comparison, worked samples, FAQ**: see the repository README at https://github.com/sanityops-org/sanityops-inspect-lite#readme (the README is not bundled into the installed plugin).
 
 ## Appendix A — Terminology quick reference
 

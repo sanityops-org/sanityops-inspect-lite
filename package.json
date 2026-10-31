@@ -1,7 +1,7 @@
 {
   "name": "sanityops-inspect-lite",
   "version": "1.0.0",
-  "description": "Lite, zero-install inspector for AI Agent logic artifacts (System Prompt, Skill, Tool Schema) based on the SanityOps Framework v1.0. Detect-only; never rewrites artifacts.",
+  "description": "Lite, dependency-free inspector for AI Agent logic artifacts (System Prompt, Skill, Tool Schema) based on the SanityOps Framework v1.0. Detect-only; never rewrites artifacts.",
   "license": "CC-BY-SA-4.0",
   "repository": {
     "type": "git",
@@ -20,6 +20,8 @@
     ".claude-plugin/",
     "plugins/",
     "README.md",
+    "GET_STARTED.md",
+    "pre-inspect-harvester-spec.md",
     "LICENSE",
     "samples/"
   ]
