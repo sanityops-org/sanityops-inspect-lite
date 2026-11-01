@@ -133,7 +133,7 @@ The extraction layer's design rationale is in [pre-inspect-harvester-spec.md](pr
 ## What can be inspected — and the input limits
 
 - **Only three artifact types qualify:** System Prompt, Skill (Markdown with `name`/`description` front matter), Tool Schema (JSON Schema / function-calling definitions). A `## Skills` list or a bare function call is documentation, not an artifact — it is skipped, not inspected.
-- **One agent at a time.** Cross-artifact, permission, and risk stages never mix agents. Up to 50 artifacts per run (1 Prompt + 1 Skill + up to 48 Tool Schemas); a run total up to 200,000 tokens.
+- **One agent at a time.** Cross-artifact, permission, and risk stages never mix agents. Up to 50 artifacts per run (1 Prompt + 1 Skill + up to 48 Tool Schemas); per-type size caps — a Tool Schema up to 2,000 tokens, a System Prompt up to 30,000 tokens, a Skill definition (with its referenced files) up to 100,000 tokens; a run total up to 200,000 tokens.
 - **Completeness decides how much is checked.** A verbatim original runs every rule; a summary is checked for contradictions only. Submitting a summary and expecting a full verdict will mislead.
 
 ## Run modes

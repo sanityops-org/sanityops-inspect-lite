@@ -19,6 +19,12 @@ git clone https://github.com/sanityops-org/sanityops-inspect-lite.git
 
 The plugin ships two skills under `plugins/sanityops-inspect-lite/skills/` — `pre-inspect-extract/` (extraction layer) and `sanityops-inspect-lite/` (the seven-stage inspector, with its condensed checklists in `references/`). Install both folders as skills in your agent.
 
+## First run
+
+- **One agent at a time:** if a document appears to mix several agents, the skill asks you to confirm whether they are one agent or an unrelated collection — answer before the cross-artifact and permission stages run.
+- **The report follows your language:** ask in Chinese and you get the report in Chinese; rule IDs (`QD-*`, `QC-*`, `EX-*`, …) stay as identifiers.
+- **Example reports:** `samples/` contains worked inspection reports (they carry a stale-notice against an earlier five-stage revision of the skill).
+
 ## Data & privacy
 
 - The skill itself is **pure Markdown**: no scripts, no dependencies, no network requests.
