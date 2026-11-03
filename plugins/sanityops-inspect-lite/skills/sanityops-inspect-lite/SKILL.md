@@ -1,6 +1,6 @@
 ---
 name: sanityops-inspect-lite
-version: 1.0.0
+version: 1.1.0
 owner: Sanity AI Labs
 description: Lite, dependency-free inspector for AI Agent logic artifacts (System Prompt, Skill, Tool Schema) based on the SanityOps Framework v1.1. Runs a seven-stage non-blocking flow — single-artifact defect inspection (QD-P/QD-S/QD-T/QC), cross-artifact contract checks (QD-PS/PT/ST/CYC), Gate-0 admission, permission proportionality quick check (QD-PM), explicit-risk audit (EX: NL-A/NL-B/NR-O/NR-S), a candidate-impact outlook (AS-*/FM-* mapping), and a lightweight self-verification pass (Stage G). P0 findings are aggregated and reported but never halt the flow. Detect-only: it never rewrites the inspected artifacts. Use when the user asks to inspect, audit, or check an agent's system prompt, skill definition, or tool schemas.
 license: CC BY-SA 4.0
@@ -215,7 +215,7 @@ Stage G (Self-verification): Executed / Not Executed — <reason>
 6. **Indicative score** only if the user asks: apply the checklist's stated deduction weights; label it "indicative (lite minimal set), not the full-spec score".
 7. **Report header (mandatory on every report and every stage-only report)** — exactly these provenance facts:
    - Host model name (self-declared by the model executing this skill, e.g. `Host model: <vendor/model>`);
-   - Skill package: `sanityops-inspect-lite v1.0.0` (the `version` value of this SKILL.md front matter);
+   - Skill package: `sanityops-inspect-lite v1.1.0` (the `version` value of this SKILL.md front matter);
    - Specification baseline: `SanityOps Framework v1.1 (2026-10 release)`;
    - The non-official-result statement, verbatim in substance: *"This result is produced by the skill rule package applied by the host model; it is NOT a conclusion of the official SanityOps engine. For a full inspection use sanityops-cli."*
    - Inspection date and the artifact version label supplied by the user;

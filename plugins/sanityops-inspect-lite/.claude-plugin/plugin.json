@@ -1,6 +1,6 @@
 {
   "name": "sanityops-inspect-lite",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Detect-only inspector for AI Agent logic artifacts (System Prompt, Skill, Tool Schema) based on the SanityOps Framework v1.1. Pure skill — no hooks, no MCP servers, no scripts.",
   "author": {
     "name": "Sanity AI Labs",
