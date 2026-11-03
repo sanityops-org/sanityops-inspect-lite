@@ -1,13 +1,13 @@
 ---
 title: Inspect Cross Checklist (Lite)
-description: "Condensed cross-artifact consistency checklist (QD-PS / QD-PT / QD-ST / QD-SS / QD-TT / QD-CYC) for the sanityops-inspect lite inspector — 29 items across six relationship groups, AC-L tiering (7/20/29 applicable items), P0 minimum rule sets (7/9/9), five-state judgment, same-source deduplication, and the scoring note. Extracted from inspect/cross.md v1.0 (2026-10); defines no new rules."
+description: "Condensed cross-artifact consistency checklist (QD-PS / QD-PT / QD-ST / QD-SS / QD-TT / QD-CYC) for the sanityops-inspect lite inspector — 29 items across six relationship groups, AC-L tiering (7/20/29 applicable items), P0 minimum rule sets (7/9/9), five-state judgment, same-source deduplication, and the scoring note. Extracted from inspect/cross.md v1.1; defines no new rules."
 ---
 
 # Cross-Artifact Consistency Checklist (Lite Inspector)
 
-> **Provenance**: Condensed from `inspect/cross.md` v1.0 (SanityOps Framework, CC BY-SA 4.0). This file is a compressed extraction for the sanityops-inspect lite inspector and defines NO new rules. On any conflict, `inspect/cross.md` governs.
+> **Provenance**: Condensed from `inspect/cross.md` v1.1 (SanityOps Framework, CC BY-SA 4.0). This file is a compressed extraction for the sanityops-inspect lite inspector and defines NO new rules. On any conflict, `inspect/cross.md` governs.
 >
-> **Source note (reproduced, not adjudicated)**: the source's version header and §0.3 version history still read `v1.0 / first release`, but the working-tree content has been expanded to **29 items across six relationship groups** (QD-SS and QD-TT added, plus QD-PS-1.7 / QD-PT-2.7 / QD-CYC-1.3) and its terminology was unified from `L1/L2/L3` + `RS/SS` to `AC-L` + `OR-L` — a "version-evidence drift" (content ahead of the version label). This checklist reproduces the **current content** and records the stale version label as-is.
+> **Source note**: `inspect/cross.md` v1.1 carries **29 items across six relationship groups** (QD-SS and QD-TT added, plus QD-PS-1.7 / QD-PT-2.7 / QD-CYC-1.3) with terminology unified to `AC-L` + `OR-L`. This checklist reproduces that v1.1 content. An earlier build of this checklist recorded a v1.0/v1.1 label drift; the source specifications were subsequently bumped to v1.1, so the label and the content now agree.
 
 ## How to Use
 

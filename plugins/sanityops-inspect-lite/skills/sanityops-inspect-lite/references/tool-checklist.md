@@ -1,11 +1,11 @@
 ---
 title: Tool Schema Inspection Checklist (Lite)
-description: "Condensed QD-T inspection checklist for the sanityops-inspect lite inspector: Tool operation risk tiering (OR-L1/L2/L3), the full QD-T rule set (1.x–5.x, 31 numbered IDs with merges/transfers), per-tier minimum rule sets (20/25/25) with defect levels, and the scoring note. Extracted from inspect/tool.md v1.0 (2026-10 revision); defines no new rules."
+description: "Condensed QD-T inspection checklist for the sanityops-inspect lite inspector: Tool operation risk tiering (OR-L1/L2/L3), the full QD-T rule set (1.x–5.x, 31 numbered IDs with merges/transfers), per-tier minimum rule sets (20/25/25) with defect levels, and the scoring note. Extracted from inspect/tool.md v1.1; defines no new rules."
 ---
 
 # Tool Schema Inspection Checklist (QD-T, Lite)
 
-> **Provenance**: Condensed from `inspect/tool.md` v1.0 (2026-10 revision) (SanityOps Framework, CC BY-SA 4.0). This file is a compressed extraction for the sanityops-inspect lite inspector and defines NO new rules. On any conflict, `inspect/tool.md` governs.
+> **Provenance**: Condensed from `inspect/tool.md` v1.1 (SanityOps Framework, CC BY-SA 4.0). This file is a compressed extraction for the sanityops-inspect lite inspector and defines NO new rules. On any conflict, `inspect/tool.md` governs.
 
 ## How to use
 

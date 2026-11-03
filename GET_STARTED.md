@@ -1,6 +1,6 @@
 # SanityOps Inspect Lite — Quick Start
 
-A lightweight inspector for AI Agent logic artifacts (**System Prompt / Skill / Tool Schema**): **report-only** (detect-only), built on SanityOps Framework v1.0.
+A lightweight inspector for AI Agent logic artifacts (**System Prompt / Skill / Tool Schema**): **report-only** (detect-only), built on SanityOps Framework v1.1.
 
 ## Option 1: Claude Code users (recommended)
 

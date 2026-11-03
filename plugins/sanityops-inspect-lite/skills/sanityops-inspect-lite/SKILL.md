@@ -2,7 +2,7 @@
 name: sanityops-inspect-lite
 version: 1.0.0
 owner: Sanity AI Labs
-description: Lite, dependency-free inspector for AI Agent logic artifacts (System Prompt, Skill, Tool Schema) based on the SanityOps Framework v1.0. Runs a seven-stage non-blocking flow — single-artifact defect inspection (QD-P/QD-S/QD-T/QC), cross-artifact contract checks (QD-PS/PT/ST/CYC), Gate-0 admission, permission proportionality quick check (QD-PM), explicit-risk audit (EX: NL-A/NL-B/NR-O/NR-S), a candidate-impact outlook (AS-*/FM-* mapping), and a lightweight self-verification pass (Stage G). P0 findings are aggregated and reported but never halt the flow. Detect-only: it never rewrites the inspected artifacts. Use when the user asks to inspect, audit, or check an agent's system prompt, skill definition, or tool schemas.
+description: Lite, dependency-free inspector for AI Agent logic artifacts (System Prompt, Skill, Tool Schema) based on the SanityOps Framework v1.1. Runs a seven-stage non-blocking flow — single-artifact defect inspection (QD-P/QD-S/QD-T/QC), cross-artifact contract checks (QD-PS/PT/ST/CYC), Gate-0 admission, permission proportionality quick check (QD-PM), explicit-risk audit (EX: NL-A/NL-B/NR-O/NR-S), a candidate-impact outlook (AS-*/FM-* mapping), and a lightweight self-verification pass (Stage G). P0 findings are aggregated and reported but never halt the flow. Detect-only: it never rewrites the inspected artifacts. Use when the user asks to inspect, audit, or check an agent's system prompt, skill definition, or tool schemas.
 license: CC BY-SA 4.0
 changelog: https://github.com/sanityops-org/sanityops-inspect-lite/releases
 ---
@@ -11,7 +11,7 @@ changelog: https://github.com/sanityops-org/sanityops-inspect-lite/releases
 
 ## 1. What this skill is
 
-A **detect-only** inspector for the three Logic Artifact types in SanityOps Framework v1.0 — **System Prompt**, **Skill**, and **Tool Schema** (Permission as a cross-cutting aspect; embedded code snippets inside them get the lite QC check) — executed by you, the host model, applying the condensed checklists in `references/`. Zero dependencies: no CLI, no scripts, no network calls.
+A **detect-only** inspector for the three Logic Artifact types in SanityOps Framework v1.1 — **System Prompt**, **Skill**, and **Tool Schema** (Permission as a cross-cutting aspect; embedded code snippets inside them get the lite QC check) — executed by you, the host model, applying the condensed checklists in `references/`. Zero dependencies: no CLI, no scripts, no network calls.
 
 It is **not**:
 
@@ -97,7 +97,7 @@ A stage is skipped (Not Executed) only for concrete structural reasons — missi
 
 ### Stage B — Cross-artifact inspection (QD-PS / QD-PT / QD-ST / QD-SS / QD-TT / QD-CYC)
 
-1. Use `references/cross-checklist.md`: evaluate the tier's inspection scope per cross.md §5.4.3 / §8.3.1 (AC-L1 = 7 items, AC-L2 = 20, AC-L3 = 29, with the explicit per-tier item composition given in the checklist), applying Appendix B's tier P0 set (7/9/9) as the blocking compliance core. The checklist documents the source's stale version label (v1.0 header vs expanded 29-item content); do not resolve it by inventing items.
+1. Use `references/cross-checklist.md`: evaluate the tier's inspection scope per cross.md §5.4.3 / §8.3.1 (AC-L1 = 7 items, AC-L2 = 20, AC-L3 = 29, with the explicit per-tier item composition given in the checklist), applying Appendix B's tier P0 set (7/9/9) as the blocking compliance core. The checklist matches `inspect/cross.md` v1.1 (29-item content); do not invent items beyond it.
 2. Inspect only cross-artifact relationships — the six relationships defined by the spec (Prompt↔Skill, Prompt↔Tool, Skill↔Tool, Skill↔Skill, Tool↔Tool, and the cross-cutting QD-CYC circular-invocation check at L2/L3). Do **not** re-check single-artifact internal defects.
 3. Any P0 → record it and continue to Stage C; P0 findings do **not** halt the flow.
 
@@ -216,7 +216,7 @@ Stage G (Self-verification): Executed / Not Executed — <reason>
 7. **Report header (mandatory on every report and every stage-only report)** — exactly these provenance facts:
    - Host model name (self-declared by the model executing this skill, e.g. `Host model: <vendor/model>`);
    - Skill package: `sanityops-inspect-lite v1.0.0` (the `version` value of this SKILL.md front matter);
-   - Specification baseline: `SanityOps Framework v1.0 (2026-10 revision)`;
+   - Specification baseline: `SanityOps Framework v1.1 (2026-10 release)`;
    - The non-official-result statement, verbatim in substance: *"This result is produced by the skill rule package applied by the host model; it is NOT a conclusion of the official SanityOps engine. For a full inspection use sanityops-cli."*
    - Inspection date and the artifact version label supplied by the user;
    - Fidelity tier per artifact set: `full` or `summary` (per-object) — when `summary`, state that absence-based rules were not run.
@@ -245,16 +245,16 @@ Stage G (Self-verification): Executed / Not Executed — <reason>
 |---|---|---|
 | `references/prompt-checklist.md` | QD-P tiered checklist (AC-L1/2/3) + minimum rule sets (7/17/25 P0) | inspect/prompt.md v1.1 |
 | `references/skill-checklist.md` | QD-S-0 baseline (9 items) + minimum rule sets (8/23/24) + six-step flow + Review Schema | inspect/skill.md v1.1 |
-| `references/tool-checklist.md` | Tool operation-risk tiering (OR-L) + QD-T rule set + minimum rule sets (20/25/25) | inspect/tool.md v1.0 (2026-10 revision) |
+| `references/tool-checklist.md` | Tool operation-risk tiering (OR-L) + QD-T rule set + minimum rule sets (20/25/25) | inspect/tool.md v1.1 |
 | `references/code-contract-checklist.md` | QC-0 baseline + QC-1/2/3/4 embedded-code checks | quality/code-contract.md (DRAFT; checklist is the operational source) |
-| `references/cross-checklist.md` | QD-PS/PT/ST/SS/TT/CYC checklist (29 items, 6 groups) + P0 minimum sets (7/9/9) | inspect/cross.md v1.0 (2026-10, content ahead of version label) |
-| `references/permission-checklist.md` | Gate-0 (G0-1..4) + AC-L/OR-L binding + QD-PM Quick Mode 17 items | inspect/permission.md v1.0.2 |
-| `references/explicit-checklist.md` | EX classification (NL-A/NL-B/NR-O/NR-S) + impact type labels (D1/D2/D3) + severity grading (Explicit·P0/P1/P2) + trigger condition label | risk/explicit.md v1.0 (2026-10 revision) |
+| `references/cross-checklist.md` | QD-PS/PT/ST/SS/TT/CYC checklist (29 items, 6 groups) + P0 minimum sets (7/9/9) | inspect/cross.md v1.1 |
+| `references/permission-checklist.md` | Gate-0 (G0-1..4) + AC-L/OR-L binding + QD-PM Quick Mode 17 items | inspect/permission.md v1.1 |
+| `references/explicit-checklist.md` | EX classification (NL-A/NL-B/NR-O/NR-S) + impact type labels (D1/D2/D3) + severity grading (Explicit·P0/P1/P2) + trigger condition label | risk/explicit.md v1.1 |
 | `references/relevance-map.md` | QD → candidate AS-*/FM-* mapping + candidate RAG-Agent metric mapping + red lines | framework/relevance.md v1.1 |
 
 ## 9. Provenance and license
 
-Condensed from the SanityOps Framework v1.0 (2026-10 revision), maintained by Sanity AI Labs, license **CC BY-SA 4.0**. This package is a derived work under the same license; it defines no new rules. Specification source: `sanityops-org/sanityops-framework` — the implementing CLI (`sanityops-org/sanityops-cli`, Apache 2.0) is NOT required by this skill.
+Condensed from the SanityOps Framework v1.1 (2026-10 release), maintained by Sanity AI Labs, license **CC BY-SA 4.0**. This package is a derived work under the same license; it defines no new rules. Specification source: `sanityops-org/sanityops-framework` — the implementing CLI (`sanityops-org/sanityops-cli`, Apache 2.0) is NOT required by this skill.
 
 ## 10. Further reading & upgrade
 

@@ -1,9 +1,9 @@
 ---
 title: Permission Proportionality Checklist (Lite Inspector, Quick Mode)
-description: Condensed QD-PM checklist for the sanityops-inspect lite inspector — Gate-0 admission conditions and output norm, AC-L/OR-L classification binding, and the 17-item Quick Mode set (permission.md Appendix D.1) with per-item determination, applicability, and severity rules. Extracted from inspect/permission.md v1.0.2; defines no new rules.
+description: Condensed QD-PM checklist for the sanityops-inspect lite inspector — Gate-0 admission conditions and output norm, AC-L/OR-L classification binding, and the 17-item Quick Mode set (permission.md Appendix D.1) with per-item determination, applicability, and severity rules. Extracted from inspect/permission.md v1.1; defines no new rules.
 ---
 
-> **Provenance**: Condensed from `inspect/permission.md` v1.0.2 (SanityOps Framework, CC BY-SA 4.0), with AC-L/OR-L definitions from `framework/core.md` §4.2–§4.3. This file is a compressed extraction for the sanityops-inspect lite inspector and defines NO new rules. On any conflict, `inspect/permission.md` governs.
+> **Provenance**: Condensed from `inspect/permission.md` v1.1 (SanityOps Framework, CC BY-SA 4.0), with AC-L/OR-L definitions from `framework/core.md` §4.2–§4.3. This file is a compressed extraction for the sanityops-inspect lite inspector and defines NO new rules. On any conflict, `inspect/permission.md` governs.
 
 # Permission Proportionality Checklist (QD-PM, Quick Mode)
 

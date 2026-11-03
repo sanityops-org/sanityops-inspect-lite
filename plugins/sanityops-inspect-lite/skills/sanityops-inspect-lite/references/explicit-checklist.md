@@ -1,11 +1,11 @@
 ---
 title: Risk Explicit Checklist (Lite)
-description: "Condensed Risk Explicit (EX) audit checklist for the sanityops-inspect lite inspector: the 34-subcategory EX classification framework (NL-A / NL-B / NR-O / NR-S), key boundary definitions, impact type labels (D1/D2/D3), severity grading (Explicit·P0/P1/P2), the binary trigger condition label, the three-phase audit workflow, and the report output format. Extracted from risk/explicit.md v1.0 (2026-10 revision); defines no new rules."
+description: "Condensed Risk Explicit (EX) audit checklist for the sanityops-inspect lite inspector: the 34-subcategory EX classification framework (NL-A / NL-B / NR-O / NR-S), key boundary definitions, impact type labels (D1/D2/D3), severity grading (Explicit·P0/P1/P2), the binary trigger condition label, the three-phase audit workflow, and the report output format. Extracted from risk/explicit.md v1.1; defines no new rules."
 ---
 
 # Risk Explicit Checklist (EX, Lite)
 
-> **Provenance**: Condensed from `risk/explicit.md` v1.0 (2026-10 revision) (SanityOps Framework, CC BY-SA 4.0). This file is a compressed extraction for the sanityops-inspect lite inspector and defines NO new rules. On any conflict, `risk/explicit.md` governs.
+> **Provenance**: Condensed from `risk/explicit.md` v1.1 (SanityOps Framework, CC BY-SA 4.0). This file is a compressed extraction for the sanityops-inspect lite inspector and defines NO new rules. On any conflict, `risk/explicit.md` governs.
 
 ## 1. How to use
 

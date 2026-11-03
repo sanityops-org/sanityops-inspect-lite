@@ -16,7 +16,7 @@ Use this file in **Stage F (Impact outlook)** only, after Stages A/B/D have prod
 - **Map only defects that actually FAILED inspection.** Never pre-map, speculatively map, or map remediated/PASS items.
 - **Candidate language only.** Every output line must read as a *candidate association*: use "may", "candidate association", "needs dynamic verification". **Never** write causal claims: "will cause", "guarantees", "ensures", "inevitably", "proves". Source principle (relevance.md §0.4-1, "Correlation is not causation"): "A `QD` defect indicates missing, ambiguous, inconsistent, or insufficiently bounded definitions; it does not automatically prove that an attack has succeeded, a runtime vulnerability exists, or a quality failure has occurred."
 - **Strength is NOT severity.** Mapping strength describes association confidence / test-priority only (§1.3) and never replaces P0/P1/P2. Label both explicitly whenever a strength is emitted.
-- **State what was NOT run.** Every impact section must explicitly record that the Risk subsets (Risk Explicit and Risk Implicit) were **NOT executed** by the lite inspector — no `EX` classification exists and dynamic exploitability is unverified — and that per relevance.md §1.4 no assumption may be made that controls outside the artifacts are absent.
+- **State what was NOT run.** Every impact section must explicitly record that Risk Implicit and the runtime Quality subsets were **NOT run** by the lite inspector — dynamic exploitability is unverified — and that per relevance.md §1.4 no assumption may be made that controls outside the artifacts are absent. Risk Explicit is **not re-classified** in this outlook: it ran in Stage E, and Stage F emits candidate mapping only.
 - **Never convert a candidate association into a definitive root-cause claim** — not before, and especially not after, a quality failure (reverse diagnostics yield candidate investigation directions only).
 - **Keep the impact outlook physically separated from the Gate/verdict conclusions.** It is advisory context, not a verdict; it must not change, soften, or escalate any Inspect conclusion.
 
@@ -244,7 +244,7 @@ Impact-dimension codes used below: `D1` = Confidentiality Harm, `D2` = Integrity
 
 ## A.5 Permission Defect Mapping (QD-PM-*)
 
-> Source note (condensed): `QD-PM-*` are produced by the Inspect Permission Governance subset (permission v1.0). This table only defines mapping directions and does not automatically determine permission defects as EX risks or actual events; `EX` classification is still independently determined by Risk Explicit. The Permission subset executes after other subsets and is subject to Gate-0 preconditions; when Gate-0 is not met, no QD-PM defects are produced, and this table does not apply.
+> Source note (condensed): `QD-PM-*` are produced by the Inspect Permission Governance subset (permission v1.1). This table only defines mapping directions and does not automatically determine permission defects as EX risks or actual events; `EX` classification is still independently determined by Risk Explicit. The Permission subset executes after other subsets and is subject to Gate-0 preconditions; when Gate-0 is not met, no QD-PM defects are produced, and this table does not apply.
 
 | QD ID | Name | Applies | AS | Impact | Strength | Validation (condensed) |
 |-------|------|---------|-----|--------|----------|------------------------|
@@ -313,6 +313,10 @@ The mapping below is **candidate only**: a QD category "may affect" the listed m
 | Skill permission and environment boundary defects | Boundary Recognition, Safety Response, Traceability | Sensitive data, user identity, production data, external resources |
 | Tool parameter and semantic defects | Correctness, Relevance, Traceability, Format Compliance | Retrieval parameters, source return, citation parsing, similar Tools |
 | Cross contract defects | Correctness, Completeness, Consistency, Traceability, Safety Response | End-to-end retrieval, citation, error handling, permission, output contracts |
+| Inter-Skill trigger conflict and name similarity (`QD-SS`) | Relevance, Correctness, Boundary Recognition | Overlapping triggers, misselection by similar names, and direct answering where clarification is due |
+| Cross-Tool data structure incompatibility (`QD-TT-5.3`) | Correctness, Traceability, Format Compliance | Retrieval result field type mismatch, missing serialization, and citation parsing failure |
+| Skill-to-Skill handoff loop (`QD-CYC-1.3`) | Timeliness, Coherence | Handoff without termination, repeated routing, and response timeout |
+| Permission proportionality defects (`QD-PM`) | Boundary Recognition, Safety Response, Traceability | Unauthorized retrieval, cross-tenant data access, and direct answering where refusal is due |
 
 Out of scope (not reproduced): relevance.md Appendix C.2 (RAG failure **reverse** diagnostic — requires actual Quality failures, which the lite inspector never produces) and D.3 (RAG-Agent quality **defect chains**).
 
@@ -324,7 +328,7 @@ Out of scope (not reproduced): relevance.md Appendix C.2 (RAG failure **reverse*
 - `QD-T-1.4 additionalProperties Policy Inappropriate` ≠ Automatic hit `NR-S-3` Parameter Type/Constraint Abnormal Declaration
 - `QD-PS-1.3 Permission Boundary Consistency Defect` ≠ Automatic hit `NL-B-9` Cross-Object Authorization Chain Forgery
 
-Source closing rule: "Only when an explicit expression meeting the EX definition exists in the artifact can Risk Explicit independently determine the corresponding `EX` classification." The lite inspector never determines `EX` classifications at all (Risk Explicit is not run).
+Source closing rule: "Only when an explicit expression meeting the EX definition exists in the artifact can Risk Explicit independently determine the corresponding `EX` classification." Stage F never derives `EX` classifications — any `EX` code is determined in Stage E (Risk Explicit); this outlook maps Inspect defects to candidate impacts only.
 
 ## Impact Card template (condensed from relevance.md §5.5, single-defect lite form)
 
@@ -345,7 +349,7 @@ Source closing rule: "Only when an explicit expression meeting the EX definition
   the backend is exploitable. (verbatim §5.5)
 
 **Recommended Validation — NOT run by this lite inspector**  <!-- mandatory statements -->
-- Risk Explicit: NOT run — no EX classification was or can be determined here (§2.3.1).
+- Risk Explicit: run in Stage E — not re-classified here (§2.3.1); Stage F maps Inspect defects only.
 - Risk Implicit: NOT run — dynamic exploitability is unverified.
 - External controls: presence/absence UNKNOWN; per relevance.md §1.4, no assumption is
   made that compensating controls outside the artifacts are absent.
