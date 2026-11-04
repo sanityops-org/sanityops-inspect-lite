@@ -7,9 +7,9 @@ license: CC BY-SA 4.0
 
 # Code Contract Inspection (QC)
 
-> **DRAFT NOTICE**: This document is a **draft**, reverse-derived from `sanityops-inspect-lite`'s condensed checklist (`references/code-contract-checklist.md`). It is NOT an authoritative SanityOps Framework source. It defines no new rules relative to that checklist; it only restates, in source-spec form, the rules the checklist already contains. The checklist remains the operational source until this draft is reviewed and promoted.
+> **DRAFT NOTICE**: This document is a **draft**, reverse-derived from `sanityops-inspect-lite`'s condensed checklist (`references/code-contract-checklist.v2.md`). It is NOT an authoritative SanityOps Framework source. It defines no new rules relative to that checklist; it only restates, in source-spec form, the rules the checklist already contains. The checklist remains the operational source until this draft is reviewed and promoted.
 
-> **Reverse-derivation provenance**: the `code-contract-checklist.md` file was authored directly for the lite inspector (no prior `quality/code-contract.md` existed). This document reconstructs the source-spec shape of that checklist: scope, terminology, numbering, defect levels, detection method, entry gate, disposition rules, the QC-0..QC-4 rule families, cross-spec relationships, exclusions, and the detection-rules index. No rule ID, name, level, or threshold is invented here.
+> **Reverse-derivation provenance**: the `code-contract-checklist.v2.md` file was authored directly for the lite inspector (no prior `quality/code-contract.md` existed). This document reconstructs the source-spec shape of that checklist: scope, terminology, numbering, defect levels, detection method, entry gate, disposition rules, the QC-0..QC-4 rule families, cross-spec relationships, exclusions, and the detection-rules index. No rule ID, name, level, or threshold is invented here.
 
 ## 1. Purpose and positioning
 

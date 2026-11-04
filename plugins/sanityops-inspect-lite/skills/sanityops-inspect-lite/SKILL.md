@@ -28,16 +28,20 @@ Only the **Artifacts** are mandatory from the user's side. Tier declarations and
 Ask the user for (do not start until you have them, or record explicitly what is missing):
 
 1. **Artifacts** — any of: System Prompt (text/markdown), Skill definition (e.g. SKILL.md and its referenced files), Tool Schema(s) (JSON Schema / function-calling definitions).
-2. **Tier declarations** — the Prompt's Agent Complexity Level (AC-L1/L2/L3), the Skill's risk level (OR-L1/L2/L3), and each Tool's risk level (OR-L1/L2/L3) (per the tier rules in the checklists). If the user cannot declare a tier, apply the tiering rules from the checklists and state the determination.
+2. **Tier (L)** — each artifact's complexity/risk tier: AC-L1/L2/L3 for the Prompt, OR-L1/L2/L3 for the Skill and each Tool. When the input comes from the pre-inspection layer (`pre-inspect-extract`), read L from the IR's `ir-core` objects (field `L`) — L is determined once there and handed down, not re-derived here. Only when there is no IR (artifacts supplied directly) fall back to the user's declaration or the tier rules below, and state the determination. L feeds severity (P) only — it never decides whether a check runs (that is the structural-fact gate's job, §4).
+
+   **Tier rules** (used only when no IR is present and the user cannot declare L):
+   - **AC-L1** single-turn — one question, one answer; no tools, no multi-turn state. **AC-L2** multi-turn — a multi-turn dialogue; each turn self-contained. **AC-L3** complex — planning / reflection / tool orchestration across steps. (L4 multi-agent is reserved: the source spec defines an AC-L4 tier for delegation morphology, but lite does not emit L4 yet — permission's AC-L4 set is kept for reference only.)
+   - **OR-L1** read-only — query / search / read; no write. **OR-L2** reversible write — create / update / send that can be corrected or undone. **OR-L3** irreversible — delete / transfer / irreversible external notification. A Skill with no tool invocation → OR-L1; a Skill or Tool with tool calls → the highest operation risk of the operations it performs.
 3. **Version label** for the artifact set (required for the multi-round ledger).
 
 Permission quick mode runs on whichever artifact types are present (Prompt, Skill, and/or Tool Schema), not on a required three-artifact set. Record Permission as NOT EXECUTED with reason "no permission-evidence artifact" only when none of the three types is present at all.
 
-**Input budget (configurable default).** One Agent per run; up to 50 artifacts (1 Prompt + 1 Skill + up to 48 Tool Schemas); per-type size caps — a Tool Schema up to 2,000 tokens, a System Prompt up to 30,000 tokens, a Skill definition (with its referenced files) up to 100,000 tokens; a run total up to 200,000 tokens on a 1M-token host window (scale down proportionally on smaller windows). If exceeded, split the run across rounds, or record the over-limit artifact as `summary` fidelity (Step 0 below). In collection mode (§5 Mode 3), the `1 Prompt + 1 Skill + up to 48 Tool Schemas` composition does not apply — any mix up to the 50-artifact cap is accepted; the per-type size caps and the run total still hold.
+**Input budget (configurable default).** One Agent per run; up to 50 artifacts (1 Prompt + 1 Skill + up to 48 Tool Schemas); per-type size caps — a Tool Schema up to 2,000 tokens, a System Prompt up to 30,000 tokens, a Skill definition (with its referenced files) up to 100,000 tokens; a run total up to 200,000 tokens on a 1M-token host window (scale down proportionally on smaller windows). The per-type caps are individual ceilings, not simultaneously reachable — the 200k run total is the binding constraint. If exceeded, split the run across rounds, or record the over-limit artifact as `summary` fidelity (Step 0 below). In collection mode (§5 Mode 3), the `1 Prompt + 1 Skill + up to 48 Tool Schemas` composition does not apply — any mix up to the 50-artifact cap is accepted; the per-type size caps and the run total still hold.
 
 ### Input preparation (not a Stage)
 
-**Object segmentation (before Step 0).** When one input file packages several artifacts — e.g. a test-case document that embeds multiple verbatim artifacts (each marked `### N. <name> (verbatim in full)`) plus container scaffolding — split it first:
+**Object segmentation (before Step 0).** This self-segmentation runs only when no pre-inspection IR is present; with an IR, consume its segmentation / type / L instead (see the pre-inspection input note above). When one input file packages several artifacts — e.g. a test-case document that embeds multiple verbatim artifacts (each marked `### N. <name> (verbatim in full)`) plus container scaffolding — split it first:
 
 - **Artifact segment** — each marked verbatim block is one candidate object.
 - **Container scaffolding** — metadata blocks, `Project Structure`, `Logical Artifact Inventory` headers, `Evaluation Dimensions`, `Scoring Criteria`, `Test Suggestions`, `Notes`, and other non-artifact sections — is not an artifact and is not inspected.
@@ -48,13 +52,13 @@ Permission quick mode runs on whichever artifact types are present (Prompt, Skil
 **Step 0 — Fidelity classification (run first, per object).** For each candidate object, determine its fidelity tier before type classification:
 
 - **`full`** — provably the original artifact: the user declares "this is the original file", or the object is a verbatim artifact with no summary/meta/framework signals.
-- **`summary`** — any of: **S1** self-declared summary/excerpt/transcribed (meta-level wording such as `Collection Method: summary`, `structure analysis`, `This is a summary`, or the equivalent meta-level wording in the artifact's own language); **S2** the object contains non-artifact sections (e.g. `Evaluation Dimensions`, `Scoring Criteria`, `Test Suggestions`, `Collection Date`/`Method`, `Relationship`); or **S3** the object has no complete structural signature.
+- **`summary`** — any of: **S1** self-declared summary/excerpt/transcribed (meta-level wording such as `Collection Method: summary`, `structure analysis`, `This is a summary`, or the equivalent meta-level wording in the artifact's own language); **S2** the object still contains non-artifact sections after segmentation (scaffolding that was not cleanly stripped — e.g. `Evaluation Dimensions`, `Scoring Criteria`, `Test Suggestions`, `Collection Date`/`Method`, `Relationship`); or **S3** the object has no complete structural signature.
 - **Default fallback**: when `full` cannot be confirmed, treat as `summary`.
 - **Hard rules**: do not keyword-scan artifact *content* for "summary" (only meta-level self-description counts); a user declaration of "original file" overrides S1/S2/S3; apply per-object, never as a single whole-batch verdict.
 
 **Fidelity consequence (global — applies to every stage A–G, not just Stage A).**
 - `full` → run all rules in every stage.
-- `summary` → in every stage, run only **contradiction-based** findings (FAIL reason = "A conflicts with / is inconsistent with / forms an unterminated loop"); **skip absence-based** findings (FAIL reason = "missing / not declared / undefined / no X"). This skips e.g. QD-T-1.1/1.2/1.4/2.1/4.1, QD-P-2.2.2/2.2.3/2.7.x, QC-0.3/3.2 and like absence rules.
+- `summary` → in every stage, run only **contradiction-based** findings (FAIL reason = "A conflicts with / is inconsistent with / forms an unterminated loop"); **skip absence-based** findings (FAIL reason = "missing / not declared / undefined / no X"). This skips e.g. QD-T-1.1/1.2/2.1/4.1, QD-P-2.2.2/2.2.3, QC-0.3/3.2 and like absence rules.
 - **Stage E (EX) is bound by the same gate**: under `summary`, the risk audit must not read example code, safety measures, or missing declarations as "explicit risk"; only a risk expression that is verbatim, self-contained, and itself contradicts a declared boundary qualifies. Inference-based findings (cross-object chains, "read-only is only natural language", "scope undefined", etc.) are skipped under `summary`.
 
 **Type classification.** After object segmentation, classify each artifact segment (or each file, when no segmentation applies) into one of the three types by structural signature — record the type and the basis:
@@ -67,13 +71,32 @@ Permission quick mode runs on whichever artifact types are present (Prompt, Skil
 
 Edge cases: an archive → expand first, then group files by agent; a script → treat as a referenced file, not an artifact, **except** when it embeds an in-scope logic-artifact literal (e.g. `system_message = """..."""`), which is classified as the corresponding artifact type and tiered by Step 0. If a file cannot be unambiguously classified, or the inputs appear to mix multiple agents, ask the user before starting Stage A — unless the user has explicitly declared collection mode (§5 Mode 3), in which case each artifact segment is checked in isolation and cross-artifact / Permission / cross-object checks are skipped. Never run Stage B/C/D/E across different agents' artifacts.
 
-**Input from the pre-inspection layer (pre-inspect-extract).** When artifacts are carried inside code that this skill's own segmentation cannot fully extract (Zod `z.object`, f-string prompts with variables, docstring signatures, Go builders), run `pre-inspect-extract` first and feed its output here. When the artifacts are produced by the pre-inspection layer, read its output's **agent membership declaration** before starting. If it is `pending confirmation` (the layer could not confirm the artifacts belong to one agent), do **not** run Stage B / Permission (Stage C–D) / Stage E NL-B by default — require the user to explicitly choose one of: (a) confirm the artifacts are one agent's → run the full seven-stage flow, or (b) declare collection mode → run single-artifact only (Mode 3). Never silently run cross checks on a `pending confirmation` collection. The layer's completeness labels (`full original` / `assembled` / `incomplete` / `summary` / `not inspectable`) are advisory provenance hints, not this skill's fidelity determination — apply Step 0 per object and derive `full` / `summary` yourself.
+**Input from the pre-inspection layer (pre-inspect-extract).** When artifacts are carried inside code that this skill's own segmentation cannot fully extract (Zod `z.object`, f-string prompts with variables, docstring signatures, Go builders), run `pre-inspect-extract` first and feed its output here. When the artifacts are produced by the pre-inspection layer, its output is a **two-layer IR**:
+
+- **Object layer** — the artifacts actually extracted, each with a full signature (type `prompt` / `skill` / `tool`, name, `L`, completeness). This replaces the flat artifact list: feed these as the Stage A objects.
+- **Reference layer** — things mentioned / depended on but not formed as extracted objects (e.g. a prompt calls `search_tool` but no `search_tool` schema exists). Feed these to Stage B so cross-object "referenced but missing" checks can catch the absence. The reference layer is read as input, never as a checklist.
+- **`ir-core` JSON block** — the machine-readable core (`objects[].{type,name,L,completeness}` + `references[].{name,referenced_by,relationship}`); read `L` from here.
+
+Before starting, read the IR's **agent membership declaration**. If it is `pending confirmation`, do **not** run Stage B / Permission (Stage C–D) / Stage E NL-B by default — require the user to explicitly choose one of: (a) confirm the artifacts are one agent's → run the full seven-stage flow, or (b) declare collection mode → run single-artifact only (Mode 3). Never silently run cross checks on a `pending confirmation` collection.
+
+When an IR is present, consume its segmentation, type classification, and `L` as-is — do **not** re-run this skill's own object segmentation. Consume the IR's per-object completeness label to set the check scope (do **not** collapse it to `full` / `summary`):
+
+   | IR completeness label | Check scope (every stage A–G) |
+   |---|---|
+   | `full original` | run all rules (= `full`) |
+   | `original · variable unexpanded` | run all rules except those that depend on the listed unexpanded variables |
+   | `assembled` | run all structure + contradiction checks; absence checks run **field by field** (source evidence covers the field fully → judge; otherwise skip, mark `uncertain`) |
+   | `incomplete` | run only checks on the fields actually provided; a missing base field is a document-level fact, never a defect |
+   | `summary` | run contradiction-based checks only (= `summary`) |
+   | `not inspectable` | run no checks; record the reason in the report's input notes |
+
+   When no IR is present (artifacts supplied directly), fall back to this skill's own segmentation + type classification + tiering (Step 0 below).
 
 ## 3. Governing sources and hard precedence
 
-- The eight files in `references/` are **condensed extractions** of the SanityOps sub-specifications. They define **no new rules**.
+- The domain checklists in `references/` (`*-checklist.v2.md`) are **condensed extractions** of the SanityOps sub-specifications. They define **no new rules**. The shared `_meta.md` (field model, `applicability` structural-fact gate, `severity` conventions, `check_engine` mapping, scoring) is loaded once and reused across every stage; each domain file carries only the check items and points back to `_meta.md` for shared definitions.
 - On any conflict (numbering, definitions, levels, thresholds, wording), the source sub-specification governs:
-  - QD-P ← `inspect/prompt.md` · QD-S ← `inspect/skill.md` · QD-T ← `inspect/tool.md` · QD-PS/PT/ST/SS/TT/CYC ← `inspect/cross.md` · QD-PM ← `inspect/permission.md` · QC ← `quality/code-contract.md` (DRAFT — the lite `code-contract-checklist.md` is the operational source) · EX ← `risk/explicit.md` · impact mapping ← `framework/relevance.md`
+  - QD-P ← `inspect/prompt.md` · QD-S ← `inspect/skill.md` · QD-T ← `inspect/tool.md` · QD-PS/PT/ST/SS/TT/CYC ← `inspect/cross.md` · QD-PM ← `inspect/permission.md` · QC ← `quality/code-contract.md` (DRAFT — the lite `code-contract-checklist.v2.md` is the operational source) · EX ← `risk/explicit.md` · impact mapping ← `framework/relevance.md`
 - Only output rule IDs that exist in the references. **Never invent QD, EX, or QC IDs, rule names, or levels.**
 - This package is licensed CC BY-SA 4.0, attributed to the SanityOps Framework.
 
@@ -87,43 +110,45 @@ A stage is skipped (Not Executed) only for concrete structural reasons — missi
 
 ### Stage A — Single-artifact inspection (QD-P / QD-S / QD-T / QC)
 
-1. For the System Prompt → `references/prompt-checklist.md`.
-2. For the Skill → `references/skill-checklist.md`. **Run the QD-S-0 baseline checks first** (they gate the rest of the Skill checklist).
-3. For each Tool Schema → `references/tool-checklist.md` (tier the Tool first, per the checklist's tier rules).
-4. For code snippets embedded in any artifact (Prompt text, Skill steps, Tool Schema description/default/example fields) → `references/code-contract-checklist.md`. **Run the QC-0 baseline first** (it gates QC-1 through QC-4). QC inspects embedded snippets only — never standalone source files.
-5. Verdict per rule: `QD-x-y | PASS/FAIL | evidence: file, section/line`. Every FAIL must quote the offending artifact text (short excerpt).
+**Applicability vs severity — the structural-fact gate (applies to every checklist item in this stage).** Whether a check runs (考不考) is decided by **observable structural facts** recorded in the checklist's `applicability.fact` (`has_tool` / `has_workflow` / `has_write_semantics` …), **not** by L. L (AC-L for Prompt, OR-L for Skill/Tool) feeds severity (P) only. Fail-safe defaults: `on_absent → N/A` (always write the structural basis); `on_unknown → judge` (default to checking, never silently drop). A structural fact judges **what the artifact claims to do / what signs appear** — it never judges "whether a declaration is complete", otherwise an item like "tool not declared" would cancel itself out (point-1 paradox). Severity is read from the checklist's `severity` field keyed by the artifact's L. An item the original tier-scoped spec would have dropped at this L is still run and shown at **reference level** (see §6.2), annotated with its original severity.
+
+1. For the System Prompt → `references/prompt-checklist.v2.md`.
+2. For the Skill → `references/skill-checklist.v2.md`. **Run the QD-S-0 baseline checks first** (only QD-S-0.3, when completely unparsable, blocks QD-S-1~5; other baseline failures are recorded as "baseline not passed" and the flow continues with "assessment incomplete (NEEDS_REVIEW)").
+3. For each Tool Schema → `references/tool-checklist.v2.md` (tier the Tool first, per the tier rules in §2). QD-T-5.x (change-check) runs only when an old/new Schema comparison is available; otherwise N/A with basis "no version comparison".
+4. For code snippets embedded in any artifact (Prompt text, Skill steps, Tool Schema description/default/example fields) → `references/code-contract-checklist.v2.md`. **Run the QC-0 baseline first** (it gates QC-1 through QC-4). QC inspects embedded snippets only — never standalone source files.
+5. Verdict per rule: `QD-x-y | PASS/FAIL/N/A | evidence: file, section/line`. Every FAIL must quote the offending artifact text (short excerpt); every N/A must carry its structural-fact basis (an `applicability.fact` not met).
 6. **Single-artifact boundary (hard)**: inspect each artifact segment in isolation. A declaration missing from the segment under inspection is a defect of *that* segment — do not treat a declaration present in a different segment as satisfying it. Evidence for every FAIL must quote the inspected segment itself, never a sibling segment.
 7. Collect all P0 findings and carry them forward. P0 findings do **not** halt the flow — continue to Stage B in the same run, unless the user asked for Stage A only.
 
 ### Stage B — Cross-artifact inspection (QD-PS / QD-PT / QD-ST / QD-SS / QD-TT / QD-CYC)
 
-1. Use `references/cross-checklist.md`: evaluate the tier's inspection scope per cross.md §5.4.3 / §8.3.1 (AC-L1 = 7 items, AC-L2 = 20, AC-L3 = 29, with the explicit per-tier item composition given in the checklist), applying Appendix B's tier P0 set (7/9/9) as the blocking compliance core. The checklist matches `inspect/cross.md` v1.1 (29-item content); do not invent items beyond it.
-2. Inspect only cross-artifact relationships — the six relationships defined by the spec (Prompt↔Skill, Prompt↔Tool, Skill↔Tool, Skill↔Skill, Tool↔Tool, and the cross-cutting QD-CYC circular-invocation check at L2/L3). Do **not** re-check single-artifact internal defects.
+1. Use `references/cross-checklist.v2.md` (the unified full checklist — no tier-scoped item subset). Run the six cross-artifact relationships and, for cross-object "referenced but missing" checks, consume the IR's **reference layer** as the input (a reference-layer entry is a named dependency that has no formed object). Applicability is the structural-fact gate (same fail-safe defaults as Stage A); L (AC-L) feeds severity only — it no longer selects which items apply (the old "AC-L1 = 7 / AC-L2 = 20 / AC-L3 = 29" scoping is gone). Items the original tier-scoped spec would have skipped at this L are shown at reference level (§6.2).
+2. Inspect only cross-artifact relationships — the six relationships defined by the spec (Prompt↔Skill, Prompt↔Tool, Skill↔Tool, Skill↔Skill, Tool↔Tool, and the cross-cutting QD-CYC circular-invocation check). Do **not** re-check single-artifact internal defects.
 3. Any P0 → record it and continue to Stage C; P0 findings do **not** halt the flow.
 
 ### Stage C — Gate-0 (admission to Permission)
 
-Gate-0 **is not an inspection item**: it produces no numbers and no score; "not passed" ≠ FAIL ≠ permission problems (permission.md §9.2.2). Verify the four admission conditions G0-1..G0-4 defined in `references/permission-checklist.md` §3.2. In this non-blocking flow, G0-1 (no unfixed P0 in Stage A) and G0-2 (no unfixed P0 in Stage B) are **recorded as informational findings and do not gate**; G0-3 (responsibility boundary statements exist and are locatable) is **non-blocking** — its absence only downgrades the 1.x items to N/A; G0-4 (each Tool Schema's name/description are complete, tool-level only) remains the only structural admission condition for Stage D.
+Gate-0 **is not an inspection item**: it produces no numbers and no score; "not passed" ≠ FAIL ≠ permission problems (permission.md §9.2.2). Verify the four admission conditions G0-1..G0-4 defined in `references/permission-checklist.v2.md` §1. In this non-blocking flow, G0-1 (no unfixed P0 in Stage A) and G0-2 (no unfixed P0 in Stage B) are **recorded as informational findings and do not gate**; G0-3 (responsibility boundary statements exist and are locatable) is **non-blocking** — its absence only downgrades the 1.x items to N/A; G0-4 (each Tool Schema's name/description are complete, tool-level only) remains the only structural admission condition for Stage D.
 
 - **Report every G0 condition with its result and reason, whether it passes or fails** — never a bare `Passed`. G0-4 is reported as `complete` / `vacuous (no Tool)` / `incomplete`; G0-3 as `locatable` / `absent → 1.x N/A`. A reader must be able to tell *how* each condition passed, not just that the gate opened.
 - G0-4 passes → proceed to Stage D (G0-1/G0-2 findings and any G0-3 absence, if any, are carried forward in the report; a G0-3 absence N/A's the 1.x items).
-- G0-4 fails → for the Permission stage output **only** the "Not Executed" block specified in `references/permission-checklist.md` §3.3 (subset / status / unsatisfied IDs / blocking reasons / remediation actions), and stop. Output nothing else for Permission — no defect list, no score, no partial conclusions.
+- G0-4 fails → for the Permission stage output **only** the "Not Executed" block specified in `references/permission-checklist.v2.md` §7.1 (subset / status / unsatisfied IDs / blocking reasons / remediation actions), and stop. Output nothing else for Permission — no defect list, no score, no partial conclusions.
 - Wording red line: the Permission stage was **"Not Executed"** — never report it as FAIL, and never write "Permission = ERROR/BLOCKED" at stage level (§9.2.4 hierarchy expression norm; see also §6 of this file).
 
 ### Stage D — Permission proportionality (QD-PM, Quick Mode)
 
 1. Run Permission on the artifact types that are present (Prompt, Skill, and/or Tool Schema), not on a required three-artifact set. Items that depend on an absent type are N/A with basis (e.g. "no Tool Schema"). Record NOT EXECUTED only when no permission-evidence artifact exists at all.
-2. Run the **17-item Quick Mode set** defined in `references/permission-checklist.md` §4 (the lite scope; the full spec has 43 items). For each item output `QD-PM-x.y | Applicable or N/A | PASS/FAIL | evidence`, and mark every verdict **"provisional (lite quick mode)"**.
-3. Apply the checklist's classification binding (its §2): applicability is a structural fact from AC-L; severity is a risk fact from OR-L (basic mapping OR-L3→P0 / OR-L2→P1 / OR-L1→P2, with fixed-P0 items 3.4/5.4/6.3/6.5 and each item's inline severity rule). Never use AC-L to grade severity or OR-L to decide applicability. Every FAIL carries the classification-basis line `<operation> → <OR-L> → <rule> → <severity>`. N/A verdicts record the determination basis (a basis-less N/A is treated as failure per the checklist).
-4. Include the checklist's mandatory scope statement (its §5): declared proportionality only — not IAM/PEP/runtime enforcement.
+2. Run the **17-item Quick Mode set** defined in `references/permission-checklist.v2.md` §2.1 (the lite scope; the full spec has 43 items). For each item output `QD-PM-x.y | Applicable or N/A | PASS/FAIL | evidence`, and mark every verdict **"provisional (lite quick mode)"**.
+3. Apply the checklist's classification binding: applicability is a **structural fact** (the checklist's `applicability.fact`), **not** derived from AC-L; severity is a risk fact from OR-L (basic mapping OR-L3→P0 / OR-L2→P1 / OR-L1→P2, with fixed-P0 items 3.4/5.4/6.3/6.5 and each item's inline severity rule). Never use AC-L to grade severity or OR-L to decide applicability. Every FAIL carries the classification-basis line `<operation> → <OR-L> → <rule> → <severity>`. N/A verdicts record the structural-fact determination basis (a basis-less N/A is treated as failure per the checklist). The IR's per-object `L` is an artifact-level risk ceiling for the Prompt/Skill/Tool domains only — Permission severity is derived **per permission item** from the highest operation risk that item covers (permission v2 §1 R2), never from the object's single `L`.
+4. Include the checklist's mandatory scope statement (its §7.2): declared proportionality only — not IAM/PEP/runtime enforcement.
 
 ### Stage E — Explicit-risk audit (EX: NL-A / NL-B / NR-O / NR-S)
 
-1. Use `references/explicit-checklist.md`. Scan the backend-logic artifacts (System Prompt, Skill, Tool Schema) for **explicitly expressed** risk — risk readable directly in static text, without running the Agent. This stage is detect + classify + grade, not PASS/FAIL inspection.
+1. Use `references/explicit-checklist.v2.md`. Scan the backend-logic artifacts (System Prompt, Skill, Tool Schema) for **explicitly expressed** risk — risk readable directly in static text, without running the Agent. This stage is detect + classify + grade, not PASS/FAIL inspection.
 2. For each discovered risk item, emit one block: `EX-x.y | verbatim risk expression | impact type labels (D1/D2/D3) | severity grade (Explicit·P0/P1/P2) | trigger condition label | disposition`. Every finding must quote the offending artifact text (short verbatim excerpt).
-3. Run the checklist's three-phase workflow (§11): Phase 1 discovery & classification (scan NL-A → NL-B → NR-O → NR-S, assign `EX` codes); Phase 2 severity determination (assign D1/D2/D3 impact type labels for traceability, grade by worst consequence into `Explicit·P0/P1/P2`, mark the trigger condition label `conditional` / `unconditional`); Phase 3 output (compile the report).
+3. Run the checklist's three-phase workflow (its §1): Phase 1 discovery & classification (scan NL-A → NL-B → NR-O → NR-S, assign `EX` codes); Phase 2 severity determination (assign D1/D2/D3 impact type labels for traceability, grade by worst consequence into `Explicit·P0/P1/P2`, mark the trigger condition label `conditional` / `unconditional`); Phase 3 output (compile the report).
 4. Red lines (mandatory):
-   - Only emit `EX` codes that exist in `references/explicit-checklist.md` — **never invent EX IDs, subcategories, or levels**.
+   - Only emit `EX` codes that exist in `references/explicit-checklist.v2.md` — **never invent EX IDs, subcategories, or levels**.
    - Write the severity grade **with the domain prefix** `Explicit·P0/P1/P2` — never bare `P0` — to distinguish Risk Explicit grading from Inspect defect disposition (`Inspect·P0`).
    - Assess only content **explicitly declared** in the risk text — never infer implicit risks (those belong to Risk Implicit, which is **not** run here).
    - Static text only: an EX finding is a static-document risk, **not** a confirmed runtime exploit. State explicitly that Risk Implicit (dynamic exploitability) was **not** run.
@@ -132,14 +157,14 @@ Gate-0 **is not an inspection item**: it produces no numbers and no score; "not 
 
 ### Stage F — Impact outlook (candidate mapping, advisory only)
 
-1. For **each FAIL** from Stages A/B/D, look up `references/relevance-map.md`.
-2. Emit a condensed Impact Card per mapped defect: defect ID → candidate attack surface(s) (AS-*) → candidate failure mode(s) (FM-*) → candidate RAG-Agent quality metric(s) → strength (Strong/Medium/Conditional).
+1. For **each FAIL** from Stages A/B/D, look up `references/relevance-map.v2.md`. (QC-* embedded-code defects have no AS-*/FM-* mapping in the relevance map — Stage F emits no Impact Card for them; record them as unmapped.)
+2. Emit a condensed Impact Card per mapped defect: defect ID → candidate attack surface(s) (AS-*) → candidate failure mode(s) (FM-*) → candidate RAG-Agent quality metric(s) → strength (Strong/Medium/Conditional). FM-* codes (FM-01..FM-10) are defined in the source L1 spec `quality/tool-agent.md` (not bundled here) — output the code reference only, never invent an FM definition.
 3. Red lines (mandatory):
    - Candidate language only: "candidate association", "may", "needs dynamic verification". **Never** "will cause", "inevitably", "guarantees".
    - Strength ≠ severity. Label both explicitly.
    - State that Risk Implicit and the runtime Quality subsets were **not run** (Risk Explicit ran in Stage E; the lite embedded-code QC ran in Stage A), and that per relevance.md §1.4 no assumption is made that controls outside the artifacts are absent.
    - Keep this section **physically separated** from the stage verdicts (advisory context, not a verdict).
-   - v1 scope: single-defect mapping only; defect chains (SC-*/QC-*) are out of scope.
+   - v1 scope: single-defect mapping only; defect chains (SC-*/QC-TA-*/QC-RA-*) are out of scope.
 
 ### Stage G — Self-verification (lightweight, in-line + closing)
 
@@ -147,27 +172,32 @@ This stage verifies **the inspector's own report**, not the artifacts. It catche
 
 **In-line checks (run as you write each verdict/conclusion — never deferred to the end):**
 
-1. **ID back-closure**: every `QD-*` / `QC-*` / `EX-*` ID you emit must exist in `references/`; every Stage F `AS-*` / `FM-*` mapping must exist in `references/relevance-map.md`. Confirm at write time; never emit an ID you cannot locate.
+1. **ID back-closure**: every `QD-*` / `QC-*` / `EX-*` ID you emit must exist in `references/`; every Stage F `AS-*` / `FM-*` mapping must exist in `references/relevance-map.v2.md`. Confirm at write time; never emit an ID you cannot locate.
 2. **Wording red lines**: never write causal language in Stage F ("will cause", "inevitably", "guarantees"); never declare the artifacts "secure" or "high quality"; never write "Permission = ERROR/BLOCKED". Check each concluding sentence as you write it.
 
 **Closing checks (run once, at the end, on the assembled report):**
 
 3. **Output contract**: the status board has exactly the seven required lines (§6.4); the report header carries all six provenance facts (§6.7); the executive summary is present (§6.1); the report follows the user's language (§6.9); and evidence excerpts are quoted verbatim in their original language (§6.10).
 
-**Closing reconciliation — judgment-quality pass (run once, at the end, on the report's own verdicts):**
+**Closing model triangle check — 三角核对 (run once, at the end, in a detached pass):**
 
-This pass re-reads **the report's verdicts** — not the artifacts, not the references from scratch — to catch over-inspection and grading errors that the in-line checks miss. It applies only rules already present in the checklists (the five-state N/A discipline, conditional-trigger preconditions, OR-L3 upgrade mapping, instance-upgrade branches, same-source dedup). It never invents rules, never re-scores, and never rewrites artifacts. On an inconsistency, append a reconciliation note and re-emit that segment — never silently change a verdict.
+This pass closes the triangle that the in-line checks cannot. The forward direction was already done during Stages A–E: `artifact + checklist → defect ID`. The reverse direction is `defect ID + defect content → checklist definition` — does each emitted verdict actually match what its checklist rule defines. It re-reads **only the report's own verdicts and the checklist definition of each emitted ID**; it does **not** re-read the artifacts, does **not** re-run the stages, and does **not** re-read the references from scratch.
 
-4. **Tier self-audit**: re-confirm the AC-L (complexity → which items apply) vs OR-L (risk → severity) determination against the tiering rules. Flag mixed cases (e.g. an AC-L2 Agent carrying OR-L3 Tools) and any place one model was used where the other was required.
-5. **N/A basis re-verification**: for every N/A, confirm a determination basis is recorded. Flag (a) a FAIL on a rule whose applicability precondition ("only when …") was not met, and (b) a conditional item left N/A without basis when its trigger was actually present.
+**Detach instruction (mandatory for accuracy).** Before running this pass, detach from the detection context: treat the report as an external document you are auditing for the first time, and each emitted ID as a claim to verify against its checklist definition. Do not carry forward the reasoning that produced the verdict. This detached reverse check over a small number of already-detected IDs is far more reliable than self-checking inside the detection context (which degrades to rubber-stamping). This skill has no program engine, so the formal-only self-check (ID existence, P validity, evidence non-empty, format) is folded into the in-line checks above; this model triangle check is what catches the semantic "张冠李戴" error.
+
+For each emitted ID confirm: (a) the ID exists in the checklist; (b) the defect content matches that ID's definition (张冠李戴 check); (c) the severity matches the L-keyed severity (or a recorded upgrade / instance branch). It applies only rules already present in the checklists (the five-state N/A discipline, conditional-trigger preconditions, OR-L3 upgrade mapping, instance-upgrade branches, same-source dedup). It never invents rules, never re-scores, and never rewrites artifacts. On an inconsistency, append a reconciliation note and re-emit that segment — never silently change a verdict.
+
+4. **Tier self-audit**: re-confirm the AC-L (complexity → Prompt-domain severity) vs OR-L (risk → Skill/Tool-domain severity) determination against the tiering rules. Flag mixed cases (e.g. an AC-L2 Agent carrying OR-L3 Tools) and any place one model was used where the other was required.
+5. **N/A basis re-verification**: for every N/A, confirm a structural-fact determination basis is recorded. Flag (a) a FAIL on a rule whose applicability precondition (its `applicability.fact`) was not met, and (b) a conditional item left N/A without basis when its trigger was actually present.
 6. **Upgrade justification audit**: for every P0 reached by an upgrade (OR-L3 mapping, or a rule's `→ P0` instance branch), confirm the trigger actually fired; conversely, flag a P1/P2 that a recorded trigger should have lifted.
-7. **Cross-stage consistency**: a fact graded in more than one stage (e.g. a Skill permission boundary in Stage A QD-S-5.x vs Stage D QD-PM) must carry the same severity, respecting INHERITED and same-source dedup; flag any divergence.
+7. **Cross-stage consistency**: a fact graded in more than one stage (e.g. a Skill permission boundary in Stage A QD-S-5.x vs Stage D QD-PM) must carry the same severity, respecting INHERITED and same-source dedup; flag any divergence. (Same-source dedup groups are listed only in cross/permission; prompt/tool have no local dedup groups — skip the dedup re-check for them and record it as not applied.)
+8. **Forward coverage (前向覆盖闭合, 防漏判)**: back-closure only guards "over-emission" (an emitted ID must exist); this guards "under-emission" (every applicable ID must be emitted). For each executed stage, take the stage's domain-file §2 index ID set and confirm every item whose `applicability.fact` is met — including `is_*`-type facts that are always true, plus any conditional item whose trigger fired — is explicitly verdict as PASS / FAIL / N/A. Report `应判 N 项 / 已判 M 项`; when M < N, list each unverdict item by ID and its reason, and the self-check does not pass. This is an ID-ledger reconciliation (index-table ID set ↔ the report's verdict ID set) only — it does not re-read definitions, does not re-read the artifacts, and does not re-run any stage.
 
 Reconciliation notes are **non-blocking**: they do not re-open or re-run stages, and they are not new findings — they only flag an already-recorded verdict as over- or under-applied.
 
 **On finding a self-error**: correct it in place and re-emit that segment. This stage fixes the report only — it never rewrites the inspected artifacts (the detect-only rule still holds).
 
-**Output**: append a short self-verification statement after the status board, e.g. `Self-verification: ID back-closure OK · red-line wording OK · output contract OK · reconciliation OK` (list any self-corrections and reconciliation notes made).
+**Output**: append a short self-verification statement after the status board, e.g. `Self-verification: ID back-closure OK · red-line wording OK · output contract OK · triangle check OK · forward coverage OK` (list any self-corrections and reconciliation notes made).
 
 ## 5. Run modes
 
@@ -196,15 +226,15 @@ If the user has not declared collection mode and the inputs appear to mix agents
 
 > **Output size**: the report is emitted in full — no explicit output-size cap is imposed (an intentional choice: completeness over bounded size). Report length is therefore proportional to the number of findings, not pre-limited.
 
-1. **Executive summary** — emitted at the top of every full-flow report. A compact block: overall status (executed stages + P0/P1/P2 counts + Gate result + Risk-Explicit `Explicit·P0/P1/P2` summary), up to five top findings (`rule ID — one-line defect`), what was NOT run (Risk Implicit / runtime Quality), and an upgrade pointer (full inspection via `sanityops-cli` — see https://github.com/sanityops-org/sanityops-framework/blob/main/framework/try-the-tools.md). Never states a security or quality conclusion; reuse Stage F candidate wording.
-2. **Per-rule verdicts**: `rule ID | PASS/FAIL | evidence location in artifact`. FAIL lines include a short verbatim excerpt of the offending text.
+1. **Executive summary** — emitted at the top of every full-flow report. A compact block: overall status (executed stages + P0/P1/P2 counts + Gate result + Risk-Explicit `Explicit·P0/P1/P2` summary), up to five top findings (`rule ID — one-line defect`), what was NOT run (Risk Implicit / runtime Quality), and an upgrade pointer (full inspection via `sanityops-cli` — see https://github.com/sanityops-org/sanityops-framework/blob/main/framework/try-the-tools.md). Never states a security or quality conclusion; reuse Stage F candidate wording. When the input is an IR, the executive summary is followed by an **input notes** block listing the IR's `not inspectable` objects (with reasons) and any `pending confirmation` membership note — input-provenance facts, never defect conclusions.
+2. **Per-rule verdicts**: `rule ID | PASS/FAIL/N/A | evidence location in artifact`. FAIL lines include a short verbatim excerpt of the offending text; N/A lines carry the structural-fact basis (never a basis-less N/A). A check that the unified checklist carries but that the original tier-scoped spec would have skipped at this L is shown at **reference level** (advisory, not a defect) and must annotate its original severity — e.g. `参考级（此项在 L3 下为 P0）` — so a downgrade is never a silent miss.
 3. **No fabricated IDs** — only IDs present in `references/`.
 4. **Status board** — always emitted, exactly these seven lines:
 
 ```
 Stage A (Single-artifact):  Executed / Not Executed — <reason>
 Stage B (Cross):            Executed / Not Executed — <reason>
-Stage C (Gate-0):           Passed / Not passed — G0-4: <complete | vacuous (no Tool) | incomplete>; G0-3: <locatable | absent → 1.x N/A>
+Stage C (Gate-0):           Passed / Not passed — G0-1: <no unfixed Stage-A P0 | carries P0>; G0-2: <no unfixed Stage-B P0 | carries P0>; G0-4: <complete | vacuous (no Tool) | incomplete>; G0-3: <locatable | absent → 1.x N/A>
 Stage D (Permission QD-PM): Executed / Not Executed — <reason>
 Stage E (Risk Explicit EX): Executed / Not Executed — <reason>
 Stage F (Impact outlook):   Executed / Not Executed — <reason>
@@ -212,7 +242,7 @@ Stage G (Self-verification): Executed / Not Executed — <reason>
 ```
 
 5. **Blocking wording red line**: a stage that did not run is reported as **Not Executed** with a concrete structural reason — the specific Gate-0 condition ID (G0-4) or "no permission-evidence artifact" (Stage D). P0 findings alone are never a reason for a stage to be Not Executed in this non-blocking flow. Never report a non-executed stage as FAIL, and never write "Permission = ERROR/BLOCKED" — the correct form is "Permission did not execute due to Gate-0 not satisfied".
-6. **Indicative score** only if the user asks: apply the checklist's stated deduction weights; label it "indicative (lite minimal set), not the full-spec score".
+6. **No score** — this skill does not compute a numeric score and does not map findings to an AI-application level. Output is "check item → severity (P) → evidence" only. If the user asks for a score, state that scoring is out of scope for the lite skill (full scoring lives in `sanityops-cli` / platform, which read the checklist's `score_weight`).
 7. **Report header (mandatory on every report and every stage-only report)** — exactly these provenance facts:
    - Host model name (self-declared by the model executing this skill, e.g. `Host model: <vendor/model>`);
    - Skill package: `sanityops-inspect-lite v1.1.0` (the `version` value of this SKILL.md front matter);
@@ -223,8 +253,8 @@ Stage G (Self-verification): Executed / Not Executed — <reason>
 
    The header is never omitted to save tokens, and must not imply the result is an official engine/SaaS conclusion.
 
-8. **Self-verification statement** — after the status board, append the Stage G statement (ID back-closure / red-line wording / output contract), including any in-place self-corrections made. This is a self-check of the report, not a verdict on the artifacts.
-9. **Report language (follow the user, hard)** — the report is written in the same language the user used to make the request. This covers all prose, findings, evidence explanations, the executive summary, the report header, the status board, and every templated block. **Rule IDs and labels are identifiers and are never translated**: `QD-*`, `QC-*`, `EX-*`, `AS-*`, `FM-*`, `G0-*`, severity labels `P0/P1/P2`, and tier labels `AC-L*`/`OR-L*` stay as-is regardless of the report language.
+8. **Self-verification statement** — after the status board, append the Stage G statement (ID back-closure / red-line wording / output contract / triangle check / forward coverage), including any in-place self-corrections made. This is a self-check of the report, not a verdict on the artifacts.
+9. **Report language (follow the user, hard)** — the report is written in the same language the user used to make the request. This covers all prose, findings, evidence explanations, the executive summary, the report header, the status board, and every templated block. **Rule IDs and labels are identifiers and are never translated**: `QD-*`, `QC-*`, `EX-*`, `AS-*`, `FM-*`, `G0-*`, severity labels `P0/P1/P2`, and tier labels `AC-L*`/`OR-L*` stay as-is regardless of the report language. The status board's stage-name labels (`Stage A/B/C/D/E/F/G`, `Gate-0`) are structural identifiers and stay as-is; the `— <reason>` fill-in text follows the report language.
 10. **Evidence excerpt language** — quote artifact text verbatim in its original language; render any explanatory gloss or finding summary in the report's language. (This replaces the former English-only and zero-CJK hard rules.)
 11. **Terminology quick reference (mandatory)** — every report opens, directly after the executive summary, with a compact glossary mapping the ID families to plain language in the report's language (see Appendix A): `QD-*` = single/cross/permission defect · `QC-*` = embedded-code defect · `EX-*` = explicit risk · `AS-*`/`FM-*` = candidate impact mapping · `AC-L*`/`OR-L*` = agent/operation risk level · `P0/P1/P2` = blocking/warning/advisory.
 
@@ -241,16 +271,19 @@ Stage G (Self-verification): Executed / Not Executed — <reason>
 
 ## 8. Reference files
 
+> The checklists follow the **unified model**: each item carries `applicability.fact` (structural facts that decide whether a check runs), `severity` (keyed by L), and `check_engine` (`program` / `model` / `hybrid` — this skill ignores `check_engine` and runs everything as model reasoning). Load `_meta.md` once (shared definitions), then load each domain file only when its stage runs. Stage G back-closure uses the domain files themselves.
+
 | File | Content | Source of authority |
 |---|---|---|
-| `references/prompt-checklist.md` | QD-P tiered checklist (AC-L1/2/3) + minimum rule sets (7/17/25 P0) | inspect/prompt.md v1.1 |
-| `references/skill-checklist.md` | QD-S-0 baseline (9 items) + minimum rule sets (8/23/24) + six-step flow + Review Schema | inspect/skill.md v1.1 |
-| `references/tool-checklist.md` | Tool operation-risk tiering (OR-L) + QD-T rule set + minimum rule sets (20/25/25) | inspect/tool.md v1.1 |
-| `references/code-contract-checklist.md` | QC-0 baseline + QC-1/2/3/4 embedded-code checks | quality/code-contract.md (DRAFT; checklist is the operational source) |
-| `references/cross-checklist.md` | QD-PS/PT/ST/SS/TT/CYC checklist (29 items, 6 groups) + P0 minimum sets (7/9/9) | inspect/cross.md v1.1 |
-| `references/permission-checklist.md` | Gate-0 (G0-1..4) + AC-L/OR-L binding + QD-PM Quick Mode 17 items | inspect/permission.md v1.1 |
-| `references/explicit-checklist.md` | EX classification (NL-A/NL-B/NR-O/NR-S) + impact type labels (D1/D2/D3) + severity grading (Explicit·P0/P1/P2) + trigger condition label | risk/explicit.md v1.1 |
-| `references/relevance-map.md` | QD → candidate AS-*/FM-* mapping + candidate RAG-Agent metric mapping + red lines | framework/relevance.md v1.1 |
+| `references/_meta.md` | shared definitions: field model · check_engine mapping · applicability structural-fact gate · severity conventions · scoring (platform) | framework (this package) |
+| `references/prompt-checklist.v2.md` | QD-P checks (applicability + severity by AC-L; check_engine tagged) | inspect/prompt.md v1.1 |
+| `references/skill-checklist.v2.md` | QD-S checks + QD-S-0 baseline (9 items) + 24 semantic items | inspect/skill.md v1.1 |
+| `references/tool-checklist.v2.md` | QD-T checks (OR-L severity; program/model/hybrid tagged) | inspect/tool.md v1.1 |
+| `references/code-contract-checklist.v2.md` | QC-0 baseline + QC-1/2/3/4 embedded-code checks | quality/code-contract.md (DRAFT; checklist is the operational source) |
+| `references/cross-checklist.v2.md` | QD-PS/PT/ST/SS/TT/CYC checks (29 items) | inspect/cross.md v1.1 |
+| `references/permission-checklist.v2.md` | Gate-0 (G0-1..4) + QD-PM Quick Mode 17 items | inspect/permission.md v1.1 |
+| `references/explicit-checklist.v2.md` | EX classification (NL-A/NL-B/NR-O/NR-S) + impact type labels (D1/D2/D3) + severity grading (Explicit·P0/P1/P2) + trigger condition label | risk/explicit.md v1.1 |
+| `references/relevance-map.v2.md` | QD → candidate AS-*/FM-* mapping + red lines | framework/relevance.md v1.1 |
 
 ## 9. Provenance and license
 
@@ -271,10 +304,12 @@ Condensed from the SanityOps Framework v1.1 (2026-10 release), maintained by San
 | `QC-*` | Code-contract defect IDs | a defect in an embedded code snippet |
 | `EX-*` | Risk Explicit IDs | an explicitly-expressed risk (static text) |
 | `AS-*` / `FM-*` | Impact-map IDs | candidate attack surface / failure mode (advisory) |
-| `AC-L1/L2/L3` | Agent complexity level | how complex the agent is (drives which rules apply) |
-| `OR-L1/L2/L3` | Operation risk level | how risky the operations are (drives severity) |
+| `AC-L1/L2/L3` | Agent complexity level | how complex the agent is (drives severity for the Prompt domain) |
+| `OR-L1/L2/L3` | Operation risk level | how risky the operations are (drives severity for the Skill/Tool domain) |
 | `P0 / P1 / P2` | Severity | blocking / warning / advisory |
 | `full` / `summary` | Fidelity | original file (all rules) vs summary (contradictions only) |
+| `applicability.fact` | Structural fact | an observable fact (`has_tool` / `has_workflow` …) that decides whether a check runs (N/A vs judge) |
+| reference level | 参考级 | a check the unified checklist carries but the original tier-scoped spec would have skipped at this L — shown advisory, annotated with its original severity |
 
 ## Appendix B — Minimal example
 

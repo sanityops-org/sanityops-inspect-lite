@@ -48,7 +48,7 @@ Seven stages, strictly in order, non-blocking:
 |---|---|
 | **A** | Single-artifact defects — Prompt, Skill, each Tool Schema, plus embedded-code checks |
 | **B** | Cross-artifact contracts — Prompt↔Skill, Prompt↔Tool, Skill↔Tool, and circular invocation |
-| **C** | Gate-0 — admission to the permission stage (informational, not a verdict) |
+| **C** | Gate-0 — admission to the permission stage (G0-1/G0-2 informational; G0-4 is the structural gate) |
 | **D** | Permission proportionality — 17-item Quick Mode |
 | **E** | Risk Explicit audit — dangerous expressions classified into 34 subcategories |
 | **F** | Impact outlook — candidate attack-surface and failure-mode mapping (advisory) |
@@ -69,7 +69,7 @@ sanityops-inspect-lite/
 │       ├── pre-inspect-extract/SKILL.md   # skill 1: extraction layer
 │       └── sanityops-inspect-lite/
 │           ├── SKILL.md                   # skill 2: seven-stage inspector
-│           └── references/                # 8 condensed reference files
+│           └── references/                # _meta.md + 8 domain checklists (v2)
 ├── samples/                               # worked inspection examples
 ├── pre-inspect-harvester-spec.md          # extraction-layer design rationale
 ├── quality/code-contract.md               # embedded-code QC source (DRAFT)
