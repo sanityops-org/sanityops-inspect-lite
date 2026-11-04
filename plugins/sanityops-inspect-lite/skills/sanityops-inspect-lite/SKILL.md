@@ -2,7 +2,7 @@
 name: sanityops-inspect-lite
 version: 1.1.0
 owner: Sanity AI Labs
-description: Lite, dependency-free inspector for AI Agent logic artifacts (System Prompt, Skill, Tool Schema) based on the SanityOps Framework v1.1. Runs a seven-stage non-blocking flow — single-artifact defect inspection (QD-P/QD-S/QD-T/QC), cross-artifact contract checks (QD-PS/PT/ST/CYC), Gate-0 admission, permission proportionality quick check (QD-PM), explicit-risk audit (EX: NL-A/NL-B/NR-O/NR-S), a candidate-impact outlook (AS-*/FM-* mapping), and a lightweight self-verification pass (Stage G). P0 findings are aggregated and reported but never halt the flow. Detect-only: it never rewrites the inspected artifacts. Use when the user asks to inspect, audit, or check an agent's system prompt, skill definition, or tool schemas.
+description: Trigger words: sanityops-flow / static check / 静态检查 / 完整检查. Lite, dependency-free inspector for AI Agent logic artifacts (System Prompt, Skill, Tool Schema) based on the SanityOps Framework v1.1. Runs a seven-stage non-blocking flow — single-artifact defect inspection (QD-P/QD-S/QD-T/QC), cross-artifact contract checks (QD-PS/PT/ST/CYC), Gate-0 admission, permission proportionality quick check (QD-PM), explicit-risk audit (EX NL-A/NL-B/NR-O/NR-S), a candidate-impact outlook (AS-*/FM-* mapping), and a lightweight self-verification pass (Stage G). P0 findings are aggregated and reported but never halt the flow. Detect-only — it never rewrites the inspected artifacts. Use when the user asks to inspect, audit, or check an agent's system prompt, skill definition, or tool schemas.
 license: CC BY-SA 4.0
 changelog: https://github.com/sanityops-org/sanityops-inspect-lite/releases
 ---
