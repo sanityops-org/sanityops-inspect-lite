@@ -283,7 +283,7 @@ For the user-facing output, collapse the two dimensions into **one unified label
 
 ### 8.5 When uncertain
 
-- If L cannot be judged from the available content (e.g. "summary" fidelity), emit `L = undetermined` and let the downstream structural-fact gate decide "whether to check"; severity then falls back to the checklist's default.
+- If L cannot be judged from the available content (e.g. "summary" fidelity), emit `L = undetermined` and let the downstream structural-fact gate decide "whether to check"; the downstream then reports severity as `—` (reference level) per `_meta.md` §4, and records "L undetermined" in the report rather than picking an L column.
 - A wrong L is safe by design: because L no longer decides "whether to check", the worst case is the severity (P) being off by one tier — it can never drop a check.
 
 ## 9. Evidence

@@ -23,7 +23,6 @@ The plugin ships two skills under `plugins/sanityops-inspect-lite/skills/` — `
 
 - **One agent at a time:** if a document appears to mix several agents, the skill asks you to confirm whether they are one agent or an unrelated collection — answer before the cross-artifact and permission stages run.
 - **The report follows your language:** ask in Chinese and you get the report in Chinese; rule IDs (`QD-*`, `QC-*`, `EX-*`, …) stay as identifiers.
-- **Example reports:** `samples/` contains worked inspection reports (they carry a stale-notice against an earlier five-stage revision of the skill).
 
 ## Data & privacy
 

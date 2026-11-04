@@ -6,7 +6,7 @@ title: 统一 Checklist 共享元文档（_meta）
 
 > 本文件是 8 个域 checklist 的**共享定义**：字段模型、check_engine 映射、applicability 结构事实门、severity 表达、打分规则、域文件组织约定。**加载一次、各域复用**。域文件只承载"检查项本身"，不重复本文件。
 >
-> 状态：v2 统一引擎版（已定稿）。与 [checklist-unification-design.md](../../../../../checklist-unification-design.md)（设计决策记录）配套。
+> 状态：v2 统一引擎版（已定稿）。设计决策记录见仓库根 `checklist-unification-design.md`（不随包分发，仅在仓库内查阅）。
 
 ## 1. 字段模型（全字段，三端共用）
 
@@ -52,6 +52,7 @@ title: 统一 Checklist 共享元文档（_meta）
 - `P1·P2` = 同项内两个子缺陷分列不同级
 - `P0(style P2)` = 主缺陷 P0、风格性子项 P2
 - 源规范 `*`（by-feature，按特征触发）的语义已并入 `applicability.fact`，severity 只存"命中后取值"。
+- `undetermined`（pre 层无法定级）= 不映射 severity，判为 `—`（参考级：仍检查、不参与打分），并在报告中写明"L 未定"，不得猜测一个 L 列来填。
 
 **域特有 L 命名**：Prompt 域用 AC-L、Skill/Tool 域用 OR-L、Permission 用 max；severity 表头显式标前缀。
 

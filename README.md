@@ -70,7 +70,6 @@ sanityops-inspect-lite/
 │       └── sanityops-inspect-lite/
 │           ├── SKILL.md                   # skill 2: seven-stage inspector
 │           └── references/                # _meta.md + 8 domain checklists (v2)
-├── samples/                               # worked inspection examples
 ├── pre-inspect-harvester-spec.md          # extraction-layer design rationale
 ├── quality/code-contract.md               # embedded-code QC source (DRAFT)
 ├── GET_STARTED.md                         # step-by-step setup
@@ -156,7 +155,7 @@ Top findings:
 Status board: Stage A Executed · Stage B Not Executed (no Tool/Skill) · ...
 ```
 
-Full reports carry a seven-line status board, an executive summary, per-rule verdicts with verbatim evidence, and a self-verification statement. Worked instances are in [`samples/`](samples/).
+Full reports carry a seven-line status board, an executive summary, per-rule verdicts with verbatim evidence, and a self-verification statement.
 
 ---
 
@@ -186,7 +185,7 @@ The comparison is illustrative; on any specific number the owning sub-specificat
 
 ## License scope
 
-- Rule content (`SKILL.md`, `references/`, `samples/`): **CC BY-SA 4.0**.
+- Rule content (`SKILL.md`, `references/`): **CC BY-SA 4.0**.
 - **Using this skill to inspect your own artifacts is not an adaptation** — your artifacts and your project keep their own license. Share-Alike applies only to modified versions of this package.
 - **To integrate the capability into a product or service**, use `sanityops-cli` (Apache 2.0) — the recommended path for embedding.
 

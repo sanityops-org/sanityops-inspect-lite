@@ -1,8 +1,8 @@
 # 统一 Checklist 改造 — 设计决策记录
 
-> 状态：**进行中**。本文档是统一 checklist 改造的唯一设计事实源，供 skill / CLI / platform 三端改造时查阅，也用于跨对话/跨窗口延续上下文。
+> 状态：**已定稿（v2 已全量落地）**。本文档是统一 checklist 改造的唯一设计事实源，供 skill / CLI / platform 三端改造时查阅，也用于跨对话/跨窗口延续上下文。
 >
-> 配套样例：[tool-checklist.v2.md](plugins/sanityops-inspect-lite/skills/sanityops-inspect-lite/references/tool-checklist.v2.md)（已产出，待审）。
+> 配套产物：`_meta.md` + 8 个域 checklist 已按本记录全量产出（commit `a21a67a`），路径见 §6。
 
 ## 1. 背景与目标
 
@@ -20,18 +20,18 @@
 - 物理结构分两层：
 
 ```
-_meta.md          — 共享元文档：字段定义、判定口径、N/A 纪律、severity 规则、失效安全（小，加载一次）
-prompt.md         ┐
-skill.md          │
-tool.md           ├ 域检查项（纯检查项，按阶段加载）
-code-contract.md  │
-cross.md          │
-permission.md     │
-explicit.md       │
-relevance.md      ┘
-id-index.md       — 精简 ID 清单（Stage G 自检 back-closure 用）
+_meta.md                       — 共享元文档：字段定义、判定口径、N/A 纪律、severity 规则、失效安全（小，加载一次）
+prompt-checklist.v2.md         ┐
+skill-checklist.v2.md          │
+tool-checklist.v2.md           ├ 域检查项（纯检查项，按阶段加载）
+code-contract-checklist.v2.md  │
+cross-checklist.v2.md          │
+permission-checklist.v2.md     │
+explicit-checklist.v2.md       │
+relevance-map.v2.md            ┘
 ```
 
+- **不产出 `id-index.md`**：Stage G 的 back-closure 直接读各域 §2 索引（理由见 §5「已否决」）。
 - 铁律：**md 就是真源，任何改动只改这一处**。
 
 ### 2.2 字段模型（全字段，三端共用）
@@ -163,20 +163,21 @@ pre-inspect-extract 输出**两层** IR：
 ## 5. 落地进度与下一步
 
 **已完成**：
-- [x] tool 域样例 `tool-checklist.v2.md`（已按自检修订：1.1 适用性点1悖论、1.2 子项补齐、`*` 归属、name 正源、Method 纠源、program-check 标记；待用户审阅）
+- [x] tool 域样例 `tool-checklist.v2.md`（先行样例，字段模型已确认并推广到全部域）
+- [x] 铺全其余 7 个域 + `_meta.md`（prompt / skill / code-contract / cross / permission / explicit / relevance）
+- [x] 改 pre-inspect-extract：加 L 前置定级 + IR 两层输出
+- [x] 改主 SKILL.md：流程引用新 checklist 方式、Stage G 自检升级为三角核对、移除打分、加参考级展示
+- [x] 同步 README / GET_STARTED / `quality/code-contract.md` / `package.json`
 
-**待办（按顺序）**：
-1. 审 tool 样例，确认字段模型后铺全量其余 7 个域（prompt / skill / code-contract / cross / permission / explicit / relevance）。
-2. 产出 `_meta.md`（共享元文档）+ `id-index.md`。
-3. 改 pre-inspect-extract：加 L 前置定级 + IR 两层输出。
-4. 改主 SKILL.md：流程引用新 checklist 方式、Stage G 自检升级为三角核对、移除打分、加参考级展示。
-5. 同步 README / GET_STARTED。
+**已否决**：
+- `id-index.md`：**不产出**。Stage G 的 ID back-closure / forward coverage 直接读各域 §2 索引；再造一份索引等于新增一份必须同步的副本，违背"无生成、无同步、无副本"原则。
 
-**CLI 侧**（另一 repo `sanityops-cli`）按本决策记录 + 开发指导另行实现，不在本仓库。
+**遗留（非阻塞）**：
+1. `examples`（正/反例）全部挂起，待后续按域补充。
+2. CLI / platform 侧（另一 repo `sanityops-cli`）按本决策记录 + 开发指导另行实现，不在本仓库。
 
 ## 6. 相关文件
 
-- 样例：[tool-checklist.v2.md](plugins/sanityops-inspect-lite/skills/sanityops-inspect-lite/references/tool-checklist.v2.md)
-- 现有旧 checklist（待替换）：`plugins/sanityops-inspect-lite/skills/sanityops-inspect-lite/references/*.md`
+- 域文件（`_meta.md` + 8 个 `*.v2.md`）：`plugins/sanityops-inspect-lite/skills/sanityops-inspect-lite/references/`
 - pre 层：`plugins/sanityops-inspect-lite/skills/pre-inspect-extract/SKILL.md`
 - 主 skill：`plugins/sanityops-inspect-lite/skills/sanityops-inspect-lite/SKILL.md`
