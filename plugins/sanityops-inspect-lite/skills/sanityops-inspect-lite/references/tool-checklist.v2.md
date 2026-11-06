@@ -72,7 +72,7 @@ title: Tool Schema Checklist (v2 统一引擎版)
 
 ### 3.2 hybrid 项的模型确认部分
 
-> 程序初筛规则见 §4；此处为模型需确认的语义要点。
+> **skill 端：本节即完整判定要点，无程序初筛前置。**「程序仅检…／程序仅做…」描述的是 CLI / platform 的初筛路径；skill 全模型推理、不执行 §4，必须自行完成语义判定，不得视为"已筛过"，也不得据此判 N/A。
 
 | ID | model_prompt（确认要点） |
 |---|---|
@@ -92,7 +92,7 @@ title: Tool Schema Checklist (v2 统一引擎版)
 
 ## 4. 程序判定项（program-check 代码块）
 
-> 程序引擎只 parse 本代码块。`rule` 字段为**判定语义示意**（非最终可执行定义，程序级实现后续补）。
+> **CLI / platform 专用：skill 不解析、不执行本代码块**（skill 全模型推理，不消费 `check_engine` 与 `program_rule`）。程序引擎只 parse 本代码块。`rule` 字段为**判定语义示意**（非最终可执行定义，程序级实现后续补）。
 > 涵盖纯 program 项 + hybrid 项的初筛规则。
 
 <!-- program-check -->

@@ -47,14 +47,14 @@ Seven stages, strictly in order, non-blocking:
 | Stage | What it checks |
 |---|---|
 | **A** | Single-artifact defects — Prompt, Skill, each Tool Schema, plus embedded-code checks |
-| **B** | Cross-artifact contracts — Prompt↔Skill, Prompt↔Tool, Skill↔Tool, and circular invocation |
+| **B** | Cross-artifact contracts — Prompt↔Skill, Prompt↔Tool, Skill↔Tool, Skill↔Skill, Tool↔Tool, and circular invocation |
 | **C** | Gate-0 — admission to the permission stage (G0-1/G0-2 informational; G0-4 is the structural gate) |
-| **D** | Permission proportionality — 17-item Quick Mode |
+| **D** | Permission proportionality — full 43-item set |
 | **E** | Risk Explicit audit — dangerous expressions classified into 34 subcategories |
 | **F** | Impact outlook — candidate attack-surface and failure-mode mapping (advisory) |
 | **G** | Self-verification — checks the report itself, never the artifacts |
 
-"Lite" refers to **rule depth**, not **scope**: every stage runs, but each uses condensed (minimal) rule sets instead of the full specification. The comparison table is in [Lite vs full](#lite-vs-full).
+"Lite" refers to **rule depth**, not **scope**: every stage runs, and most stages use condensed (minimal) rule sets instead of the full specification — the Permission stage is the exception and runs the full 43-item set. The comparison table is in [Lite vs full](#lite-vs-full).
 
 ---
 
@@ -163,8 +163,8 @@ Full reports carry a seven-line status board, an executive summary, per-rule ver
 
 | Capability | Lite (this skill) | Full (CLI / Platform) |
 |---|---|---|
-| Inspect rules | Condensed minimal sets | Full specification |
-| Permission | 17-item Quick Mode | Full 43-item set |
+| Inspect rules | Condensed minimal sets (Permission: full 43) | Full specification |
+| Permission | Full 43-item set (model-judged) | Full 43-item set (program + model engines) |
 | Risk Explicit | 34-subcategory classification + grading | Full classification |
 | Risk Implicit | Not run | Run (dynamic exploitability) |
 | Quality — runtime | Not run | Run (RAG/Tool-Agent metrics) |

@@ -15,7 +15,7 @@ title: Code Contract Inspection Checklist (QC, v2 统一引擎版)
 - **基线门 QC-0**（5 项）：entry gate，QC-1~4 检查前 MUST 通过。
 - **依赖上下文规则**（源 §1）：QC-1.2（Invalid Import）、QC-1.3（Deprecated API）依赖**外部输入**（声明依赖清单 + API 版本库），不在 Logic Artifact 内。外部输入缺失（lite 默认）时记 `Not Executed`，**绝不记 FAIL**；仅当片段内自证缺陷（如 import 明显不存在的模块）或自相矛盾时才记 FAIL。
 - **示意片段规则**（源 §1）：外层文本标记为示意/伪码（"example"/"pseudo"、用 `...` 省略）的片段，豁免 QC-0.1 / QC-0.3 的解析完整性要求；省略或缺 import 不构成 FAIL。
-- **check_engine 分配口径**：源 Method 列 `Automated`→program、`Semi-automated`→hybrid、`Pattern match`→program（确定性模式匹配，程序可执行）；QC-0 无 Method 列，按 Appendix 检测策略映射（0.4 fence 匹配→program，0.5 语言-内容关键词匹配→hybrid）。本域**无纯 model 项**（lint 型）。
+- **check_engine 分配口径（本域重分类日志）**：源 Method 列 `Automated`→program、`Semi-automated`→hybrid、`Pattern match`→program（确定性模式匹配，程序可执行）；QC-0 无 Method 列，按 Appendix 检测策略映射（0.4 fence 匹配→program，0.5 语言-内容关键词匹配→hybrid）。本域**无纯 model 项**（lint 型）。
 - **跨域交叉引用**（源 §5 注）：QC-3.3（Hardcoded Demo Value）与 NR-S-9（Hardcoded Credential）重叠——真实凭证由 NR-S-9 优先；QC-3.3 覆盖弱/演示模式（"123456"、"xxx"、"changeme"、本地路径、内网 IP），不匹配凭证检测器。
 
 ## 2. 检查项索引（17 项 = 5 基线门 + 12 检查项）
@@ -52,7 +52,7 @@ title: Code Contract Inspection Checklist (QC, v2 统一引擎版)
 
 ### 3.2 hybrid 项的模型确认部分
 
-> 程序初筛规则见 §4；此处为模型需确认的语义要点。
+> **skill 端：本节即完整判定要点，无程序初筛前置。**「关键词匹配是模糊信号」等描述的是 CLI / platform 的初筛路径；skill 全模型推理、不执行 §4，必须自行完成语义判定，不得视为"已筛过"，也不得据此判 N/A。
 
 | ID | model_prompt（确认要点） |
 |---|---|
@@ -63,7 +63,7 @@ title: Code Contract Inspection Checklist (QC, v2 统一引擎版)
 
 ## 4. 程序判定项（program-check 代码块）
 
-> 程序引擎只 parse 本代码块。`rule` 字段为**判定语义示意**（非最终可执行定义，程序级实现后续补）。涵盖纯 program 项 + hybrid 项的初筛规则。
+> **CLI / platform 专用：skill 不解析、不执行本代码块**（skill 全模型推理，不消费 `check_engine` 与 `program_rule`）。程序引擎只 parse 本代码块。`rule` 字段为**判定语义示意**（非最终可执行定义，程序级实现后续补）。涵盖纯 program 项 + hybrid 项的初筛规则。
 
 <!-- program-check -->
 ```json

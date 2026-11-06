@@ -15,7 +15,7 @@ title: Risk Explicit Checklist (EX, v2 统一引擎版)
 - **域前缀红线**（core.md §4.6）：分级必须写带前缀的 `Explicit·P0/P1/P2`，禁裸 `P0`——与 Inspect 缺陷处置 `Inspect·P0` 区分。
 - **三阶段流程**（源 §3.5，严格有序）：① 发现分类（NL-A 逐句 → NL-B 跨句关联 → NR-O 解码后回 NL → NR-S 结构+字段校验）；② 定级（D1/D2/D3 标签 → 最坏后果分级 → 触发条件标签）；③ 输出报告。
 - **判定纪律**（源 §3.1/§3.2）：D1/D2/D3 仅作影响**类型标签**（追溯用，绝不参与分级）；只评估风险文本中**显式声明**的内容，不推断隐式风险；多级同时命中取最高；静态审计不得以"可能不触发"降级（保留级并加 `to-be-verified` 交 Risk Implicit）；分级固定三级。
-- **check_engine 分配口径**（从源 Detection strategy 列映射 + 设计 §2.8「优先收敛」）：确定性检测（归一化/解码/格式匹配/字段校验）→ `program`；关键词/模式初筛 + 语义确认 → `hybrid`；纯语义关联/结构识别 → `model`。
+- **check_engine 分配口径（本域重分类日志）**（从源 Detection strategy 列映射 + 设计 §2.8「优先收敛」）：确定性检测（归一化/解码/格式匹配/字段校验）→ `program`；关键词/模式初筛 + 语义确认 → `hybrid`；纯语义关联/结构识别 → `model`。
 - **applicability 结构事实**：`is_text`=任意静态后端文本（通用类型事实，恒真）；`has_structured_config`=存在结构化字段/Tool Schema（NR-S-1~8 专用）。NR-S-9/10 是 NR-S 内**跨载体例外**——扫描全部 Logic Artifact 文本（含 NL 正文），故用 `is_text`。
 - **编号红线**：只允许输出本文件存在的 EX 码，**禁发明 EX ID / 子类 / 层级**。
 
@@ -86,7 +86,7 @@ title: Risk Explicit Checklist (EX, v2 统一引擎版)
 
 ### 3.2 hybrid 项的模型确认部分
 
-> 程序初筛规则见 §4；此处为模型需确认的语义要点。
+> **skill 端：本节即完整判定要点，无程序初筛前置。**「程序仅做…／程序仅检…」描述的是 CLI / platform 的初筛路径；skill 全模型推理、不执行 §4，必须自行完成语义判定，不得视为"已筛过"，也不得据此判 N/A。
 
 | ID | model_prompt（确认要点） |
 |---|---|
@@ -103,7 +103,7 @@ title: Risk Explicit Checklist (EX, v2 统一引擎版)
 
 ## 4. 程序判定项（program-check 代码块）
 
-> 程序引擎只 parse 本代码块。`rule` 字段为**判定语义示意**（非最终可执行定义）。涵盖纯 program 项 + hybrid 项的初筛规则。NR-O 命中解码后需回 NL 分析（源 §5.1）。
+> **CLI / platform 专用：skill 不解析、不执行本代码块**（skill 全模型推理，不消费 `check_engine` 与 `program_rule`）。程序引擎只 parse 本代码块。`rule` 字段为**判定语义示意**（非最终可执行定义）。涵盖纯 program 项 + hybrid 项的初筛规则。NR-O 命中解码后需回 NL 分析（源 §5.1）。
 
 <!-- program-check -->
 ```json

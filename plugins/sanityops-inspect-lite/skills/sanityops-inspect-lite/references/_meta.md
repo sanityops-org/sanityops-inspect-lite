@@ -15,14 +15,16 @@ title: 统一 Checklist 共享元文档（_meta）
 | 字段 | 含义 | skill | CLI | platform |
 |---|---|---|---|---|
 | `id` / `name` / `definition` | 溯源锚点 + 判定定义 | ✓ | ✓ | ✓ |
-| `check_engine` | `program` / `model` / `hybrid` | 忽略（全模型） | ✓ 路由 | ✓ 路由 |
+| `check_engine` | `program` / `model` / `hybrid` | **不消费**（全模型推理） | ✓ 路由 | ✓ 路由 |
 | `applicability` | 结构事实（决定"考不考"，不写 L） | ✓ | ✓ | ✓ |
 | `severity` | 按 L 完整映射（决定"多严重"） | ✓ | ✓ | ✓ |
-| `program_rule` | 程序判定规则（program/hybrid 的初筛） | 忽略 | ✓ | ✓ |
+| `program_rule` | 程序判定规则（program/hybrid 的初筛） | **不消费**（无程序执行环境） | ✓ | ✓ |
 | `model_prompt` | 模型判定要点（model/hybrid 的确认） | ✓ | ✓ | ✓ |
 | `score_weight` | 打分权重/是否计入分母 | 忽略 | 忽略 | ✓ |
 | `examples` | 正/反例（挂起，待补） | ✓ | ✓ | ✓ |
 | `cross_refs` | 同源去重/合并/转移关系 | ✓ | ✓ | ✓ |
+
+> **skill 消费边界（硬）**：skill 端不读取 `check_engine`、不解析 §4 的 `program-check` 块、不执行 `program_rule`。域文件中「程序仅检…／程序仅做…／程序引擎只 parse…」等措辞描述的是 CLI / platform 的初筛路径，**不构成 skill 的判定前置**：skill 必须按 §3 的判定要点完成全量语义推理，不得因"程序已筛过"而降低判定强度，也不得把"程序初筛未命中"当作 N/A 依据。
 
 ## 2. check_engine 三值与映射
 
@@ -43,6 +45,7 @@ title: 统一 Checklist 共享元文档（_meta）
   - `on_absent` → N/A（结构事实不存在，必写依据）
   - `on_unknown` → judge（无法判定，默认查）
 - **N/A 纪律**：N/A 是"结构不适用"的出口，**不是缺失**；必须写明依据。
+- **判定主体（谁判结构事实）**：skill 端结构事实由宿主模型全量语义判定（skill 不消费 `check_engine` / `program_rule`，见 §1）；CLI / platform 端由程序初筛 + 模型确认。无论哪端，结构事实的判定依据都必须可追溯——尤其"事实不存在"（`on_absent → N/A`）必须记录搜索范围与未命中的依据，依据不足时标 `uncertain` 而非 N/A。条件项的事实来源（如 `has_pii` / `has_side_effect_op` / `is_regulated_domain`）由同一判定主体确定，且"触发→P0"的事实命中必须写依据。
 
 ## 4. severity 表达约定
 
@@ -68,11 +71,17 @@ title: 统一 Checklist 共享元文档（_meta）
 每个域文件（如 `prompt-checklist.v2.md`）结构：
 
 1. 状态头（来源 + 本文件只承载检查项，共享定义见 `_meta.md`）
-2. §1 域内重分类日志（如有）
+2. **§1 域内说明（含 check_engine 重分类日志）**：本域 L 命名、判定口径、条目分类说明；相对源 `Method` 列的 check_engine 偏离必须在此留日志，无偏离时写明「无重分类」
 3. §2 检查项索引（ID / name / check_engine / applicability.fact / severity / 计入打分）
-4. §3 模型推理项（§3.1 纯 model / §3.2 hybrid 确认）
-5. §4 程序判定项（`<!-- program-check -->` JSON 块，只放 program + hybrid 初筛）
+4. §3 模型判定要点（§3.1 纯 model / §3.2 hybrid 确认）
+5. §4 程序判定项（`<!-- program-check -->` JSON 块，只放 program + hybrid 初筛；**skill 不执行**）
 6. §5 tombstone（merged / transferred）
 7. §6 打分字段说明（域特有分母）
+
+**变体（不视为漂移）**：
+
+- 含 ungraded 建议项的域（当前为 prompt 域）在 §5 与打分节之间增设「§6 建议项」，打分节顺延为 §7。
+- `explicit-checklist.v2.md` 的末节为「分级与处置说明」（无数值打分），对应本约定第 7 项。
+- `relevance-map.v2.md` 是映射表而非检查项清单，不适用本组织约定。
 
 **三栏闭合约束**：§2 索引 / §3.1 model / §3.2 hybrid / §4 program 块 的 ID 集合一致。

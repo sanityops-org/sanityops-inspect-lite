@@ -11,7 +11,7 @@ title: System Prompt Checklist (v2 统一引擎版)
 ## 1. 域内说明
 
 - **L 命名**：本域 severity 表头用 **AC-L1/AC-L2/AC-L3**（Agent complexity level），非 OR-L。System Prompt 无 operation-risk 维度。
-- **check_engine 分配口径**（源无 Method 列，按源"detection nature"映射）：
+- **check_engine 分配口径（本域重分类日志）**（源无 Method 列，按源"detection nature"映射）：
   - **Part 1（QD-P-1.x，逻辑缺陷，可语义阅读检出）→ `model`**。
   - **Part 2（QD-P-2.x，完整性/安全缺口，需显式 checklist）**：缺声明类（"未声明/缺失 X"）→ `hybrid`（程序初筛声明存在 + 模型确认充分性）；纯语义质量类 → `model`。
 - **条件项**：QD-P-2.3.4 / 2.3.7 / 2.5.7 / 2.5.9 无固定 tier severity，触发→P0（2.3.7 为 P1），不触发→N/A，**不计入静态分母**。
@@ -121,7 +121,7 @@ title: System Prompt Checklist (v2 统一引擎版)
 
 ### 3.2 hybrid 项的模型确认部分（11 项）
 
-> 程序初筛规则见 §4；此处为模型需确认的语义要点。
+> **skill 端：本节即完整判定要点，无程序初筛前置。**「程序仅检…／程序仅做…」描述的是 CLI / platform 的初筛路径；skill 全模型推理、不执行 §4，必须自行完成语义判定，不得视为"已筛过"，也不得据此判 N/A。
 
 | ID | model_prompt（确认要点） |
 |---|---|
@@ -139,7 +139,7 @@ title: System Prompt Checklist (v2 统一引擎版)
 
 ## 4. 程序判定项（program-check 代码块）
 
-> 程序引擎只 parse 本代码块。覆盖 hybrid 项的初筛规则（声明存在性 / 字段缺失）。`rule` 为语义示意。
+> **CLI / platform 专用：skill 不解析、不执行本代码块**（skill 全模型推理，不消费 `check_engine` 与 `program_rule`）。程序引擎只 parse 本代码块。覆盖 hybrid 项的初筛规则（声明存在性 / 字段缺失）。`rule` 为语义示意。
 
 <!-- program-check -->
 ```json

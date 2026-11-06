@@ -12,7 +12,7 @@ title: Skill Inspection Checklist (QD-S, v2 统一引擎版)
 
 - **L 命名**：本域 severity 表头用 **OR-L1/OR-L2/OR-L3**（operation risk：L1 read-only / L2 reversible write / L3 irreversible；Skill 无工具调用 → L1，有工具调用 → 按所执行操作的最高风险）。Skill 域无 AC-L 维度。
 - **基线门 QD-S-0**（9 项）：平台最小结构校验（能否解析、可检），**pass/fail，不计分**（源 §11.3）。QD-S-0.9 为 SHOULD 级，不计入门。放宽失败处理（v1.1）：仅 QD-S-0.3 完全不可解析才阻断 QD-S-1~5 检查；其余 0 缺陷标记 "baseline not passed" 并继续，结论记 "assessment incomplete (NEEDS_REVIEW)"。
-- **check_engine 分配口径**（源 §6 六步流程 + 设计 §2.8「优先收敛」）：
+- **check_engine 分配口径（本域重分类日志）**（源 §6 六步流程 + 设计 §2.8「优先收敛」）：
   - QD-S-0 结构校验（0.1–0.4、0.6–0.9）→ `program`；0.5（冲突判定，需人审）→ `hybrid`。
   - 数量边界/无界措辞扫描类（1.1–1.3、2.1–2.4，源 §6 步骤 4 的 keyword scanning）→ `hybrid`（程序关键词初筛 + 模型确认）。
   - 语义/声明充分性类（1.4–1.5、3.x、4.x、5.x，源 §6 步骤 5）→ `model`。
@@ -89,7 +89,7 @@ title: Skill Inspection Checklist (QD-S, v2 统一引擎版)
 
 ### 3.2 hybrid 项的模型确认部分
 
-> 程序初筛规则见 §4；此处为模型需确认的语义要点。
+> **skill 端：本节即完整判定要点，无程序初筛前置。**「程序仅检…／程序仅做…」描述的是 CLI / platform 的初筛路径；skill 全模型推理、不执行 §4，必须自行完成语义判定，不得视为"已筛过"，也不得据此判 N/A。
 
 | ID | model_prompt（确认要点） |
 |---|---|
@@ -104,7 +104,7 @@ title: Skill Inspection Checklist (QD-S, v2 统一引擎版)
 
 ## 4. 程序判定项（program-check 代码块）
 
-> 程序引擎只 parse 本代码块。`rule` 字段为**判定语义示意**（非最终可执行定义，程序级实现后续补）。涵盖纯 program 项（QD-S-0 基线）+ hybrid 项的初筛规则。
+> **CLI / platform 专用：skill 不解析、不执行本代码块**（skill 全模型推理，不消费 `check_engine` 与 `program_rule`）。程序引擎只 parse 本代码块。`rule` 字段为**判定语义示意**（非最终可执行定义，程序级实现后续补）。涵盖纯 program 项（QD-S-0 基线）+ hybrid 项的初筛规则。
 
 <!-- program-check -->
 ```json

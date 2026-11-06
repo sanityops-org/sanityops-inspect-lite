@@ -15,7 +15,7 @@ title: Cross-Artifact Consistency Checklist (v2 统一引擎版)
 - **仅检跨工件关系**（六组：QD-PS / QD-PT / QD-ST / QD-SS / QD-TT / QD-CYC），不复检 QD-P/QS/QD-T 的单工件内部缺陷。
 - **每项证据须引双方工件位置**（三级定位：关系→工件→字段）。
 - **N/A 纪律**：N/A 必写依据（如"无 Tool Schema""Agent 仅 1 个 Skill"）；无依据的 N/A 视为未检，按默认级计失败。
-- **check_engine 分配口径**：跨工件一致性本质是语义推理 → 绝大多数 `model`；存在性/唯一性/竞争（2.1、3.1、4.2、5.2）有程序初筛（名称匹配）→ `hybrid`。本域**无纯 program 项**。
+- **check_engine 分配口径（本域重分类日志）**：跨工件一致性本质是语义推理 → 绝大多数 `model`；存在性/唯一性/竞争（2.1、3.1、4.2、5.2）有程序初筛（名称匹配）→ `hybrid`。本域**无纯 program 项**。
 
 **OR-L3 升级表（源 Appendix C.2，跨项）**：
 
@@ -100,7 +100,7 @@ title: Cross-Artifact Consistency Checklist (v2 统一引擎版)
 
 ### 3.2 hybrid 项的模型确认部分
 
-> 程序初筛规则见 §4；此处为模型需确认的语义要点。
+> **skill 端：本节即完整判定要点，无程序初筛前置。**「程序仅做…」描述的是 CLI / platform 的初筛路径；skill 全模型推理、不执行 §4，必须自行完成语义判定，不得视为"已筛过"，也不得据此判 N/A。
 
 | ID | model_prompt（确认要点） |
 |---|---|
@@ -111,7 +111,7 @@ title: Cross-Artifact Consistency Checklist (v2 统一引擎版)
 
 ## 4. 程序判定项（program-check 代码块）
 
-> 程序引擎只 parse 本代码块。`rule` 字段为**判定语义示意**。本域仅 hybrid 项有初筛规则，无纯 program 项。
+> **CLI / platform 专用：skill 不解析、不执行本代码块**（skill 全模型推理，不消费 `check_engine` 与 `program_rule`）。程序引擎只 parse 本代码块。`rule` 字段为**判定语义示意**。本域仅 hybrid 项有初筛规则，无纯 program 项。
 
 <!-- program-check -->
 ```json
