@@ -339,6 +339,27 @@ title: Relevance Map (v2 统一引擎版)
 | "Relies on compensating controls" | "Completely secure" |
 | "Not reproduced under current test conditions" | "Absolutely unexploitable" |
 
+### 8.1 Compact 模板（按影响类别分组，lite 可选用）
+
+当缺陷较多、缩写密度影响可读性时，可用下表的**分组形态**替代逐缺陷卡片（§8 完整模板仍可用于需详述的单缺陷）。硬要求不变：候选语言、Strength ≠ severity、Risk Implicit / 运行时 Quality 未运行、与 verdict 物理隔离。
+
+**术语表（必带，只列本表实际用到的编码）**
+
+| 编码 | 含义 |
+|---|---|
+| AS-xx | <攻击面中文名，取自 §3 图例> |
+| D1 / D2 / D3 | 机密性 / 完整性 / 授权损害 |
+| Strong / Medium / Conditional | 关联强度（=验证优先级，非严重度） |
+| FM 类别组 | <组名，取自 §5>（逐码定义未随包分发，不展开） |
+
+**分组表（每行一个影响类别）**
+
+| 影响类别 | 缺陷（内联归属，逐缺陷不可合并） | 可能后果（人话） | 建议先测 |
+|---|---|---|---|
+| <类别名>（AS-xx/…） | `<QD-ID>`（AS-… · impact · strength · FM-…）、`<QD-ID>`（…） | … | … |
+
+> 约束：每行内每个缺陷必须内联自己的 `AS / impact / strength / FM`；strength 组内可能不同（如 Strong 与 Conditional 并存），不得因分组丢失；P0 缺陷加粗。
+
 ## 9. 缺陷链——出 lite 范围（§1.5）
 
 缺陷链用于识别多缺陷组合形成的候选利用/失败路径，需唯一 `chain_id`、保留成员缺陷与跨工件关系、端到端 Risk Implicit 验证等。**lite inspector v1 出范围**：本参考仅支持单缺陷候选映射，不构造/断言/报告缺陷链（SC-*/QC-TA-*/QC-RA-*），不把分离的单缺陷候选关联升级为链路径。

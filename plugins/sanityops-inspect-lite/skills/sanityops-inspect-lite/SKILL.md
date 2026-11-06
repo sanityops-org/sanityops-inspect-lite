@@ -1,8 +1,8 @@
 ---
 name: sanityops-inspect-lite
-version: 1.3.0
+version: 1.3.1
 owner: Sanity AI Labs
-description: Trigger words: sanityops-inspect-lite / sanityops-flow / static check / 静态检查 / 完整检查. Lite, dependency-free inspector for AI Agent logic artifacts (System Prompt, Skill, Tool Schema) based on the SanityOps Framework v1.1. Runs a seven-stage non-blocking flow — single-artifact defect inspection (QD-P/QD-S/QD-T/QC), cross-artifact contract checks (QD-PS/PT/ST/SS/TT/CYC), Gate-0 admission, permission proportionality check (QD-PM, full 43-item set), explicit-risk audit (EX NL-A/NL-B/NR-O/NR-S), a candidate-impact outlook (AS-*/FM-* mapping), and a lightweight self-verification pass (Stage G). P0 findings are aggregated and reported but never halt the flow. Detect-only — it never rewrites the inspected artifacts. Use when the user asks to inspect, audit, or check an agent's system prompt, skill definition, or tool schemas.
+description: Trigger words: sanityops-inspect-lite / sanityops-flow / static check / 静态检查 / 完整检查. Lite, dependency-free inspector for AI Agent logic artifacts (System Prompt, Skill, Tool Schema) based on the SanityOps Framework v1.1. Runs a seven-stage non-blocking flow — single-artifact defect inspection (QD-P/QD-S/QD-T/QC), cross-artifact contract checks (QD-PS/PT/ST/SS/TT/CYC), Gate-0 admission, permission proportionality check (QD-PM, full 43-item set), explicit-risk audit (EX NL-A/NL-B/NR-O/NR-S), a candidate-impact outlook (AS-*/FM-* mapping), and a lightweight self-verification pass (Stage G). P0 findings are aggregated and reported but never halt the flow. Detect-only — it never rewrites the inspected artifacts. Use when the user asks to inspect, audit, or check an agent's system prompt, skill definition, or tool schemas. Local mod: Stage F grouped compact output (v1.3.1).
 license: CC BY-SA 4.0
 changelog: https://github.com/sanityops-org/sanityops-inspect-lite/releases
 ---
@@ -178,7 +178,7 @@ Gate-0 **is not an inspection item**: it produces no numbers and no score; "not 
 ### Stage F — Impact outlook (candidate mapping, advisory only)
 
 1. For **each FAIL** from Stages A/B/D, look up `references/relevance-map.v2.md`. (QC-* embedded-code defects have no AS-*/FM-* mapping in the relevance map — Stage F emits no Impact Card for them; record them as unmapped.)
-2. Emit a condensed Impact Card per mapped defect: defect ID → candidate attack surface(s) (AS-*) → candidate failure mode(s) (FM-*) → candidate RAG-Agent quality metric(s) → strength (Strong/Medium/Conditional). FM-* codes (FM-01..FM-10) are defined in the source L1 spec `quality/tool-agent.md` (not bundled here) — output the code reference only, never invent an FM definition.
+2. Emit, for each mapped defect, its candidate mapping: defect ID → candidate attack surface(s) (AS-*) → candidate failure mode(s) (FM-*) → candidate RAG-Agent quality metric(s) → strength (Strong/Medium/Conditional). Presentation may be **grouped by impact category into one table** instead of one card per defect, provided that: (a) every mapped defect carries its own inline attribution `defect ID (AS-… · impact · strength · FM-…)` — grouping must never merge per-defect strength/AS/FM, which vary within a category; (b) P0 defects are visually distinguished (e.g. bold); and (c) a **glossary of abbreviations** (AS-01..09, D1/D2/D3, the three strength levels, and the FM category groups used) precedes the table, since abbreviation density is the primary readability failure. FM-* codes (FM-01..FM-10) are defined in the source L1 spec `quality/tool-agent.md` (not bundled here) — output the code reference (category group) only, never invent an FM definition.
 3. Red lines (mandatory):
    - Candidate language only: "candidate association", "may", "needs dynamic verification". **Never** "will cause", "inevitably", "guarantees".
    - Strength ≠ severity. Label both explicitly.
