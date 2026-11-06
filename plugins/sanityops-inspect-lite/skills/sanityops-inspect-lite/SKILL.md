@@ -274,7 +274,7 @@ Stage G (Self-verification): Executed / Not Executed — <reason>
 7. **Report header (mandatory on every report and every stage-only report)** — exactly these provenance facts:
    - Host model name (self-declared by the model executing this skill, e.g. `Host model: <vendor/model>`);
    - Single-model statement: `Extraction (pre-inspect) and inspection were performed by the same host model in the same context; no independent verifier reviewed the extraction or the verdicts.` (omit the extraction clause when no IR was used);
-   - Skill package: `sanityops-inspect-lite v1.3.0` (the `version` value of this SKILL.md front matter);
+   - Skill package: `sanityops-inspect-lite v1.3.1` (the `version` value of this SKILL.md front matter);
    - Specification baseline: `SanityOps Framework v1.1 (2026-10 release)`;
    - The non-official-result statement, verbatim in substance: *"This result is produced by the skill rule package applied by the host model; it is NOT a conclusion of the official SanityOps engine. For a full inspection use sanityops-cli."*
    - Inspection date and the artifact version label supplied by the user;

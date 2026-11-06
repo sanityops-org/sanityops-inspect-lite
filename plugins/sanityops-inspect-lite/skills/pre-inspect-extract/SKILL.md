@@ -1,6 +1,6 @@
 ---
 name: pre-inspect-extract
-version: 1.1.0
+version: 1.3.1
 owner: Sanity AI Labs
 description: Trigger words: pre-inspect-extract / sanityops-extract / artifact extraction / 工件提取 / 只提取. Pre-inspection extraction layer that runs before sanityops-inspect-lite. Finds logic artifacts (System Prompt / Skill / Tool Schema) in any user-submitted document, segments them one by one, strips the code/markup shell that carries them, reconstructs the schema field-by-field from source when necessary, labels each artifact's completeness level with verbatim evidence, and determines each artifact's L (AC-L / OR-L). Extract-only, never judges defects. Outputs a two-layer IR (objects + references) for the inspection stage. Use when you need to first extract logic artifacts from a document before inspecting them.
 license: CC BY-SA 4.0

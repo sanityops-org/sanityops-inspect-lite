@@ -1,7 +1,7 @@
 # SanityOps Inspect Lite
 
 [![License: CC BY-SA 4.0](https://img.shields.io/badge/License-CC%20BY--SA%204.0-lightgrey.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)](package.json)
+[![Version](https://img.shields.io/badge/version-1.3.1-blue.svg)](package.json)
 
 A **dependency-free, detect-only inspector** for AI Agent logic artifacts — **System Prompt**, **Skill**, and **Tool Schema**. It reads them and reports defects; it never rewrites them.
 
