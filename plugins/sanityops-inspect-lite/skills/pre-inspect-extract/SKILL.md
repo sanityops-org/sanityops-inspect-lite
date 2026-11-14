@@ -2,7 +2,7 @@
 name: pre-inspect-extract
 version: 1.3.1
 owner: Sanity AI Labs
-description: Trigger words: pre-inspect-extract / sanityops-extract / artifact extraction / 工件提取 / 只提取. Pre-inspection extraction layer that runs before sanityops-inspect-lite. Finds logic artifacts (System Prompt / Skill / Tool Schema) in any user-submitted document, segments them one by one, strips the code/markup shell that carries them, reconstructs the schema field-by-field from source when necessary, labels each artifact's completeness level with verbatim evidence, and determines each artifact's L (AC-L / OR-L). Extract-only, never judges defects. Outputs a two-layer IR (objects + references) for the inspection stage. Use when you need to first extract logic artifacts from a document before inspecting them.
+description: Trigger words: pre-inspect-extract / sanityops-extract / artifact extraction / extract only / 工件提取 / 只提取. Pre-inspection extraction layer that runs before sanityops-inspect-lite. Finds logic artifacts (System Prompt / Skill / Tool Schema) in any user-submitted document, segments them one by one, strips the code/markup shell that carries them, reconstructs the schema field-by-field from source when necessary, labels each artifact's completeness level with verbatim evidence, and determines each artifact's L (AC-L / OR-L). Extract-only, never judges defects. Outputs a two-layer IR (objects + references) for the inspection stage. Use when you need to first extract logic artifacts from a document before inspecting them.
 license: CC BY-SA 4.0
 changelog: https://github.com/sanityops-org/sanityops-inspect-lite/releases
 ---
@@ -83,7 +83,7 @@ Segment → classify type → classify extraction class → extract → determin
 
 Cut into candidate objects, discard scaffolding.
 
-- Scaffolding headings (match by meaning, not by exact English string — `## 元数据` equals `## Metadata`, etc.): `## Metadata`, `## Evaluation Dimensions`, `## Scoring Criteria`, `## Test Suggestions`, `## Notes`, `## Source Profile`.
+- Scaffolding headings (match by meaning, not by exact English string — a heading localized into another language still counts as `## Metadata`, etc.): `## Metadata`, `## Evaluation Dimensions`, `## Scoring Criteria`, `## Test Suggestions`, `## Notes`, `## Source Profile`.
 - Each `### N. xxx`, each text passage with a structural signature, and each top-level code fence block is one candidate object. **A single fence may still hold multiple artifacts** (a JSON array with several tools, a `.py` with several `Tool(...)` calls): after cutting out the fence, re-split by element when it contains more than one independent artifact, and report each in the summary count.
 
 **"Structural signature" — the minimal definition.** A text block is a candidate object when it shows at least one of:
@@ -359,7 +359,7 @@ Each output carries:
 
 - **Location**: source file + section heading (e.g. `## Original Artifact Content` / `### 2. Input schema`).
 - **Method**: verbatim copy / assembly / summary.
-- **Verbatim excerpt**: verbatim-copy cases give the head and tail fragments; assembly cases give the source fragment per field (`name` → source, `description` → source, each parameter → source).
+- **Verbatim excerpt**: verbatim-copy cases give the head and tail fragments **plus a `#### Full verbatim body` block carrying the complete artifact text word-for-word**; assembly cases give the source fragment per field (`name` → source, `description` → source, each parameter → source).
 
 Self-evidence standard: a person who does not know the context can find every point in the original using only the evidence. If not, drop the completeness level by one (down the §7 order).
 
@@ -391,7 +391,7 @@ Self-evidence standard: a person who does not know the context can find every po
 One Markdown inventory, structured as a two-layer IR:
 
 1. **Extraction summary** (top): agent membership declaration (single agent / pending confirmation), total artifact count, count by type, not-inspectable count and per-item reasons, completeness-level distribution, and L distribution. The membership declaration uses a fixed phrasing so downstream consumers can read it reliably: `agent membership: single agent` or `agent membership: pending confirmation` (never a free-form paraphrase).
-2. **Object layer** — one block per extracted artifact: artifact name, type, completeness level, **L**, extraction class, source location, extraction method, verbatim evidence. "original · variable unexpanded" must list the unexpanded variables and a content summary.
+2. **Object layer** — one block per extracted artifact: artifact name, type, completeness level, **L**, extraction class, source location, extraction method, verbatim evidence, and a **`#### Full verbatim body` block carrying the complete artifact text word-for-word** (the head/tail excerpts alone are not enough — the downstream inspection must read the full body to judge "missing / not declared" checks). "original · variable unexpanded" must list the unexpanded variables and a content summary.
 3. **Reference layer** — every cross-object reference detected in §4.1: `referenced name | referenced by | relationship (tool call / skill dep / prompt var / file ref)`; generic prose does not enter here. A `prompt var` entry whose definition is locatable (§5 E2) additionally carries the **expanded rules** — the traced definition text, or a location anchor pointing to where it is defined — so the inspection stage can read the expanded content, not just the variable name.
 4. **Not-inspectable list** — listed separately, each with a reason, producing no defect conclusion.
 5. **`ir-core` JSON block** — the machine-readable core of layers 2, 3 and 4 — objects, references, and the not-inspectable list (see below), for CLI / platform to parse.
