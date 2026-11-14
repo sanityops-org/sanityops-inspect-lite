@@ -1,0 +1,24 @@
+name: Notify sanityops-cli of skill updates
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'plugins/sanityops-inspect-lite/skills/**'
+  workflow_dispatch:
+
+jobs:
+  notify:
+    name: Trigger skill sync in sanityops-cli
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger repository dispatch
+        env:
+          GH_TOKEN: ${{ secrets.CLI_SYNC_TOKEN }}
+        run: |
+          curl -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            https://api.github.com/repos/sanityops-org/sanityops-cli/dispatches \
+            -d '{"event_type":"skill-updated","client_payload":{"commit":"${{ github.sha }}","ref":"${{ github.ref }}"}}'
