@@ -1,6 +1,6 @@
 ---
 name: pre-inspect-extract
-version: 1.3.1
+version: 1.4.0
 owner: Sanity AI Labs
 description: Trigger words: pre-inspect-extract / sanityops-extract / artifact extraction / extract only / 工件提取 / 只提取. Pre-inspection extraction layer that runs before sanityops-inspect-lite. Finds logic artifacts (System Prompt / Skill / Tool Schema) in any user-submitted document, segments them one by one, strips the code/markup shell that carries them, reconstructs the schema field-by-field from source when necessary, labels each artifact's completeness level with verbatim evidence, and determines each artifact's L (AC-L / OR-L). Extract-only, never judges defects. Outputs a two-layer IR (objects + references) for the inspection stage. Use when you need to first extract logic artifacts from a document before inspecting them.
 license: CC BY-SA 4.0
@@ -60,7 +60,8 @@ When a document contains **zero artifacts** (all reference files / scaffolding),
 - **Extraction summary** (top): agent membership declaration (single agent / pending confirmation), total artifact count, count by type, not-inspectable count and per-item reasons, completeness-level distribution, and L distribution.
 - **Object layer**: one block per extracted artifact, each carrying type, name, completeness level, **L**, extraction class, source location, extraction method, and verbatim evidence.
 - **Reference layer**: the things mentioned / depended on but not formed as extracted objects.
-- **`ir-core` block**: the machine-readable core of the object + reference layers, in the frozen ir-core v1 shape (§11: `ir_version`, `objects[].{type,name,completeness,L,source,mismatch}`, `not_inspectable[]`, `references[].{name,referenced_by,relationship}`), carried in a fixed JSON block so CLI / platform can parse it directly.
+- **Candidate-but-not-extracted list** (optional): when a candidate shows Tool/Prompt/Skill signature but cannot be fully extracted (e.g., external type reference, runtime schema generation), record it here with the detection basis and the extraction obstacle. This allows users to manually review or supplement. These entries do not go to inspection.
+- **`ir-core` block**: the machine-readable core of the object + reference layers, in the frozen ir-core v1 shape (§11: `ir_version`, `objects[].{type,name,completeness,L,source,mismatch}`, `not_inspectable[]`, `candidates_not_extracted[]`, `references[].{name,referenced_by,relationship}`), carried in a fixed JSON block so CLI / platform can parse it directly.
 
 ## 3. Things in a document fall into four categories
 
@@ -84,7 +85,7 @@ Segment → classify type → classify extraction class → extract → determin
 When the input is a directory, a glob, or several unlabeled files — rather than one named document — this gate runs **first and is blocking**: do not start segmentation (§4.1) until the user confirms the candidate set.
 
 1. **Enumerate** files under the path (recursive). Skip obvious non-candidates: VCS and build/dependency dirs (`.git`, `.svn`, `node_modules`, `dist`, `build`, `target`, `__pycache__`), binaries, images, lock files, and other non-text files.
-2. **Classify each remaining file** by the §4.1 structural signature, as file-level triage only (do not segment yet): `name`+`description` front matter + body → Skill; `parameters` / `inputSchema` / `input_schema` / `function.parameters` → Tool; instructional prose → Prompt. Files showing only documentation / scaffolding / reference-file signatures are non-candidates and are skipped.
+2. **Classify each remaining file** by the §4.1 structural signature, as file-level triage only (do not segment yet): `name`+`description` front matter + body → Skill; schema-carrying fields (see §4.1 full list) or decorator/builder patterns → Tool; instructional prose → Prompt. Files showing only documentation / scaffolding / reference-file signatures are non-candidates and are skipped.
 3. **Build a candidate inventory** — one row per candidate: `file path | detected type | confidence (high / medium / low) | suspected agent membership | size`. If several candidates appear to belong to different agents, flag it per §10 (`agent membership pending confirmation`) — do not auto-split and do not auto-decide.
 4. **Require user confirmation (blocking).** Present the inventory and ask the user to confirm the set — they may keep, drop, or annotate candidates (type / agent / tier hints are optional, never required). The default on an ambiguous multi-file input is to ask, never to auto-run.
 5. After confirmation, the confirmed files become the input documents; run the seven-step flow (§4.1 onward) on each in turn. A confirmed file that yields zero artifacts is a normal result (§2), not a failure.
@@ -100,12 +101,32 @@ Cut into candidate objects, discard scaffolding.
 
 **"Structural signature" — the minimal definition.** A text block is a candidate object when it shows at least one of:
   - instructional semantics (imperatives / rules / role instructions) → Prompt;
-  - `name` + `description`, or `parameters` / `inputSchema` / `input_schema` / `function.parameters` → Tool;
+  - `name` + `description`, or schema-carrying fields → Tool (see full list below);
   - front matter with `name` + `description` followed by a body → Skill.
+
+**Tool schema field signatures** (any one signals Tool candidate):
+  - Standard: `parameters` / `inputSchema` / `input_schema` / `function.parameters`
+  - Common aliases: `args` / `arguments` / `schema` / `input` / `params` / `params_schema` / `arg_types` / `param_schema`
+  - JSON Schema markers: `type: object` + `properties`; `type: array` + `items` (when clearly a parameter shape)
+  - Decorator + annotation pattern: `@tool` / `@mcp.tool` / `@server.tool` / `@function_tool` / `@kernel_function` + function with type-annotated parameters
+  - Builder pattern: `Tool(...)` / `mcp.NewTool(...)` / `NewTool(...)` / `.add_tool(...)` / `.add_function(...)`
+  - Pydantic-based: `BaseModel` subclass whose fields describe tool parameters, referenced by `from_model(...)` / `from_pydantic(...)`
 
 Documentation-style text is **not** a candidate object: a `## Skills` list (e.g. `- browser: search docs`) only *describes* a capability, and a bare function call (e.g. `await fetchTickets({...})`) only *invokes* a tool — neither is loadable as an artifact. Record such text as an input note and skip it; never segment it into a Prompt.
 
 **Must report the artifact count**: after segmentation, state explicitly "this file has N candidate objects" and name each one. A file often contains multiple artifacts (two `Tool(...)` in one `.py`, two prompt constants in one `.ts`, are two artifacts). **A missed segment is a missed inspection.** Do not accept "several" or "multiple".
+
+**Multi-tool file segmentation** (when one file contains multiple Tool definitions):
+
+| Pattern | Segmentation method |
+|---|---|
+| Multiple `Tool(...)` calls | Each call is one Tool; split by the outermost `Tool(...)` boundary |
+| Multiple `@tool` / `@mcp.tool()` decorated functions | Each decorated function is one Tool |
+| Multiple `def` / `async def` in a `class Tools:` | Each method is one Tool (if it has schema-carrying signature) |
+| JSON array of tools `[{"name": "a", ...}, {"name": "b", ...}]` | Each element is one Tool |
+| Multiple `z.object({...})` assigned to variables | Each assignment is one Tool schema candidate |
+
+When a file has multiple artifacts of different types (e.g., one Prompt and two Tools), segment each independently and count them separately.
 
 **Detect cross-object references (reference layer)** while segmenting: record every named thing a prompt / skill mentions as a dependency but that is not itself present as a formed object. Four reference kinds are recorded:
   1. **tool call** — a prompt/skill calls a verbatim tool name with no tool schema present (e.g. `call search_tool`);
@@ -190,19 +211,87 @@ Needs **assembly** to become a loadable artifact. **One rule decides E3**: an ob
 | Python `Tool(...)` + `inputSchema={...}` / `parameters={...}` dict literal | The schema exists only as a Python literal, not as JSON — literal field-by-field transcription per §6.2 |
 | Python decorator `@mcp.tool()` + type annotations + docstring | Types from annotations, defaults from the signature, descriptions from the `Args:` section |
 | Go builder `mcp.NewTool(...)` + `WithString/Required/DefaultString/Description` | Parameters are all literals |
+| **Decorator + annotation patterns** (see §5.1) | Function signature + docstring provide all field literals |
 
 → **assembly**, see §6.2.
+
+### E3.1 — Decorator + annotation patterns (special E3 case)
+
+Many frameworks define tools via decorator + function signature, with no explicit schema literal. These are **E3** (assembly) when the function's parameter types and descriptions are all literal in the source:
+
+**Recognized patterns** (any one → E3, assemble from function signature):
+
+| Pattern | Framework | Assembly source |
+|---|---|---|
+| `@tool` / `@langchain.tools.tool` | LangChain | Function signature + docstring |
+| `@mcp.tool()` / `@server.tool()` | MCP SDK | Function signature + docstring |
+| `@function_tool` | LlamaIndex | Function signature + docstring |
+| `@kernel_function` / `[kernel_function]` | Semantic Kernel | Function signature + docstring |
+| `@autoplan.tool` | AutoGen | Function signature + docstring |
+| `def func(...) -> Tool` returning `Tool.from_function()` | Generic | Function signature + docstring |
+| `class Args(BaseModel): ...; tool = Tool(..., args_schema=Args)` | Pydantic-based | BaseModel fields |
+
+**Assembly rules for decorator + annotation**:
+
+1. **name**: from decorator `name=` kwarg, or function name if not specified.
+2. **description**: from docstring first paragraph (before `Args:` / `Parameters:` / `Parameters`), or decorator `description=` kwarg.
+3. **parameters**: from function signature:
+   - Parameter name → property key
+   - Type annotation → JSON Schema type (per §6.2 conversion table)
+   - Default value → `default`; no default → in `required`
+   - `Optional[X]` / `X | None` → not in `required` unless has default
+   - Docstring `Args:` / `Parameters:` section → parameter `description`
+4. **Framework-injected parameters**: remove `ctx: Context`, `self`, `cls`, `Depends(...)`, `InjectedToolArg`, and any parameter whose annotation is a framework context type.
+
+**When decorator pattern becomes EX**:
+- Type annotation references an external type not defined in the input (e.g., `def tool(x: ExternalModel): ...` where `ExternalModel` is not in scope)
+- Type annotation is a runtime-computed generic (e.g., `list[get_type()]`)
+- No type annotations at all, and no docstring parameter descriptions
+- The function body generates the schema dynamically
+
+**External type handling**: If a parameter's type annotation references a Pydantic `BaseModel` or `dataclass` defined **elsewhere in the input**, trace that definition and assemble from its fields. If defined outside the input, label the parameter "type not in input, cannot assemble" and the whole artifact as EX — but record the partial extraction in evidence.
+
+### E3.2 — Pydantic model as schema
+
+When a tool uses a Pydantic `BaseModel` as its input schema (e.g., `args_schema=InputModel` or `Tool.from_model(InputModel)`), and the `BaseModel` definition is present in the input:
+
+1. Locate the `BaseModel` class definition.
+2. Extract field names, types, and descriptions from:
+   - Field type annotation → JSON Schema type
+   - `Field(description="...")` → parameter description
+   - `Field(default=...)` → `default`
+   - `Field(...)` with no default → in `required`
+   - `Optional[X]` / `X | None` → not in `required`
+   - docstring `Attributes:` / `Fields:` section → field descriptions
+3. Assemble into `{ "type": "object", "properties": {...}, "required": [...] }`.
 
 ### EX — unrecognizable
 
 - No structural signature, no fence, cannot tell whether it contains an artifact.
-- Dynamic registration, no literal schema (`server.tool(func, name=..., output_schema=...)`).
-- Only a registration list (`{"fn": "...", "tags": [...]}`, `manifest.json` entries), no `inputSchema` / `parameters`.
+- Dynamic registration with no extractable schema:
+  - Function with no type annotations and no docstring parameter descriptions
+  - Schema generated at runtime by external function call (`my_schema()`, `generate_schema()`)
+  - Only a registration list (`{"fn": "...", "tags": [...]}`, `manifest.json` entries), no `inputSchema` / `parameters` and no function definition
 - Go `type Xxx struct` + tags — assembly **if** the field types and the validate tags are literal and their forms are listed in §6.2; EX (not inspectable) only when types are inferred or the tags cannot be transcribed.
+- **External type not in input**: parameter annotation references a type (class/model) not defined in the input, and the type definition cannot be traced.
 
 → label "not inspectable", record the reason.
 
 **Exception**: a candidate with `name` + `description` but missing the rest of its type's base field is not "unrecognizable" — it is an **incomplete** artifact. Label "incomplete", extract the available fields, and state what is missing ("schema not provided with the document" for a Tool; "no body" for a Skill). A candidate with `name` but missing `description` is likewise **incomplete** — a Tool must carry `description` before the QD-T checks can run. A pure JSON Schema with no `name` is not incomplete: it stays a full original with `name = (unnamed)` (§5 E1). The missing base field is recorded only as a document-level fact, not judged as a product defect. For a Prompt, "incomplete" means the text carries no instruction at all (e.g. a bare placeholder or variable) or is assembled from several fragments whose assembly logic is absent from the input (§10).
+
+### 5.2 Description field aliases
+
+The `description` field may appear under different names across frameworks. When extracting a Tool, check for these aliases in order:
+
+| Priority | Field name | Context |
+|---|---|---|
+| 1 | `description` | Standard (OpenAI, Anthropic, MCP) |
+| 2 | `desc` | Abbreviated form |
+| 3 | `help` / `doc` | Some frameworks |
+| 4 | Docstring first paragraph | For decorator-based tools (see §5.1) |
+| 5 | `summary` | JSON Schema draft 2020-12 (title is the name, summary is the description) |
+
+If none of these are present, the Tool is **incomplete** — not because the field has a wrong name, but because no description-like field exists. Record "description not declared in source" in evidence.
 
 ## 6. Extraction rules
 
@@ -406,13 +495,14 @@ One Markdown inventory, structured as a two-layer IR:
 2. **Object layer** — one block per extracted artifact: artifact name, type, completeness level, **L**, extraction class, source location, extraction method, verbatim evidence, and a **`#### Full verbatim body` block carrying the complete artifact text word-for-word** (the head/tail excerpts alone are not enough — the downstream inspection must read the full body to judge "missing / not declared" checks). "original · variable unexpanded" must list the unexpanded variables and a content summary.
 3. **Reference layer** — every cross-object reference detected in §4.1: `referenced name | referenced by | relationship (tool call / skill dep / prompt var / file ref)`; generic prose does not enter here. A `prompt var` entry whose definition is locatable (§5 E2) additionally carries the **expanded rules** — the traced definition text, or a location anchor pointing to where it is defined — so the inspection stage can read the expanded content, not just the variable name.
 4. **Not-inspectable list** — listed separately, each with a reason, producing no defect conclusion.
-5. **`ir-core` JSON block** — the machine-readable core of layers 2, 3 and 4 — objects, references, and the not-inspectable list (see below), for CLI / platform to parse.
+5. **Candidate-but-not-extracted list** (optional) — candidates that showed artifact signature but could not be fully extracted. Each entry carries: detected name (or placeholder), detected type, detection basis (the structural feature that triggered detection), and the extraction obstacle (why it could not be extracted). These are for user review, not for inspection.
+6. **`ir-core` JSON block** — the machine-readable core of layers 2, 3, 4 and 5 — objects, references, not-inspectable list, and candidates-not-extracted list (see below), for CLI / platform to parse.
 
 ### ir-core block (machine-readable core)
 
 Materialize the IR to a file and, inside it, embed one `<!-- ir-core -->` JSON block carrying only the machine-readable fields, so a program engine can parse the IR without reading the human evidence.
 
-**ir-core v1 contract.** `ir_version` is `"1"`. `completeness` is one of the six labels (§7); `L` is one of `AC-L1` / `AC-L2` / `AC-L3` / `OR-L1` / `OR-L2` / `OR-L3` / `undetermined`. `objects[]` carries `type` / `name` / `completeness` / `L` / `source` / `mismatch`; `source` is the section heading (§9 Location), `mismatch` is a correctness mark or null. "not inspectable" objects are **not** in `objects[]` — they go in a separate `not_inspectable[].{name,reason}`. `references[].relationship` is one of `tool call` / `skill dep` / `prompt var` / `file ref`.
+**ir-core v1 contract.** `ir_version` is `"1"`. `completeness` is one of the six labels (§7); `L` is one of `AC-L1` / `AC-L2` / `AC-L3` / `OR-L1` / `OR-L2` / `OR-L3` / `undetermined`. `objects[]` carries `type` / `name` / `completeness` / `L` / `source` / `mismatch`; `source` is the section heading (§9 Location), `mismatch` is a correctness mark or null. "not inspectable" objects are **not** in `objects[]` — they go in a separate `not_inspectable[].{name,reason}`. `candidates_not_extracted[]` carries `{name,type,detection_basis,obstacle}` for candidates that showed artifact signature but could not be extracted. `references[].relationship` is one of `tool call` / `skill dep` / `prompt var` / `file ref`.
 
 <!-- ir-core -->
 ```json
@@ -423,6 +513,9 @@ Materialize the IR to a file and, inside it, embed one `<!-- ir-core -->` JSON b
     { "type": "tool", "name": "delete_customer", "completeness": "full original", "L": "OR-L3", "source": "### 2. Input schema", "mismatch": null }
   ],
   "not_inspectable": [],
+  "candidates_not_extracted": [
+    { "name": "external_tool", "type": "tool", "detection_basis": "@tool decorator + function signature", "obstacle": "parameter type ExternalModel not defined in input" }
+  ],
   "references": [
     { "name": "search_tool", "referenced_by": "main_prompt", "relationship": "tool call" }
   ]
