@@ -1,6 +1,6 @@
 ---
 name: pre-inspect-extract
-version: 1.4.2
+version: 1.4.3
 owner: Sanity AI Labs
 description: Trigger words: pre-inspect-extract / sanityops-extract / artifact extraction / extract only / 工件提取 / 只提取. Pre-inspection extraction layer that runs before sanityops-inspect-lite. Finds logic artifacts (System Prompt / Skill / Tool Schema) in any user-submitted document, segments them one by one, strips the code/markup shell that carries them, reconstructs the schema field-by-field from source when necessary, labels each artifact's completeness level with verbatim evidence, and determines each artifact's L (AC-L / OR-L). Extract-only, never judges defects. Outputs a two-layer IR (objects + references) for the inspection stage. Use when you need to first extract logic artifacts from a document before inspecting them.
 license: CC BY-SA 4.0
@@ -24,7 +24,7 @@ The words in this file mean exactly the following. Nothing else.
 | **original · variable unexpanded** | Obtained by verbatim copy, but the prompt has unexpanded variables that expand into rules |
 | **assembled** | A schema assembled from code, not the verbatim original |
 | **incomplete** | The artifact is missing a base field its type requires — a Tool without `inputSchema`, a Skill without a body, a Prompt that cannot form a complete instruction |
-| **summary** | Summarized / transcribed / truncated; cannot be matched to the original in full |
+| **summary** | Summarized / transcribed / truncated (only when artifact exceeds 10K token limit per §2); cannot be matched to the original in full |
 | **not inspectable** | Cannot be extracted; skip and record the reason |
 | **completeness level** | The umbrella term for the six labels above |
 | **skip a check** | Because the data is unreliable, a specific check is not judged this time (this is not a FAIL) |
@@ -52,6 +52,23 @@ Three inviolable principles:
 ## 2. Input and output
 
 **Input**: one user-submitted document, or a directory / multi-file scope (a folder, a glob, or several unlabeled files). A single named document is processed directly; a directory or ambiguous multi-file scope first runs the **Step-0 scope gate (§4.0)** — enumerate candidates, present the inventory, and require user confirmation — before extraction begins. Document size is bounded by the same run-total budget as the inspection stage — up to 200,000 tokens total across all confirmed files (an estimate, since a model cannot count tokens exactly; scale down proportionally on smaller host windows). If over the limit, split the extraction across rounds, or extract only the fully-readable part and label it "summary".
+
+**Per-artifact token limits (before truncation is allowed)**:
+
+| Artifact type | Token limit | Approximate lines |
+|---|---|---|
+| System Prompt | 10,000 tokens | ~500-700 lines |
+| Skill body | 10,000 tokens | ~500-700 lines |
+| Tool Schema | 10,000 tokens | ~500-700 lines |
+
+**Before reaching these limits**: truncation is **FORBIDDEN**. Output the complete artifact in `#### Full verbatim body` block(s).
+
+**When an artifact exceeds its token limit**:
+1. First attempt to split into multiple `#### Full verbatim body (part N of M)` blocks within the same response
+2. If still too large for context window, label completeness as "summary" and explicitly state: "artifact exceeds 10K token limit, extracted X of ~Y lines"
+3. Never silently truncate without labeling
+
+**Why 10K tokens**: This is a reasonable upper bound for a single artifact that preserves enough context for meaningful inspection. Most production prompts/tools are well under this limit.
 
 **Output**: a two-layer Intermediate Representation (IR), sized in proportion to the number of input artifacts (one block per artifact), with no extra inflation. The IR is **materialized to a file** when the host can write one (for audit and reuse by CLI / platform; §11 defines the no-write fallback) and also **kept in-context** (for the chained inspection to read immediately).
 
@@ -506,13 +523,13 @@ Each output carries:
 - **Method**: verbatim copy / assembly / summary.
 - **Verbatim excerpt**: verbatim-copy cases give the head and tail fragments **plus a `#### Full verbatim body` block carrying the complete artifact text word-for-word**; assembly cases give the source fragment per field (`name` → source, `description` → source, each parameter → source).
 
-**⚠️ NEVER truncate the Full verbatim body.** The `#### Full verbatim body` block must contain the **entire** artifact text, not an excerpt. If the artifact is too long for a single output turn:
+**⚠️ NEVER truncate the Full verbatim body.** The `#### Full verbatim body` block must contain the **entire** artifact text, not an excerpt. Truncation is only allowed when an artifact **exceeds its 10K token limit** (see §2).
 
 | Situation | Handling |
 |---|---|
-| Artifact fits in one output (most cases) | Output the complete body in one `#### Full verbatim body` block |
-| Artifact is very long (thousands of lines) | Split across multiple `#### Full verbatim body (part N of M)` blocks within the same response; do NOT truncate or summarize |
-| Context window cannot hold the full body | Extract what fits, label completeness as "summary", and explicitly state "extracted X of Y lines, full body exceeds context limit" |
+| Artifact under 10K tokens | Output the complete body in one `#### Full verbatim body` block — **truncation forbidden** |
+| Artifact exceeds 10K tokens | First try splitting into `#### Full verbatim body (part N of M)` blocks; if still too large for context, label "summary" and state line counts |
+| Context window cannot hold the full body | Extract what fits, label completeness as "summary", and explicitly state "artifact exceeds 10K token limit, extracted X of ~Y lines" |
 
 **Why truncation is forbidden**: The downstream inspection needs the full body to check for "missing / not declared / contradictory" defects. A truncated body would produce false FAILs (e.g., "instruction not declared" when it was just truncated away).
 
@@ -536,7 +553,7 @@ Self-evidence standard: a person who does not know the context can find every po
 | Variable expands into rules, definition locatable (`{reference_prompt}` defined in the input) | Keep "full original", trace the definition, list the variable, and add it to the reference layer as `prompt var` |
 | Variable expands into rules, definition not locatable (`{reference_prompt}` undefined in the input) | Label "original · variable unexpanded", list the variable |
 | Multiple fragments assembled by code into a final prompt | Label "incomplete", write "assembly logic not provided" |
-| **Prompt too long for context window** | Extract as much as possible, label "summary" with explicit line count and truncation reason (e.g., "extracted 800 of ~2000 lines, full body exceeds context limit"). Do NOT silently truncate. |
+| **Prompt exceeds 10K token limit** | Extract as much as possible, label "summary" with explicit line count (e.g., "extracted 800 of ~2000 lines, prompt exceeds 10K token limit"). Do NOT silently truncate prompts under 10K tokens. |
 | A field does not match the source during assembly | Label the whole thing "assembled", attach the `assembly mismatch` correctness mark, and note the field |
 | Description field suspected lost | The related checks do not run, evidence noted |
 | Suspected multiple agents | Label "agent membership pending confirmation", output confirmation options |
