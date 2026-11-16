@@ -1,6 +1,6 @@
 ---
 name: pre-inspect-extract
-version: 1.4.1
+version: 1.4.2
 owner: Sanity AI Labs
 description: Trigger words: pre-inspect-extract / sanityops-extract / artifact extraction / extract only / 工件提取 / 只提取. Pre-inspection extraction layer that runs before sanityops-inspect-lite. Finds logic artifacts (System Prompt / Skill / Tool Schema) in any user-submitted document, segments them one by one, strips the code/markup shell that carries them, reconstructs the schema field-by-field from source when necessary, labels each artifact's completeness level with verbatim evidence, and determines each artifact's L (AC-L / OR-L). Extract-only, never judges defects. Outputs a two-layer IR (objects + references) for the inspection stage. Use when you need to first extract logic artifacts from a document before inspecting them.
 license: CC BY-SA 4.0
@@ -506,6 +506,16 @@ Each output carries:
 - **Method**: verbatim copy / assembly / summary.
 - **Verbatim excerpt**: verbatim-copy cases give the head and tail fragments **plus a `#### Full verbatim body` block carrying the complete artifact text word-for-word**; assembly cases give the source fragment per field (`name` → source, `description` → source, each parameter → source).
 
+**⚠️ NEVER truncate the Full verbatim body.** The `#### Full verbatim body` block must contain the **entire** artifact text, not an excerpt. If the artifact is too long for a single output turn:
+
+| Situation | Handling |
+|---|---|
+| Artifact fits in one output (most cases) | Output the complete body in one `#### Full verbatim body` block |
+| Artifact is very long (thousands of lines) | Split across multiple `#### Full verbatim body (part N of M)` blocks within the same response; do NOT truncate or summarize |
+| Context window cannot hold the full body | Extract what fits, label completeness as "summary", and explicitly state "extracted X of Y lines, full body exceeds context limit" |
+
+**Why truncation is forbidden**: The downstream inspection needs the full body to check for "missing / not declared / contradictory" defects. A truncated body would produce false FAILs (e.g., "instruction not declared" when it was just truncated away).
+
 Self-evidence standard: a person who does not know the context can find every point in the original using only the evidence. If not, drop the completeness level by one (down the §7 order).
 
 **Correctness mark (independent of completeness).** Completeness says *how much* was extracted; correctness says *whether the extraction may be wrong*. When the evidence cannot be matched field-by-field to the original, attach a correctness mark — `verbatim mismatch` (a verbatim copy that drifts) or `assembly mismatch` (an assembled field that does not match its source) — even if the completeness label stays `full original`. This is what lets an audit tell "extraction error" apart from "inspection error".
@@ -526,6 +536,7 @@ Self-evidence standard: a person who does not know the context can find every po
 | Variable expands into rules, definition locatable (`{reference_prompt}` defined in the input) | Keep "full original", trace the definition, list the variable, and add it to the reference layer as `prompt var` |
 | Variable expands into rules, definition not locatable (`{reference_prompt}` undefined in the input) | Label "original · variable unexpanded", list the variable |
 | Multiple fragments assembled by code into a final prompt | Label "incomplete", write "assembly logic not provided" |
+| **Prompt too long for context window** | Extract as much as possible, label "summary" with explicit line count and truncation reason (e.g., "extracted 800 of ~2000 lines, full body exceeds context limit"). Do NOT silently truncate. |
 | A field does not match the source during assembly | Label the whole thing "assembled", attach the `assembly mismatch` correctness mark, and note the field |
 | Description field suspected lost | The related checks do not run, evidence noted |
 | Suspected multiple agents | Label "agent membership pending confirmation", output confirmation options |
@@ -537,6 +548,29 @@ One Markdown inventory, structured as a two-layer IR:
 
 1. **Extraction summary** (top): agent membership declaration (single agent / pending confirmation), total artifact count, count by type, not-inspectable count and per-item reasons, completeness-level distribution, and L distribution. The membership declaration uses a fixed phrasing so downstream consumers can read it reliably: `agent membership: single agent` or `agent membership: pending confirmation` (never a free-form paraphrase).
 2. **Object layer** — one block per extracted artifact: artifact name, type, completeness level, **L**, extraction class, source location, extraction method, verbatim evidence, and a **`#### Full verbatim body` block carrying the complete artifact text word-for-word** (the head/tail excerpts alone are not enough — the downstream inspection must read the full body to judge "missing / not declared" checks). "original · variable unexpanded" must list the unexpanded variables and a content summary.
+
+   **Full verbatim body format**:
+   ```
+   #### Full verbatim body
+   ```
+   <paste the complete artifact text here, no truncation, no ellipsis, no "...">
+   ```
+   ```
+   
+   If the body is very long, split into numbered parts:
+   ```
+   #### Full verbatim body (part 1 of 3)
+   ```
+   <first portion>
+   ```
+   #### Full verbatim body (part 2 of 3)
+   ```
+   <middle portion>
+   ```
+   #### Full verbatim body (part 3 of 3)
+   ```
+   <last portion>
+   ```
 3. **Reference layer** — every cross-object reference detected in §4.1: `referenced name | referenced by | relationship (tool call / skill dep / prompt var / file ref)`; generic prose does not enter here. A `prompt var` entry whose definition is locatable (§5 E2) additionally carries the **expanded rules** — the traced definition text, or a location anchor pointing to where it is defined — so the inspection stage can read the expanded content, not just the variable name.
 4. **Not-inspectable list** — listed separately, each with a reason, producing no defect conclusion.
 5. **Candidate-but-not-extracted list** (optional) — candidates that showed artifact signature but could not be fully extracted. Each entry carries: detected name (or placeholder), detected type, detection basis (the structural feature that triggered detection), and the extraction obstacle (why it could not be extracted). These are for user review, not for inspection.
