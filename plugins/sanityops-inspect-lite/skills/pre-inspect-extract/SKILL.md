@@ -1,6 +1,6 @@
 ---
 name: pre-inspect-extract
-version: 1.4.0
+version: 1.4.1
 owner: Sanity AI Labs
 description: Trigger words: pre-inspect-extract / sanityops-extract / artifact extraction / extract only / 工件提取 / 只提取. Pre-inspection extraction layer that runs before sanityops-inspect-lite. Finds logic artifacts (System Prompt / Skill / Tool Schema) in any user-submitted document, segments them one by one, strips the code/markup shell that carries them, reconstructs the schema field-by-field from source when necessary, labels each artifact's completeness level with verbatim evidence, and determines each artifact's L (AC-L / OR-L). Extract-only, never judges defects. Outputs a two-layer IR (objects + references) for the inspection stage. Use when you need to first extract logic artifacts from a document before inspecting them.
 license: CC BY-SA 4.0
@@ -74,6 +74,14 @@ When a document contains **zero artifacts** (all reference files / scaffolding),
 
 > A carrier is not an artifact. `def f(...): return f"""..."""` is a carrier; the string inside is the artifact.
 
+**⚠️ Code files are NOT automatically "reference files".** A `.py` / `.ts` / `.js` / `.go` file containing:
+- `Tool(...)` constructor calls
+- `@tool` / `@mcp.tool` decorators
+- `.add_tool(...)` / `.add_function(...)` calls
+- Multi-line prompt strings with instructional content
+
+...is a **carrier file** (contains artifacts wrapped in code), not a reference file. Only skip a code file when it has NONE of these signals.
+
 ## 4. Seven-step flow
 
 ```
@@ -85,9 +93,37 @@ Segment → classify type → classify extraction class → extract → determin
 When the input is a directory, a glob, or several unlabeled files — rather than one named document — this gate runs **first and is blocking**: do not start segmentation (§4.1) until the user confirms the candidate set.
 
 1. **Enumerate** files under the path (recursive). Skip obvious non-candidates: VCS and build/dependency dirs (`.git`, `.svn`, `node_modules`, `dist`, `build`, `target`, `__pycache__`), binaries, images, lock files, and other non-text files.
-2. **Classify each remaining file** by the §4.1 structural signature, as file-level triage only (do not segment yet): `name`+`description` front matter + body → Skill; schema-carrying fields (see §4.1 full list) or decorator/builder patterns → Tool; instructional prose → Prompt. Files showing only documentation / scaffolding / reference-file signatures are non-candidates and are skipped.
+
+2. **Classify each remaining file** by file-level triage. Read the file content (not just extension) and check for artifact signatures:
+
+   **File-level candidate detection rules** (any one → candidate file):
+
+   | Detection | File patterns / content signals |
+   |---|---|
+   | **JSON/YAML artifact** | `.json` / `.yaml` / `.yml` file with `name` + `description` + schema fields (`parameters` / `inputSchema` / `args` / etc.) |
+   | **Markdown artifact** | `.md` file with front matter (`---`) containing `name` + `description`, or code fences with schema content |
+   | **Code file with tool definitions** | `.py` / `.ts` / `.js` / `.go` file containing ANY of: |
+   | | - Schema field: `parameters=` / `inputSchema=` / `args_schema=` / `input_schema=` |
+   | | - Tool constructor: `Tool(` / `mcp.NewTool(` / `NewTool(` |
+   | | - Decorator: `@tool` / `@mcp.tool` / `@function_tool` / `@kernel_function` / `@server.tool` |
+   | | - Builder: `.add_tool(` / `.add_function(` / `.register_tool(` |
+   | | - Function with docstring: `def ...` + docstring with `Args:` section (potential E3 tool) |
+   | **Code file with prompt** | `.py` / `.ts` / `.js` file containing: |
+   | | - Multi-line string with instructional content (`"""..."""`, template literal with role/task/instruction keywords) |
+   | | - Prompt constant: `PROMPT =` / `SYSTEM_PROMPT =` / `prompt =` + multi-line string |
+
+   **Non-candidate files** (skip these):
+   - Pure import/utility files: only `import` / `from ... import` / `export ... from` with no artifact definitions
+   - Test files: `test_*.py` / `*.test.ts` / `*_test.go` unless they contain artifact definitions (not just tool invocations)
+   - Config files: `config.*` / `settings.*` / `*.config.*` with no artifact content
+   - Type definition files: `types.ts` / `models.py` with only type/class definitions not used as tool schemas
+
+   **⚠️ Critical: Do NOT skip code files by default.** A `.py` or `.ts` file is NOT a "reference file" just because it contains code. It is a candidate if it has ANY of the artifact signals above. When in doubt, include the file and let segmentation (§4.1) determine if it contains artifacts.
+
 3. **Build a candidate inventory** — one row per candidate: `file path | detected type | confidence (high / medium / low) | suspected agent membership | size`. If several candidates appear to belong to different agents, flag it per §10 (`agent membership pending confirmation`) — do not auto-split and do not auto-decide.
+
 4. **Require user confirmation (blocking).** Present the inventory and ask the user to confirm the set — they may keep, drop, or annotate candidates (type / agent / tier hints are optional, never required). The default on an ambiguous multi-file input is to ask, never to auto-run.
+
 5. After confirmation, the confirmed files become the input documents; run the seven-step flow (§4.1 onward) on each in turn. A confirmed file that yields zero artifacts is a normal result (§2), not a failure.
 
 The gate is read-only and script-free. It reuses the §4.1 signature and §10 membership rules — it adds no new detection logic, only the enumerate-and-confirm ordering.
@@ -98,6 +134,14 @@ Cut into candidate objects, discard scaffolding.
 
 - Scaffolding headings (match by meaning, not by exact English string — a heading localized into another language still counts as `## Metadata`, etc.): `## Metadata`, `## Evaluation Dimensions`, `## Scoring Criteria`, `## Test Suggestions`, `## Notes`, `## Source Profile`.
 - Each `### N. xxx`, each text passage with a structural signature, and each top-level code fence block is one candidate object. **A single fence may still hold multiple artifacts** (a JSON array with several tools, a `.py` with several `Tool(...)` calls): after cutting out the fence, re-split by element when it contains more than one independent artifact, and report each in the summary count.
+
+**Code file segmentation (critical)**:
+- A `.py` / `.ts` / `.js` / `.go` file is NOT segmented by fences alone. **Scan the entire file** for artifact signals:
+  - Each `Tool(...)` / `mcp.NewTool(...)` / `NewTool(...)` call → one Tool candidate
+  - Each `@tool` / `@mcp.tool` / `@function_tool` decorated function → one Tool candidate
+  - Each `def` / `async def` with `Args:` docstring (and no decorator) → potential Tool candidate
+  - Each multi-line string assigned to a prompt variable → one Prompt candidate
+- **Do NOT skip a code file because it has no fences.** Code files are E2/E3 carriers — the code itself is the shell.
 
 **"Structural signature" — the minimal definition.** A text block is a candidate object when it shows at least one of:
   - instructional semantics (imperatives / rules / role instructions) → Prompt;
