@@ -25,6 +25,8 @@ It is **not**:
 
 Only the **Artifacts** are mandatory from the user's side. Tier declarations and the version label are optional: when the user cannot provide them, determine tiers from the checklist rules and record the version as "undeclared" — never block the run on their absence.
 
+**Directory / ambiguous input (delegate — do not auto-run).** When the user points at a directory, a glob, or several unlabeled files instead of naming specific artifacts, that is **not** an artifact set yet: do not start Stage A. First run the scope gate in `pre-inspect-extract` (enumerate candidate files → present the inventory → require user confirmation), then consume the confirmed IR as the artifacts. Only a user-confirmed set starts the seven-stage flow.
+
 Ask the user for the following (only the Artifacts are blocking — do not start until you have at least one artifact; tier and version are non-blocking, recorded as "undeclared" when absent):
 
 1. **Artifacts** — any of: System Prompt (text/markdown), Skill definition (e.g. SKILL.md and its referenced files), Tool Schema(s) (JSON Schema / function-calling definitions).

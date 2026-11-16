@@ -51,7 +51,7 @@ Three inviolable principles:
 
 ## 2. Input and output
 
-**Input**: one user-submitted document; document size is bounded by the same run-total budget as the inspection stage — up to 200,000 tokens (an estimate, since a model cannot count tokens exactly; scale down proportionally on smaller host windows). If over the limit, split the extraction across rounds, or extract only the fully-readable part and label it "summary".
+**Input**: one user-submitted document, or a directory / multi-file scope (a folder, a glob, or several unlabeled files). A single named document is processed directly; a directory or ambiguous multi-file scope first runs the **Step-0 scope gate (§4.0)** — enumerate candidates, present the inventory, and require user confirmation — before extraction begins. Document size is bounded by the same run-total budget as the inspection stage — up to 200,000 tokens total across all confirmed files (an estimate, since a model cannot count tokens exactly; scale down proportionally on smaller host windows). If over the limit, split the extraction across rounds, or extract only the fully-readable part and label it "summary".
 
 **Output**: a two-layer Intermediate Representation (IR), sized in proportion to the number of input artifacts (one block per artifact), with no extra inflation. The IR is **materialized to a file** when the host can write one (for audit and reuse by CLI / platform; §11 defines the no-write fallback) and also **kept in-context** (for the chained inspection to read immediately).
 
@@ -78,6 +78,18 @@ When a document contains **zero artifacts** (all reference files / scaffolding),
 ```
 Segment → classify type → classify extraction class → extract → determine completeness → determine level (L) → record evidence
 ```
+
+### 4.0 Input scope gate (directory / multi-file input — blocking)
+
+When the input is a directory, a glob, or several unlabeled files — rather than one named document — this gate runs **first and is blocking**: do not start segmentation (§4.1) until the user confirms the candidate set.
+
+1. **Enumerate** files under the path (recursive). Skip obvious non-candidates: VCS and build/dependency dirs (`.git`, `.svn`, `node_modules`, `dist`, `build`, `target`, `__pycache__`), binaries, images, lock files, and other non-text files.
+2. **Classify each remaining file** by the §4.1 structural signature, as file-level triage only (do not segment yet): `name`+`description` front matter + body → Skill; `parameters` / `inputSchema` / `input_schema` / `function.parameters` → Tool; instructional prose → Prompt. Files showing only documentation / scaffolding / reference-file signatures are non-candidates and are skipped.
+3. **Build a candidate inventory** — one row per candidate: `file path | detected type | confidence (high / medium / low) | suspected agent membership | size`. If several candidates appear to belong to different agents, flag it per §10 (`agent membership pending confirmation`) — do not auto-split and do not auto-decide.
+4. **Require user confirmation (blocking).** Present the inventory and ask the user to confirm the set — they may keep, drop, or annotate candidates (type / agent / tier hints are optional, never required). The default on an ambiguous multi-file input is to ask, never to auto-run.
+5. After confirmation, the confirmed files become the input documents; run the seven-step flow (§4.1 onward) on each in turn. A confirmed file that yields zero artifacts is a normal result (§2), not a failure.
+
+The gate is read-only and script-free. It reuses the §4.1 signature and §10 membership rules — it adds no new detection logic, only the enumerate-and-confirm ordering.
 
 ### 4.1 Segmentation
 
