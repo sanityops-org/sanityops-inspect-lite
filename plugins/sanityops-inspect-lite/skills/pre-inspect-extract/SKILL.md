@@ -257,7 +257,7 @@ Needs **assembly** to become a loadable artifact. **One rule decides E3**: an ob
 | Python `Tool(...)` + `inputSchema={...}` / `parameters={...}` dict literal | The schema exists only as a Python literal, not as JSON — literal field-by-field transcription per §6.2 |
 | Python decorator `@mcp.tool()` + type annotations + docstring | Types from annotations, defaults from the signature, descriptions from the `Args:` section |
 | Go builder `mcp.NewTool(...)` + `WithString/Required/DefaultString/Description` | Parameters are all literals |
-| **Decorator + annotation patterns** (see §5.1) | Function signature + docstring provide all field literals |
+| **Decorator + annotation patterns** (see E3.1) | Function signature + docstring provide all field literals |
 
 → **assembly**, see §6.2.
 
@@ -334,7 +334,7 @@ The `description` field may appear under different names across frameworks. When
 | 1 | `description` | Standard (OpenAI, Anthropic, MCP) |
 | 2 | `desc` | Abbreviated form |
 | 3 | `help` / `doc` | Some frameworks |
-| 4 | Docstring first paragraph | For decorator-based tools (see §5.1) |
+| 4 | Docstring first paragraph | For decorator-based tools (see E3.1) |
 | 5 | `summary` | JSON Schema draft 2020-12 (title is the name, summary is the description) |
 
 If none of these are present, the Tool is **incomplete** — not because the field has a wrong name, but because no description-like field exists. Record "description not declared in source" in evidence.

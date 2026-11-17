@@ -1,8 +1,8 @@
 ---
 name: sanityops-inspect-lite
-version: 1.3.1
+version: 1.4.4
 owner: Sanity AI Labs
-description: Trigger words: sanityops-inspect-lite / sanityops-flow / static check / full check / 静态检查 / 完整检查. Lite, dependency-free inspector for AI Agent logic artifacts (System Prompt, Skill, Tool Schema) based on the SanityOps Framework v1.1. Runs a seven-stage non-blocking flow — single-artifact defect inspection (QD-P/QD-S/QD-T/QC), cross-artifact contract checks (QD-PS/PT/ST/SS/TT/CYC), Gate-0 admission, permission proportionality check (QD-PM, full 43-item set), explicit-risk audit (EX NL-A/NL-B/NR-O/NR-S), a candidate-impact outlook (AS-*/FM-* mapping), and a lightweight self-verification pass (Stage G). P0 findings are aggregated and reported but never halt the flow. Detect-only — it never rewrites the inspected artifacts. Use when the user asks to inspect, audit, or check an agent's system prompt, skill definition, or tool schemas. Local mod: Stage F grouped compact output (v1.3.1).
+description: Trigger words: sanityops-inspect-lite / sanityops-flow / static check / full check / 静态检查 / 完整检查. Lite, dependency-free inspector for AI Agent logic artifacts (System Prompt, Skill, Tool Schema) based on the SanityOps Framework v1.1. Runs a seven-stage non-blocking flow — single-artifact defect inspection (QD-P/QD-S/QD-T/QC), cross-artifact contract checks (QD-PS/PT/ST/SS/TT/CYC), Gate-0 admission, permission proportionality check (QD-PM, full 43-item set), explicit-risk audit (EX NL-A/NL-B/NR-O/NR-S), a candidate-impact outlook (AS-*/FM-* mapping), and a lightweight self-verification pass (Stage G). P0 findings are aggregated and reported but never halt the flow. Detect-only — it never rewrites the inspected artifacts. Use when the user asks to inspect, audit, or check an agent's system prompt, skill definition, or tool schemas. Local mod: Stage F grouped compact output (v1.4.4).
 license: CC BY-SA 4.0
 changelog: https://github.com/sanityops-org/sanityops-inspect-lite/releases
 ---
@@ -83,7 +83,7 @@ Edge cases: an archive → expand first, then group files by agent; a script →
 
 - **Object layer** — the artifacts actually extracted, each with a full signature (type `prompt` / `skill` / `tool`, name, `L`, completeness) plus a `#### Full verbatim body` block carrying the complete artifact text word-for-word. This replaces the flat artifact list: feed these as the Stage A objects. Absence-based checks ("missing / not declared / undefined") read the full body, not the head/tail excerpts alone.
 - **Reference layer** — things mentioned / depended on but not formed as extracted objects (e.g. a prompt calls `search_tool` but no `search_tool` schema exists). Feed these to Stage B so cross-object "referenced but missing" checks can catch the absence. The reference layer is read as input, never as a checklist. A `prompt var` entry carries expanded rules (pre §11): in Stage A, read the expanded rules as additional context for judging the prompt's declarations and cite the source location in the evidence — never judge the placeholder `{var}` alone as a missing declaration.
-- **`ir-core` JSON block** — the machine-readable core (ir-core v1: `objects[].{type,name,completeness,L,source,mismatch}` + `not_inspectable[]` + `references[].{name,referenced_by,relationship}` where `relationship` is `tool call` / `skill dep` / `prompt var` / `file ref`); read `L` from here. `not_inspectable[]` entries are input notes only, never inspected.
+- **`ir-core` JSON block** — the machine-readable core (ir-core v1: `objects[].{type,name,completeness,L,source,mismatch}` + `not_inspectable[]` + `candidates_not_extracted[]` + `references[].{name,referenced_by,relationship}` where `relationship` is `tool call` / `skill dep` / `prompt var` / `file ref`); read `L` from here. `not_inspectable[]` and `candidates_not_extracted[]` entries are input notes only, never inspected.
 
 Before starting, read the IR's **agent membership declaration**. If it is `pending confirmation`, do **not** run Stage B / Permission (Stage C–D) / Stage E NL-B by default — require the user to explicitly choose one of: (a) confirm the artifacts are one agent's → run the full seven-stage flow, or (b) declare collection mode → run single-artifact only (Mode 3). Never silently run cross checks on a `pending confirmation` collection.
 
@@ -278,7 +278,7 @@ Stage G (Self-verification): Executed / Not Executed — <reason>
 7. **Report header (mandatory on every report and every stage-only report)** — exactly these provenance facts:
    - Host model name (self-declared by the model executing this skill, e.g. `Host model: <vendor/model>`);
    - Single-model statement: `Extraction (pre-inspect) and inspection were performed by the same host model in the same context; no independent verifier reviewed the extraction or the verdicts.` (omit the extraction clause when no IR was used);
-   - Skill package: `sanityops-inspect-lite v1.3.1` (the `version` value of this SKILL.md front matter);
+   - Skill package: `sanityops-inspect-lite v1.4.4` (the `version` value of this SKILL.md front matter);
    - Specification baseline: `SanityOps Framework v1.1 (2026-10 release)`;
    - The non-official-result statement, verbatim in substance: *"This result is produced by the skill rule package applied by the host model; it is NOT a conclusion of the official SanityOps engine. For a full inspection use sanityops-cli."*
    - Inspection date and the artifact version label supplied by the user;
