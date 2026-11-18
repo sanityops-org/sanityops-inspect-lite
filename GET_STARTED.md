@@ -11,6 +11,13 @@ A lightweight inspector for AI Agent logic artifacts (**System Prompt / Skill / 
 
 Then just say "inspect my system prompt / skill / tool schema" to trigger it.
 
+Verify and update later:
+
+```
+/plugin marketplace list              # confirm the marketplace is registered
+/plugin marketplace update sanityops  # refresh to pick up new releases
+```
+
 ## Option 2: Clone / download
 
 ```

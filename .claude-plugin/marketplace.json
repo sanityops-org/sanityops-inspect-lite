@@ -3,6 +3,9 @@
   "owner": {
     "name": "Sanity AI Labs"
   },
+  "metadata": {
+    "description": "SanityOps plugin marketplace — detect-only inspection of AI Agent logic artifacts (System Prompt, Skill, Tool Schema)."
+  },
   "plugins": [
     {
       "name": "sanityops-inspect-lite",

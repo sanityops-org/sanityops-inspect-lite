@@ -84,7 +84,7 @@ sanityops-inspect-lite/
 
 Pick one path:
 
-- **Claude Code (recommended):** `/plugin marketplace add sanityops-org/sanityops-inspect-lite`, then `/plugin install sanityops-inspect-lite@sanityops`, then say *"inspect my system prompt"*.
+- **Claude Code (recommended):** `/plugin marketplace add sanityops-org/sanityops-inspect-lite`, then `/plugin install sanityops-inspect-lite@sanityops`, then say *"inspect my system prompt"*. Verify with `/plugin marketplace list`; pull later releases with `/plugin marketplace update sanityops`.
 - **Any agent (clone):** `git clone https://github.com/sanityops-org/sanityops-inspect-lite.git`, then install both skills from `plugins/sanityops-inspect-lite/skills/` — `pre-inspect-extract/` and `sanityops-inspect-lite/`.
 - **Full step-by-step:** see [GET_STARTED.md](GET_STARTED.md).
 
