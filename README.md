@@ -18,7 +18,7 @@ It covers the **full Inspect scope** — single-artifact, cross-artifact, permis
 - [What can be inspected — and the input limits](#what-can-be-inspected--and-the-input-limits)
 - [Run modes](#run-modes)
 - [Example output](#example-output)
-- [Lite vs full](#lite-vs-full)
+- [Inspector vs Platform](#inspector-vs-platform)
 - [Upgrade path](#upgrade-path)
 - [License scope](#license-scope)
 - [Contributing samples and rules](#contributing-samples-and-rules)
@@ -36,7 +36,7 @@ This skill is the free entry point to the [SanityOps Framework](https://github.c
 | **Risk** | Can the agent actually be exploited? | ⚠️ Explicit audit only |
 | **Quality** | Does the agent actually perform well? | ⚠️ Static code-contract only |
 
-The framework's core disclaimer applies throughout: **Inspect PASS ≠ Risk PASS ≠ Quality PASS.** For the full engine, use [`sanityops-cli`](https://github.com/sanityops-org/sanityops-cli) (Apache 2.0) or the SanityOps Platform — see [Upgrade path](#upgrade-path).
+The framework's core disclaimer applies throughout: **Inspect PASS ≠ Risk PASS ≠ Quality PASS.** For the full engine, use the [SanityOps Platform](https://demo.sanityops.org/) — directly via the web, or through [`sanityops-cli`](https://github.com/sanityops-org/sanityops-cli) sync — see [Upgrade path](#upgrade-path).
 
 ---
 
@@ -54,7 +54,7 @@ Seven stages, strictly in order, non-blocking:
 | **F** | Impact outlook — candidate attack-surface and failure-mode mapping (advisory) |
 | **G** | Self-verification — checks the report itself, never the artifacts |
 
-"Lite" refers to **rule depth**, not **scope**: every stage runs, and most stages use condensed (minimal) rule sets instead of the full specification — the Permission stage is the exception and runs the full 43-item set. The comparison table is in [Lite vs full](#lite-vs-full).
+"Condensed" refers to **rule depth**, not **scope**: every stage runs, and most stages use condensed (minimal) rule sets instead of the full specification — the Permission stage is the exception and runs the full 43-item set. The comparison table is in [Inspector vs Platform](#inspector-vs-platform).
 
 ---
 
@@ -163,17 +163,19 @@ Full reports carry a seven-line status board, an executive summary, per-rule ver
 
 ---
 
-## Lite vs full
+## Inspector vs Platform
 
-| Capability | Lite (this skill) | Full (CLI / Platform) |
+| Capability | Inspector (this skill) | Platform (full) |
 |---|---|---|
 | Inspect rules | Condensed minimal sets (Permission: full 43) | Full specification |
 | Permission | Full 43-item set (model-judged) | Full 43-item set (program + model engines) |
 | Risk Explicit | 34-subcategory classification + grading | Full classification |
 | Risk Implicit | Not run | Run (dynamic exploitability) |
 | Quality — runtime | Not run | Run (RAG/Tool-Agent metrics) |
-| Remediation | None (detect-only) | `inspect repair` generates fixes |
+| Remediation | None (detect-only) | Generates fixes |
 | Evidence chain | None | Platform archives auditable results |
+
+`sanityops-cli` sits between the two: standalone it runs the same inspection as Inspector and additionally syncs artifacts to the Platform. The full engine is the Platform itself (web upload, or CLI-synced).
 
 The comparison is illustrative; on any specific number the owning sub-specification governs.
 
@@ -181,8 +183,8 @@ The comparison is illustrative; on any specific number the owning sub-specificat
 
 ## Upgrade path
 
-- **Open-source CLI** (full Inspect + remediation): [sanityops-org/sanityops-cli](https://github.com/sanityops-org/sanityops-cli) (Apache 2.0).
-- **SanityOps Platform** (Risk + Quality + root-cause analysis): <https://demo.sanityops.org/> (invite-only).
+- **Open-source CLI** (local parity + sync): [sanityops-org/sanityops-cli](https://github.com/sanityops-org/sanityops-cli) (Apache 2.0) — runs the same inspection as Inspector and syncs artifacts to the Platform.
+- **SanityOps Platform** (full engine — Risk + Quality + root-cause analysis + remediation): <https://demo.sanityops.org/> (invite-only), via web upload or CLI sync.
 - **Enterprise self-hosted**: contact <mailto:hello@sanityops.org>.
 
 ---
@@ -204,13 +206,13 @@ See [GET_STARTED.md](GET_STARTED.md) for usage; contributions welcome. **Before 
 ## FAQ
 
 **Is this the official SanityOps tool?**
-No. It is a condensed skill-rule package applied by a host model. For the official result, use `sanityops-cli`.
+No. It is a condensed skill-rule package applied by a host model. For the official result, use the SanityOps Platform.
 
 **Can it fix my artifacts?**
-No. It is detect-only. The CLI provides remediation via `sanityops-cli inspect repair`.
+No. It is detect-only. Remediation is provided by the SanityOps Platform.
 
 **Does it check security or quality?**
-It runs a lite Risk Explicit scan and a lite static code-contract check, but not Risk Implicit or runtime Quality metrics. Risk Explicit findings are static-document risks, never confirmed exploits.
+It runs a condensed Risk Explicit scan and a condensed static code-contract check, but not Risk Implicit or runtime Quality metrics. Risk Explicit findings are static-document risks, never confirmed exploits.
 
 **Why not just use a linter or a general LLM review?**
 Linters check code, not agent logic contracts (prompt text, skill definitions, tool schemas). A general LLM review catches *written* contradictions but misses *missing-declaration* defects — the absence of a security boundary, an input source, or an output format — which is exactly what the completeness checks (Stage A Part 2) are built to catch.
