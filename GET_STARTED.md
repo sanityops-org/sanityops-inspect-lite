@@ -1,12 +1,12 @@
-# SanityOps Inspect Lite — Quick Start
+# SanityOps Inspector — Quick Start
 
 A lightweight inspector for AI Agent logic artifacts (**System Prompt / Skill / Tool Schema**): **report-only** (detect-only), built on SanityOps Framework v1.1.
 
 ## Option 1: Claude Code users (recommended)
 
 ```
-/plugin marketplace add sanityops-org/sanityops-inspect-lite
-/plugin install sanityops-inspect-lite@sanityops
+/plugin marketplace add sanityops-org/sanityops-inspector
+/plugin install sanityops-inspector@sanityops
 ```
 
 Then just say "inspect my system prompt / skill / tool schema" to trigger it.
@@ -21,10 +21,10 @@ Verify and update later:
 ## Option 2: Clone / download
 
 ```
-git clone https://github.com/sanityops-org/sanityops-inspect-lite.git
+git clone https://github.com/sanityops-org/sanityops-inspector.git
 ```
 
-The plugin ships two skills under `plugins/sanityops-inspect-lite/skills/` — `pre-inspect-extract/` (extraction layer) and `sanityops-inspect-lite/` (the seven-stage inspector, with its condensed checklists in `references/`). Install both folders as skills in your agent.
+The plugin ships three skills under `plugins/sanityops-inspector/skills/` — `sanityops-extract-only/` (extraction layer), `sanityops-inspect-only/` (the seven-stage inspector, with its condensed checklists in `references/`), and `sanityops-inspector/` (the full-flow wrapper). Install these folders as skills in your agent.
 
 ## First run
 

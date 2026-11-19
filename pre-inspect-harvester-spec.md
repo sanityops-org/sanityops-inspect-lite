@@ -1,7 +1,7 @@
 ---
 title: Pre-Inspection Extraction Layer — Design Rationale
 version: 0.5.3
-status: Explanatory document; the rules live in pre-inspect-extract/SKILL.md
+status: Explanatory document; the rules live in sanityops-extract-only/SKILL.md
 execution_mode: pure-prompt (no scripts, zero dependencies)
 ---
 
@@ -9,7 +9,7 @@ execution_mode: pure-prompt (no scripts, zero dependencies)
 
 ## 0. What this document is
 
-**It contains no rules.** There is exactly one source of rules: [pre-inspect-extract/SKILL.md](plugins/sanityops-inspect-lite/skills/pre-inspect-extract/SKILL.md). The glossary is also at the top of that file.
+**It contains no rules.** There is exactly one source of rules: [sanityops-extract-only/SKILL.md](plugins/sanityops-inspector/skills/sanityops-extract-only/SKILL.md). The glossary is also at the top of that file.
 
 This document answers a different question: **why it is designed this way.** Each decision is followed by its basis, drawn from review discussion and from re-running against real cases. Read this before changing a rule, so that already-validated pitfalls are not re-entered.
 
@@ -17,7 +17,7 @@ This document answers a different question: **why it is designed this way.** Eac
 
 ## 1. Why this layer is needed
 
-All seven stages of `sanityops-inspect-lite` assume that "the artifact has already been correctly separated out". But what a user hands us is usually a single document mixing metadata, evaluation dimensions, code, and examples. The artifact may be wrapped in an f-string, or there may be no ready-made schema at all — only something that has to be assembled from Zod, decorators, or a Go builder.
+All seven stages of `sanityops-inspect-only` assume that "the artifact has already been correctly separated out". But what a user hands us is usually a single document mixing metadata, evaluation dimensions, code, and examples. The artifact may be wrapped in an f-string, or there may be no ready-made schema at all — only something that has to be assembled from Zod, decorators, or a Go builder.
 
 If this layer does its job poorly, all seven downstream stages collapse: either the code shell gets inspected as if it were a prompt, producing a pile of phantom defects, or the object is declared "not inspectable" and skipped, which is the same as not inspecting at all.
 

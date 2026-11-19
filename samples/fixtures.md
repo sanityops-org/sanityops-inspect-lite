@@ -1,4 +1,4 @@
-# pre-inspect-extract golden fixtures
+# sanityops-extract-only golden fixtures
 
 Regression fixtures for the extraction layer. Each case is `input → expected ir-core`. Six cases, one per completeness label, plus one cross-object reference example. These pin the determinism principle (SKILL.md §1 principle 4); a change that alters an expected `ir-core` is a breaking change to the ir-core v1 contract.
 

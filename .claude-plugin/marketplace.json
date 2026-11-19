@@ -8,8 +8,8 @@
   },
   "plugins": [
     {
-      "name": "sanityops-inspect-lite",
-      "source": "./plugins/sanityops-inspect-lite",
+      "name": "sanityops-inspector",
+      "source": "./plugins/sanityops-inspector",
       "description": "Detect-only inspector for AI Agent logic artifacts (System Prompt, Skill, Tool Schema) based on the SanityOps Framework v1.1. Pure skill — no hooks, no MCP servers, no scripts."
     }
   ]

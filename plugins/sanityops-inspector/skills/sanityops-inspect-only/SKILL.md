@@ -1,13 +1,13 @@
 ---
-name: sanityops-inspect
-version: 1.4.4
+name: sanityops-inspect-only
+version: 1.5.0
 owner: Sanity AI Labs
-description: Trigger words: sanityops-inspect / static check / single check / 只检查. Lite, dependency-free inspector for AI Agent logic artifacts (System Prompt, Skill, Tool Schema) based on the SanityOps Framework v1.1. Runs a seven-stage non-blocking flow — single-artifact defect inspection (QD-P/QD-S/QD-T/QC), cross-artifact contract checks (QD-PS/PT/ST/SS/TT/CYC), Gate-0 admission, permission proportionality check (QD-PM, full 43-item set), explicit-risk audit (EX NL-A/NL-B/NR-O/NR-S), a candidate-impact outlook (AS-*/FM-* mapping), and a lightweight self-verification pass (Stage G). P0 findings are aggregated and reported but never halt the flow. Detect-only — it never rewrites the inspected artifacts. Use when the user asks to inspect, audit, or check an agent's system prompt, skill definition, or tool schemas. Local mod: Stage F grouped compact output (v1.4.4).
+description: Trigger words: sanityops-inspect-only / single check / inspect only / 只检查. Lite, dependency-free inspector for AI Agent logic artifacts (System Prompt, Skill, Tool Schema) based on the SanityOps Framework v1.1. Runs a seven-stage non-blocking flow — single-artifact defect inspection (QD-P/QD-S/QD-T/QC), cross-artifact contract checks (QD-PS/PT/ST/SS/TT/CYC), Gate-0 admission, permission proportionality check (QD-PM, full 43-item set), explicit-risk audit (EX NL-A/NL-B/NR-O/NR-S), a candidate-impact outlook (AS-*/FM-* mapping), and a lightweight self-verification pass (Stage G). P0 findings are aggregated and reported but never halt the flow. Detect-only — it never rewrites the inspected artifacts. Use when the user asks to inspect, audit, or check an agent's system prompt, skill definition, or tool schemas. Local mod: Stage F grouped compact output (v1.5.0).
 license: CC BY-SA 4.0
-changelog: https://github.com/sanityops-org/sanityops-inspect-lite/releases
+changelog: https://github.com/sanityops-org/sanityops-inspector/releases
 ---
 
-# SanityOps Inspect Lite
+# SanityOps Inspect Only
 
 ## 1. What this skill is
 
@@ -25,12 +25,12 @@ It is **not**:
 
 Only the **Artifacts** are mandatory from the user's side. Tier declarations and the version label are optional: when the user cannot provide them, determine tiers from the checklist rules and record the version as "undeclared" — never block the run on their absence.
 
-**Directory / ambiguous input (delegate — do not auto-run).** When the user points at a directory, a glob, or several unlabeled files instead of naming specific artifacts, that is **not** an artifact set yet: do not start Stage A. First run the scope gate in `pre-inspect-extract` (enumerate candidate files → present the inventory → require user confirmation), then consume the confirmed IR as the artifacts. Only a user-confirmed set starts the seven-stage flow.
+**Directory / ambiguous input (delegate — do not auto-run).** When the user points at a directory, a glob, or several unlabeled files instead of naming specific artifacts, that is **not** an artifact set yet: do not start Stage A. First run the scope gate in `sanityops-extract-only` (enumerate candidate files → present the inventory → require user confirmation), then consume the confirmed IR as the artifacts. Only a user-confirmed set starts the seven-stage flow.
 
 Ask the user for the following (only the Artifacts are blocking — do not start until you have at least one artifact; tier and version are non-blocking, recorded as "undeclared" when absent):
 
 1. **Artifacts** — any of: System Prompt (text/markdown), Skill definition (e.g. SKILL.md and its referenced files), Tool Schema(s) (JSON Schema / function-calling definitions).
-2. **Tier (L)** — each artifact's complexity/risk tier: AC-L1/L2/L3 for the Prompt, OR-L1/L2/L3 for the Skill and each Tool. When the input comes from the pre-inspection layer (`pre-inspect-extract`), read L from the IR's `ir-core` objects (field `L`) — L is determined once there and handed down, not re-derived here. When the IR records `L = undetermined`, keep it undetermined: report severity as `—` (reference level, `_meta.md` §4) and say so in the report — never pick an L column for it. Only when there is no IR (artifacts supplied directly) fall back to the user's declaration or the tier rules below, and state the determination. L feeds severity (P) only — it never decides whether a check runs (that is the structural-fact gate's job, §4).
+2. **Tier (L)** — each artifact's complexity/risk tier: AC-L1/L2/L3 for the Prompt, OR-L1/L2/L3 for the Skill and each Tool. When the input comes from the pre-inspection layer (`sanityops-extract-only`), read L from the IR's `ir-core` objects (field `L`) — L is determined once there and handed down, not re-derived here. When the IR records `L = undetermined`, keep it undetermined: report severity as `—` (reference level, `_meta.md` §4) and say so in the report — never pick an L column for it. Only when there is no IR (artifacts supplied directly) fall back to the user's declaration or the tier rules below, and state the determination. L feeds severity (P) only — it never decides whether a check runs (that is the structural-fact gate's job, §4).
 
    **Tier rules** (used only when no IR is present and the user cannot declare L):
    - **AC-L1** single-turn — one question, one answer; no tools, no multi-turn state. **AC-L2** multi-turn — a multi-turn dialogue; each turn self-contained. **AC-L3** complex — planning / reflection / tool orchestration across steps. (L4 multi-agent is reserved: the source spec defines an AC-L4 tier for delegation morphology, but lite does not emit L4 yet — permission's AC-L4 set is kept for reference only.)
@@ -79,7 +79,7 @@ Permission checks run on whichever artifact types are present (Prompt, Skill, an
 
 Edge cases: an archive → expand first, then group files by agent; a script → treat as a referenced file, not an artifact, **except** when it embeds an in-scope logic-artifact literal (e.g. `system_message = """..."""`), which is classified as the corresponding artifact type and tiered by Step 0. If a file cannot be unambiguously classified, or the inputs appear to mix multiple agents, ask the user before starting Stage A — unless the user has explicitly declared collection mode (§5 Mode 3), in which case each artifact segment is checked in isolation and cross-artifact / Permission / cross-object checks are skipped. Never run Stage B/C/D/E across different agents' artifacts.
 
-**Input from the pre-inspection layer (pre-inspect-extract).** When artifacts are carried inside code that this skill's own segmentation cannot fully extract (Zod `z.object`, f-string prompts with variables, docstring signatures, Go builders), run `pre-inspect-extract` first and feed its output here. When the artifacts are produced by the pre-inspection layer, its output is a **two-layer IR** — an object layer plus a reference layer, serialized into the machine-readable `ir-core` block below (`ir-core` is not a third layer):
+**Input from the pre-inspection layer (sanityops-extract-only).** When artifacts are carried inside code that this skill's own segmentation cannot fully extract (Zod `z.object`, f-string prompts with variables, docstring signatures, Go builders), run `sanityops-extract-only` first and feed its output here. When the artifacts are produced by the pre-inspection layer, its output is a **two-layer IR** — an object layer plus a reference layer, serialized into the machine-readable `ir-core` block below (`ir-core` is not a third layer):
 
 - **Object layer** — the artifacts actually extracted, each with a full signature (type `prompt` / `skill` / `tool`, name, `L`, completeness) plus a `#### Full verbatim body` block carrying the complete artifact text word-for-word. This replaces the flat artifact list: feed these as the Stage A objects. Absence-based checks ("missing / not declared / undefined") read the full body, not the head/tail excerpts alone.
 - **Reference layer** — things mentioned / depended on but not formed as extracted objects (e.g. a prompt calls `search_tool` but no `search_tool` schema exists). Feed these to Stage B so cross-object "referenced but missing" checks can catch the absence. The reference layer is read as input, never as a checklist. A `prompt var` entry carries expanded rules (pre §11): in Stage A, read the expanded rules as additional context for judging the prompt's declarations and cite the source location in the evidence — never judge the placeholder `{var}` alone as a missing declaration.
@@ -278,7 +278,7 @@ Stage G (Self-verification): Executed / Not Executed — <reason>
 7. **Report header (mandatory on every report and every stage-only report)** — exactly these provenance facts:
    - Host model name (self-declared by the model executing this skill, e.g. `Host model: <vendor/model>`);
    - Single-model statement: `Extraction (pre-inspect) and inspection were performed by the same host model in the same context; no independent verifier reviewed the extraction or the verdicts.` (omit the extraction clause when no IR was used);
-   - Skill package: `sanityops-inspect-lite v1.4.4` (the `version` value of this SKILL.md front matter);
+   - Skill package: `sanityops-inspect-only v1.5.0` (the `version` value of this SKILL.md front matter);
    - Specification baseline: `SanityOps Framework v1.1 (2026-10 release)`;
    - The non-official-result statement, verbatim in substance: *"This result is produced by the skill rule package applied by the host model; it is NOT a conclusion of the official SanityOps engine. For a full inspection use sanityops-cli."*
    - Inspection date and the artifact version label supplied by the user;
@@ -326,7 +326,7 @@ Condensed from the SanityOps Framework v1.1 (2026-10 release), maintained by San
 ## 10. Further reading & upgrade
 
 - **Upgrade to the full inspection**: the open-source `sanityops-cli` and the SanityOps Platform provide the complete Inspect ruleset plus the Risk (Explicit/Implicit) and Quality subsets, remediation, and version-level evidence chains. See https://github.com/sanityops-org/sanityops-framework/blob/main/framework/try-the-tools.md.
-- **Background, lite-vs-full comparison, worked samples, FAQ**: see the repository README at https://github.com/sanityops-org/sanityops-inspect-lite#readme (the README is not bundled into the installed plugin).
+- **Background, lite-vs-full comparison, worked samples, FAQ**: see the repository README at https://github.com/sanityops-org/sanityops-inspector#readme (the README is not bundled into the installed plugin).
 
 ## Appendix A — Terminology quick reference
 

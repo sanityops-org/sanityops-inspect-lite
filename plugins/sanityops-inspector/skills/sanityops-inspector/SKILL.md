@@ -1,24 +1,24 @@
 ---
-name: sanityops-flow
-version: 1.4.4
+name: sanityops-inspector
+version: 1.5.0
 owner: Sanity AI Labs
-description: Trigger words: sanityops-flow / sanityops-full / full check / extract+inspect / 全流程检查 / 完整检查. Orchestration wrapper that runs the extraction layer (sanityops-extract) and the seven-stage inspector (sanityops-inspect) back-to-back over one artifact or one artifact set. Use when you want a single request to both extract and inspect logic artifacts end to end.
+description: Trigger words: sanityops-inspector / inspector / inspect / check / 检查 / 完整检查 / 全流程检查 / full check. Orchestration wrapper that runs the extraction layer (sanityops-extract-only) and the seven-stage inspector (sanityops-inspect-only) back-to-back over one artifact or one artifact set. Use when you want a single request to both extract and inspect logic artifacts end to end.
 license: CC BY-SA 4.0
-changelog: https://github.com/sanityops-org/sanityops-inspect-lite/releases
+changelog: https://github.com/sanityops-org/sanityops-inspector/releases
 ---
 
-# SanityOps Flow
+# SanityOps Inspector
 
 ## 1. What this skill is
 
 An orchestration wrapper only. It adds no new extraction or inspection logic — it chains the two skills below in one sequential pass over the same artifact(s):
 
-1. `sanityops-extract` (the pre-inspection extraction layer) — find, segment, and extract logic artifacts (System Prompt / Skill / Tool Schema) into a two-layer IR (objects + references, each tagged with L).
-2. `sanityops-inspect` (the seven-stage inspector) — consume that IR and run Stages A → G.
+1. `sanityops-extract-only` (the pre-inspection extraction layer) — find, segment, and extract logic artifacts (System Prompt / Skill / Tool Schema) into a two-layer IR (objects + references, each tagged with L).
+2. `sanityops-inspect-only` (the seven-stage inspector) — consume that IR and run Stages A → G.
 
 Both underlying skills are detect-only and never rewrite the inspected artifacts. This wrapper is likewise read-only with respect to the inspected artifacts — it writes only a derived `{basename}.ir.md`, never the artifacts themselves.
 
-Downstream scope: this wrapper invokes only `sanityops-extract` and `sanityops-inspect`. No other skill may be invoked, and neither downstream skill may be substituted or extended without updating this wrapper.
+Downstream scope: this wrapper invokes only `sanityops-extract-only` and `sanityops-inspect-only`. No other skill may be invoked, and neither downstream skill may be substituted or extended without updating this wrapper.
 
 Permission–responsibility mapping:
 1. read the user-provided artifacts — required by §1/§4 to extract and inspect;
@@ -28,19 +28,19 @@ Permission–responsibility mapping:
 
 - The user points at a directory, a glob, or several unlabeled files (needs extraction first).
 - The user wants "one command" to both extract and inspect, without two separate turns.
-- A single clean file (e.g. one `SKILL.md` or one `system_prompt.md`) may be handed to `sanityops-inspect` directly — this wrapper is optional then.
+- A single clean file (e.g. one `SKILL.md` or one `system_prompt.md`) may be handed to `sanityops-inspect-only` directly — this wrapper is optional then.
 
 ## 3. Execution — strictly sequential
 
 Run the two skills **in order, never in parallel, never out of order**:
 
-1. Run `sanityops-extract` on the input. It emits a two-layer IR (materialized as `{input_basename}.ir.md` when the host can write, plus an in-context copy). Do not skip this step.
-2. Take the IR and run `sanityops-inspect`'s seven-stage flow (A → B → C → D → E → F → G) on it, exactly as its SKILL.md specifies. Do not re-extract inside the inspect step; consume the IR as-is.
+1. Run `sanityops-extract-only` on the input. It emits a two-layer IR (materialized as `{input_basename}.ir.md` when the host can write, plus an in-context copy). Do not skip this step.
+2. Take the IR and run `sanityops-inspect-only`'s seven-stage flow (A → B → C → D → E → F → G) on it, exactly as its SKILL.md specifies. Do not re-extract inside the inspect step; consume the IR as-is.
 
 ### 3.1 Failure & partial completion
 
-- If `sanityops-extract` cannot run, or the emitted IR is empty / malformed, halt and report the failure to the user — do not proceed to inspection, do not re-extract by other means, and do not fabricate an IR.
-- If `sanityops-inspect` cannot run (e.g. its `references/` are unavailable), report that stage "Not Executed — references unavailable" and stop.
+- If `sanityops-extract-only` cannot run, or the emitted IR is empty / malformed, halt and report the failure to the user — do not proceed to inspection, do not re-extract by other means, and do not fabricate an IR.
+- If `sanityops-inspect-only` cannot run (e.g. its `references/` are unavailable), report that stage "Not Executed — references unavailable" and stop.
 - Partial completion: a run that finishes extraction but not inspection is NOT a complete flow — deliver the IR as an intermediate artifact and mark the inspection incomplete; it never substitutes for the full run.
 
 ## 4. Inputs & parameters
@@ -57,7 +57,7 @@ Tier (L) and version are optional; both skills determine or record them when abs
 
 Two structural gates may pause the run — surface them instead of guessing:
 
-1. **Directory / glob / multi-file input** — `sanityops-extract` §4.0 must present a candidate inventory and wait for the user's confirmation before extracting.
+1. **Directory / glob / multi-file input** — `sanityops-extract-only` §4.0 must present a candidate inventory and wait for the user's confirmation before extracting.
 2. **`agent membership: pending confirmation`** — do not run cross-artifact / permission / NL-B checks until the user chooses (a) confirm one agent, or (b) declare collection mode.
 
 A single named artifact with a declared agent membership runs end to end with no interruption.
@@ -72,5 +72,5 @@ A single named artifact with a declared agent membership runs end to end with no
 
 ## 7. Reference
 
-- Extraction rules: `sanityops-extract` (SKILL.md).
-- Inspection rules: `sanityops-inspect` (SKILL.md) and its `references/`.
+- Extraction rules: `sanityops-extract-only` (SKILL.md).
+- Inspection rules: `sanityops-inspect-only` (SKILL.md) and its `references/`.

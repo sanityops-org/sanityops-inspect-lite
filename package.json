@@ -1,11 +1,11 @@
 {
-  "name": "sanityops-inspect-lite",
-  "version": "1.4.4",
+  "name": "sanityops-inspector",
+  "version": "1.5.0",
   "description": "Lite, dependency-free inspector for AI Agent logic artifacts (System Prompt, Skill, Tool Schema) based on the SanityOps Framework v1.1. Detect-only; never rewrites artifacts.",
   "license": "CC-BY-SA-4.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/sanityops-org/sanityops-inspect-lite.git"
+    "url": "https://github.com/sanityops-org/sanityops-inspector.git"
   },
   "keywords": [
     "sanityops",

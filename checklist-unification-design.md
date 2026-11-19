@@ -59,7 +59,7 @@ Principle: **fields take the most complete consumer (platform) as the ceiling; "
 
 - In the original framework P is bound to L (tier-specific severity), and needs decoupling.
 - New design: **L only decides the value of P, no longer decides "whether to check"**.
-- L determination is **moved forward to pre-inspect-extract**, determined once.
+- L determination is **moved forward to sanityops-extract-only**, determined once.
 
 ### 2.5 L merging: separated at the engine layer, merged at the product layer
 
@@ -79,14 +79,14 @@ Principle: **fields take the most complete consumer (platform) as the ceiling; "
 
 ### 2.7 IR two layers (pre-extraction output)
 
-pre-inspect-extract outputs a **two-layer** IR:
+sanityops-extract-only outputs a **two-layer** IR:
 
 - **Object layer**: objects actually extracted with a complete signature (how many P / S / T).
 - **Reference layer**: references mentioned / depended on in the artifact but not yet formed.
 
 Cross-object checks (e.g. "tool existence") look at the **reference layer**, to avoid missing "should exist but does not" defects.
 
-- **Materialize to disk**: the IR is the output of pre-inspect-extract and is **materialized as a Markdown file** (default `{input_basename}.ir.md`) for audit traceability (distinguish "extraction error" from "inspection error") and reuse by CLI/platform; a copy is also kept in-context for chained handoff.
+- **Materialize to disk**: the IR is the output of sanityops-extract-only and is **materialized as a Markdown file** (default `{input_basename}.ir.md`) for audit traceability (distinguish "extraction error" from "inspection error") and reuse by CLI/platform; a copy is also kept in-context for chained handoff.
 - **Machine-readable core**: the IR embeds a `<!-- ir-core -->` JSON block carrying only the machine-readable fields — `objects[].{type,name,completeness,L,source,mismatch}`, `not_inspectable[].{name,reason}`, and `references[].{name,referenced_by,relationship}`; the program engine parses only this block (the same pattern as the checklist's `program-check`).
 
 ### 2.8 check_engine (three values)
@@ -166,7 +166,7 @@ Consumption by the three consumers:
 **Completed**:
 - [x] tool domain sample `tool-checklist.v2.md` (pilot sample; the field model was confirmed and rolled out to all domains)
 - [x] Roll out the remaining 7 domains + `_meta.md` (prompt / skill / code-contract / cross / permission / explicit / relevance)
-- [x] Modify pre-inspect-extract: add upfront L determination + two-layer IR output
+- [x] Modify sanityops-extract-only: add upfront L determination + two-layer IR output
 - [x] Modify the main SKILL.md: the flow references the new checklist approach, Stage G self-check upgraded to triangle check, scoring removed, reference-level display added
 - [x] Synchronize README / GET_STARTED / `quality/code-contract.md` / `package.json`
 
@@ -179,6 +179,6 @@ Consumption by the three consumers:
 
 ## 6. Related files
 
-- Domain files (`_meta.md` + 8 `*.v2.md`): `plugins/sanityops-inspect-lite/skills/sanityops-inspect-lite/references/`
-- pre layer: `plugins/sanityops-inspect-lite/skills/pre-inspect-extract/SKILL.md`
-- main skill: `plugins/sanityops-inspect-lite/skills/sanityops-inspect-lite/SKILL.md`
+- Domain files (`_meta.md` + 8 `*.v2.md`): `plugins/sanityops-inspector/skills/sanityops-inspect-only/references/`
+- pre layer: `plugins/sanityops-inspector/skills/sanityops-extract-only/SKILL.md`
+- main skill: `plugins/sanityops-inspector/skills/sanityops-inspect-only/SKILL.md`

@@ -1,7 +1,7 @@
-# SanityOps Inspect Lite
+# SanityOps Inspector
 
 [![License: CC BY-SA 4.0](https://img.shields.io/badge/License-CC%20BY--SA%204.0-lightgrey.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-1.4.4-blue.svg)](package.json)
+[![Version](https://img.shields.io/badge/version-1.5.0-blue.svg)](package.json)
 
 A **dependency-free, detect-only inspector** for AI Agent logic artifacts — **System Prompt**, **Skill**, and **Tool Schema**. It reads them and reports defects; it never rewrites them.
 
@@ -61,16 +61,16 @@ Seven stages, strictly in order, non-blocking:
 ## Repository layout
 
 ```
-sanityops-inspect-lite/
+sanityops-inspector/
 ├── .claude-plugin/marketplace.json        # Claude Code plugin marketplace entry
-├── plugins/sanityops-inspect-lite/
+├── plugins/sanityops-inspector/
 │   ├── .claude-plugin/plugin.json         # plugin manifest
 │   └── skills/
-│       ├── pre-inspect-extract/SKILL.md   # skill: extraction layer (name: sanityops-extract)
-│       ├── sanityops-inspect-lite/
-│       │   ├── SKILL.md                   # skill: seven-stage inspector (name: sanityops-inspect)
+│       ├── sanityops-extract-only/SKILL.md  # skill: extraction layer (name: sanityops-extract-only)
+│       ├── sanityops-inspect-only/
+│       │   ├── SKILL.md                   # skill: seven-stage inspector (name: sanityops-inspect-only)
 │       │   └── references/                # _meta.md + 8 domain checklists (v2)
-│       └── sanityops-flow/SKILL.md        # orchestration wrapper: extract → inspect in one pass
+│       └── sanityops-inspector/SKILL.md   # orchestration wrapper: extract-only → inspect-only in one pass
 ├── pre-inspect-harvester-spec.md          # extraction-layer design rationale
 ├── quality/code-contract.md               # embedded-code QC source (DRAFT)
 ├── GET_STARTED.md                         # step-by-step setup
@@ -85,8 +85,8 @@ sanityops-inspect-lite/
 
 Pick one path:
 
-- **Claude Code (recommended):** `/plugin marketplace add sanityops-org/sanityops-inspect-lite`, then `/plugin install sanityops-inspect-lite@sanityops`, then say *"inspect my system prompt"*. Verify with `/plugin marketplace list`; pull later releases with `/plugin marketplace update sanityops`.
-- **Any agent (clone):** `git clone https://github.com/sanityops-org/sanityops-inspect-lite.git`, then install the skills from `plugins/sanityops-inspect-lite/skills/` — `pre-inspect-extract/`, `sanityops-inspect-lite/`, and (for the one-command full flow) `sanityops-flow/`.
+- **Claude Code (recommended):** `/plugin marketplace add sanityops-org/sanityops-inspector`, then `/plugin install sanityops-inspector@sanityops`, then say *"inspect my system prompt"*. Verify with `/plugin marketplace list`; pull later releases with `/plugin marketplace update sanityops`.
+- **Any agent (clone):** `git clone https://github.com/sanityops-org/sanityops-inspector.git`, then install the skills from `plugins/sanityops-inspector/skills/` — `sanityops-extract-only/`, `sanityops-inspect-only/`, and (for the one-command full flow) `sanityops-inspector/`.
 - **Full step-by-step:** see [GET_STARTED.md](GET_STARTED.md).
 
 No build, no scripts, no runtime dependency — the skill is plain Markdown, installed either by a single plugin command (Claude Code) or by copying the `skills/` directory (any agent). Nothing runs at inspection time; a host model (the agent you run it in) executes the skill.
@@ -108,17 +108,15 @@ No build, no scripts, no runtime dependency — the skill is plain Markdown, ins
 This repository ships two skills that run in sequence, plus an optional wrapper that chains them in a single request:
 
 ```
-arbitrary document  →  sanityops-extract  →  sanityops-inspect  →  report
+arbitrary document  →  sanityops-extract-only  →  sanityops-inspect-only  →  report
                         (pull artifacts out)   (seven-stage inspection)
 
-        sanityops-flow = the two skills above, run back-to-back
+        sanityops-inspector = the two skills above, run back-to-back
 ```
 
-- **[`sanityops-extract`](plugins/sanityops-inspect-lite/skills/pre-inspect-extract/SKILL.md)** — finds logic artifacts inside any document, strips the code/markup that carries them, reconstructs a schema from source when necessary, and labels each artifact's completeness.
-- **[`sanityops-inspect`](plugins/sanityops-inspect-lite/skills/sanityops-inspect-lite/SKILL.md)** — runs the seven stages on the extracted artifacts; its operational contract (inputs, flow, run modes, output format) lives in that SKILL.md.
-- **[`sanityops-flow`](plugins/sanityops-inspect-lite/skills/sanityops-flow/SKILL.md)** — a pure orchestration wrapper: runs extraction and inspection strictly in order over the same artifacts. It adds no rules of its own. Use it when you want one command for "extract + inspect" (e.g. pointing at a directory or a mixed document); a single clean file can also be handed to `sanityops-inspect` directly.
-
-> Note: the skill **names** are `sanityops-extract` / `sanityops-inspect` / `sanityops-flow`; the on-disk **directory names** (`pre-inspect-extract/`, `sanityops-inspect-lite/`) are kept for backward compatibility with existing installations.
+- **[`sanityops-extract-only`](plugins/sanityops-inspector/skills/sanityops-extract-only/SKILL.md)** — finds logic artifacts inside any document, strips the code/markup that carries them, reconstructs a schema from source when necessary, and labels each artifact's completeness.
+- **[`sanityops-inspect-only`](plugins/sanityops-inspector/skills/sanityops-inspect-only/SKILL.md)** — runs the seven stages on the extracted artifacts; its operational contract (inputs, flow, run modes, output format) lives in that SKILL.md.
+- **[`sanityops-inspector`](plugins/sanityops-inspector/skills/sanityops-inspector/SKILL.md)** — a pure orchestration wrapper: runs extraction and inspection strictly in order over the same artifacts. It adds no rules of its own. Use it when you want one command for "extract + inspect" (e.g. pointing at a directory or a mixed document); a single clean file can also be handed to `sanityops-inspect-only` directly.
 
 The extraction layer labels every artifact with one of six completeness levels, which decides how much of it can be checked:
 

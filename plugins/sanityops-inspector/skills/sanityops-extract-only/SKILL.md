@@ -1,13 +1,13 @@
 ---
-name: sanityops-extract
-version: 1.4.4
+name: sanityops-extract-only
+version: 1.5.0
 owner: Sanity AI Labs
-description: Trigger words: sanityops-extract / extract only / 只抽取 / artifact extraction. Pre-inspection extraction layer that runs before sanityops-inspect. Finds logic artifacts (System Prompt / Skill / Tool Schema) in any user-submitted document, segments them one by one, strips the code/markup shell that carries them, reconstructs the schema field-by-field from source when necessary, labels each artifact's completeness level with verbatim evidence, and determines each artifact's L (AC-L / OR-L). Extract-only, never judges defects. Outputs a two-layer IR (objects + references) for the inspection stage. Use when you need to first extract logic artifacts from a document before inspecting them.
+description: Trigger words: sanityops-extract-only / extract only / 只抽取. Pre-inspection extraction layer that runs before sanityops-inspect-only. Finds logic artifacts (System Prompt / Skill / Tool Schema) in any user-submitted document, segments them one by one, strips the code/markup shell that carries them, reconstructs the schema field-by-field from source when necessary, labels each artifact's completeness level with verbatim evidence, and determines each artifact's L (AC-L / OR-L). Extract-only, never judges defects. Outputs a two-layer IR (objects + references) for the inspection stage. Use when you need to first extract logic artifacts from a document before inspecting them.
 license: CC BY-SA 4.0
-changelog: https://github.com/sanityops-org/sanityops-inspect-lite/releases
+changelog: https://github.com/sanityops-org/sanityops-inspector/releases
 ---
 
-# Pre-Inspection Extraction Layer (pre-inspect-extract)
+# Pre-Inspection Extraction Layer (sanityops-extract-only)
 
 ## 0. Glossary (read this first)
 
@@ -38,7 +38,7 @@ The words in this file mean exactly the following. Nothing else.
 
 ## 1. What this is
 
-A pure-prompt, zero-dependency **pre-inspection extraction** skill that runs before `sanityops-inspect-lite`. It turns any user-submitted document into "inspectable artifacts + verbatim evidence".
+A pure-prompt, zero-dependency **pre-inspection extraction** skill that runs before `sanityops-inspect-only`. It turns any user-submitted document into "inspectable artifacts + verbatim evidence".
 
 It only extracts, only classifies, only labels completeness. **It does not judge defects** — PASS/FAIL is the job of the seven-stage inspection that follows.
 
@@ -614,7 +614,7 @@ Materialize the IR to a file and, inside it, embed one `<!-- ir-core -->` JSON b
 - Do not treat a carrier as an artifact, or scaffolding as an artifact.
 - Do not write framework-injected parameters (Python MCP `ctx: Context`, FastAPI `Depends(...)`, LangChain `InjectedToolArg`, `self` / `cls`) as tool parameters.
 
-## 13. Handoff to sanityops-inspect-lite
+## 13. Handoff to sanityops-inspect-only
 
 ```
 Original document → [pre-inspection extraction layer] → two-layer IR (objects + references, each object tagged with L) → [seven-stage inspection]
