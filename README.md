@@ -71,7 +71,7 @@ sanityops-inspector/
 │       │   ├── SKILL.md                   # skill: seven-stage inspector (name: sanityops-inspect-only)
 │       │   └── references/                # _meta.md + 8 domain checklists (v2)
 │       └── sanityops-inspector/SKILL.md   # orchestration wrapper: extract-only → inspect-only in one pass
-├── pre-inspect-harvester-spec.md          # extraction-layer design rationale
+├── extraction-layer-design.md              # extraction-layer design rationale
 ├── quality/code-contract.md               # embedded-code QC source (DRAFT)
 ├── GET_STARTED.md                         # step-by-step setup
 ├── LICENSE                                # CC BY-SA 4.0
@@ -129,7 +129,7 @@ The extraction layer labels every artifact with one of six completeness levels, 
 | **summary** | Summarized or transcribed | Contradictions only |
 | **not inspectable** | Cannot extract | Nothing; reason recorded |
 
-The extraction layer's design rationale is in [pre-inspect-harvester-spec.md](pre-inspect-harvester-spec.md).
+The extraction layer's design rationale is in [extraction-layer-design.md](extraction-layer-design.md).
 
 ---
 

@@ -2,7 +2,7 @@
 name: sanityops-inspect-only
 version: 1.5.0
 owner: Sanity AI Labs
-description: Trigger words: sanityops-inspect-only / single check / inspect only / 只检查. Lite, dependency-free inspector for AI Agent logic artifacts (System Prompt, Skill, Tool Schema) based on the SanityOps Framework v1.1. Runs a seven-stage non-blocking flow — single-artifact defect inspection (QD-P/QD-S/QD-T/QC), cross-artifact contract checks (QD-PS/PT/ST/SS/TT/CYC), Gate-0 admission, permission proportionality check (QD-PM, full 43-item set), explicit-risk audit (EX NL-A/NL-B/NR-O/NR-S), a candidate-impact outlook (AS-*/FM-* mapping), and a lightweight self-verification pass (Stage G). P0 findings are aggregated and reported but never halt the flow. Detect-only — it never rewrites the inspected artifacts. Use when the user asks to inspect, audit, or check an agent's system prompt, skill definition, or tool schemas. Local mod: Stage F grouped compact output (v1.5.0).
+description: Trigger words: sanityops-inspect-only / single check / inspect only. Dependency-free inspector for AI Agent logic artifacts (System Prompt, Skill, Tool Schema) based on the SanityOps Framework v1.1. Runs a seven-stage non-blocking flow — single-artifact defect inspection (QD-P/QD-S/QD-T/QC), cross-artifact contract checks (QD-PS/PT/ST/SS/TT/CYC), Gate-0 admission, permission proportionality check (QD-PM, full 43-item set), explicit-risk audit (EX NL-A/NL-B/NR-O/NR-S), a candidate-impact outlook (AS-*/FM-* mapping), and a condensed self-verification pass (Stage G). P0 findings are aggregated and reported but never halt the flow. Detect-only — it never rewrites the inspected artifacts. Use only when the artifacts are already extracted (an IR from sanityops-extract-only, or a single clean artifact file) and you want the seven-stage inspection; for raw or mixed documents run sanityops-inspector (extract + inspect) instead. Local mod: Stage F grouped compact output (v1.5.0).
 license: CC BY-SA 4.0
 changelog: https://github.com/sanityops-org/sanityops-inspector/releases
 ---
@@ -11,12 +11,12 @@ changelog: https://github.com/sanityops-org/sanityops-inspector/releases
 
 ## 1. What this skill is
 
-A **detect-only** inspector for the three Logic Artifact types in SanityOps Framework v1.1 — **System Prompt**, **Skill**, and **Tool Schema** (Permission as a cross-cutting aspect; embedded code snippets inside them get the lite QC check) — executed by you, the host model, applying the condensed checklists in `references/`. Zero dependencies: no CLI, no scripts, no network calls.
+A **detect-only** inspector for the three Logic Artifact types in SanityOps Framework v1.1 — **System Prompt**, **Skill**, and **Tool Schema** (Permission as a cross-cutting aspect; embedded code snippets inside them get the condensed QC check) — executed by you, the host model, applying the condensed checklists in `references/`. Zero dependencies: no CLI, no scripts, no network calls.
 
 It is **not**:
 
 - The official `sanityops-cli` or any SaaS — condensed minimal rule sets, with the Permission stage as the exception (it runs the full 43-item set); still not the full specification.
-- A security or quality gate — Inspect PASS ≠ Risk PASS ≠ Quality PASS (core.md §1.4); the Risk Implicit and runtime Quality subsets are **not** run (the lite embedded-code QC in Stage A is the only Quality check).
+- A security or quality gate — Inspect PASS ≠ Risk PASS ≠ Quality PASS (core.md §1.4); the Risk Implicit and runtime Quality subsets are **not** run (the condensed embedded-code QC in Stage A is the only Quality check).
 - A repair tool — it never rewrites, patches, or generates fixed versions.
 - A runtime auditor — Permission checks validate only what is *declared in the artifacts*, not IAM/IdP configuration, PEP/PDP enforcement, or runtime monitoring (permission.md §0.1.4).
 - An executing permission — it declares no write, delete, or environment-elevation scope; the skill is read-only static inspection of authorized artifacts and performs no production operation of any kind.
@@ -33,7 +33,7 @@ Ask the user for the following (only the Artifacts are blocking — do not start
 2. **Tier (L)** — each artifact's complexity/risk tier: AC-L1/L2/L3 for the Prompt, OR-L1/L2/L3 for the Skill and each Tool. When the input comes from the pre-inspection layer (`sanityops-extract-only`), read L from the IR's `ir-core` objects (field `L`) — L is determined once there and handed down, not re-derived here. When the IR records `L = undetermined`, keep it undetermined: report severity as `—` (reference level, `_meta.md` §4) and say so in the report — never pick an L column for it. Only when there is no IR (artifacts supplied directly) fall back to the user's declaration or the tier rules below, and state the determination. L feeds severity (P) only — it never decides whether a check runs (that is the structural-fact gate's job, §4).
 
    **Tier rules** (used only when no IR is present and the user cannot declare L):
-   - **AC-L1** single-turn — one question, one answer; no tools, no multi-turn state. **AC-L2** multi-turn — a multi-turn dialogue; each turn self-contained. **AC-L3** complex — planning / reflection / tool orchestration across steps. (L4 multi-agent is reserved: the source spec defines an AC-L4 tier for delegation morphology, but lite does not emit L4 yet — permission's AC-L4 set is kept for reference only.)
+   - **AC-L1** single-turn — one question, one answer; no tools, no multi-turn state. **AC-L2** multi-turn — a multi-turn dialogue; each turn self-contained. **AC-L3** complex — planning / reflection / tool orchestration across steps. (L4 multi-agent is reserved: the source spec defines an AC-L4 tier for delegation morphology, but this inspector does not emit L4 yet — permission's AC-L4 set is kept for reference only.)
    - **OR-L1** read-only — query / search / read; no write. **OR-L2** reversible write — create / update / send that can be corrected or undone. **OR-L3** irreversible — delete / transfer / irreversible external notification. A Skill or Tool with tool calls → the highest operation risk of the operations it performs. A Skill with **no declared tool invocation** is **not** automatically OR-L1: first scan its prose for write semantics (verbs like delete / transfer / send / overwrite / deploy) — any write hit means `judge` by the highest such operation (never silently downgrade to OR-L1); only a prose scan showing a positive read verb (query / search / read) and no write verb is OR-L1; a prose scan with no verb of any kind stays `undetermined` (see the signals below).
 
    **Determination signals (when no IR is present and the user cannot declare L).** Derive L from observable signals and record those signals in the report, never from a bare keyword or an empty default: AC-L — history/turn/session variables or a multi-step dialogue → AC-L2; planning/reflection/tool orchestration → AC-L3; otherwise `undetermined` (no observable signal — do not guess). OR-L — write verbs in prose or tool semantics (create/update/send → OR-L2; delete/transfer/irreversible notification → OR-L3); read-only (OR-L1) only on positive read evidence — a read verb (query / search / read) present **and** no write verb — never merely the absence of a write verb. If no verb of any kind is present, keep `L = undetermined` and report severity as `—`.
@@ -112,7 +112,7 @@ When an IR is present, consume its segmentation, type classification, and `L` as
 
 - The domain checklists in `references/` (`*-checklist.v2.md`) are **condensed extractions** of the SanityOps sub-specifications. They define **no new rules**. The shared `_meta.md` (field model, `applicability` structural-fact gate, `severity` conventions, `check_engine` mapping, scoring) is loaded once and reused across every stage; each domain file carries only the check items and points back to `_meta.md` for shared definitions.
 - On any conflict (numbering, definitions, levels, thresholds, wording), the source sub-specification governs:
-  - QD-P ← `inspect/prompt.md` · QD-S ← `inspect/skill.md` · QD-T ← `inspect/tool.md` · QD-PS/PT/ST/SS/TT/CYC ← `inspect/cross.md` · QD-PM ← `inspect/permission.md` · QC ← `quality/code-contract.md` (DRAFT — the lite `code-contract-checklist.v2.md` is the operational source) · EX ← `risk/explicit.md` · impact mapping ← `framework/relevance.md`
+  - QD-P ← `inspect/prompt.md` · QD-S ← `inspect/skill.md` · QD-T ← `inspect/tool.md` · QD-PS/PT/ST/SS/TT/CYC ← `inspect/cross.md` · QD-PM ← `inspect/permission.md` · QC ← `quality/code-contract.md` (DRAFT — the condensed `code-contract-checklist.v2.md` is the operational source) · EX ← `risk/explicit.md` · impact mapping ← `framework/relevance.md`
 - Only output rule IDs that exist in the references. **Never invent QD, EX, or QC IDs, rule names, or levels.**
 - **Retrieval protocol**: every verdict cites its rule's checklist file and section anchor (e.g. `permission-checklist.v2.md §2`). If `references/` cannot be read for a stage, report that stage **Not Executed — references unavailable**; never execute a stage from memory.
 - This package is licensed CC BY-SA 4.0, attributed to the SanityOps Framework.
@@ -152,7 +152,7 @@ A stage is skipped (Not Executed) only for concrete structural reasons — missi
 
 ### Stage C — Gate-0 (admission to Permission)
 
-Gate-0 **is not an inspection item**: it produces no numbers and no score; "not passed" ≠ FAIL ≠ permission problems (permission.md §9.2.2). Verify the four admission conditions G0-1..G0-4 defined in `references/permission-checklist.v2.md` §1. In this non-blocking flow, G0-1 (no unfixed P0 in Stage A) and G0-2 (no unfixed P0 in Stage B) are **recorded as informational findings and do not gate**; G0-3 (responsibility boundary statements exist and are locatable) is **non-blocking** — its absence only downgrades the 1.x items to N/A; G0-4 (each Tool Schema's name/description are complete, tool-level only) remains the only structural admission condition for Stage D. This non-blocking treatment of G0-1/G0-2/G0-3 is a consumer-side choice authorized by `permission-checklist.v2.md` §1 ("Gate-0's blocking/degradation strategy is consumer-side behavior"); under the lite non-blocking flow, a `Passed` here does **not** mean the source spec's gate was passed — it means the lite flow did not gate on it.
+Gate-0 **is not an inspection item**: it produces no numbers and no score; "not passed" ≠ FAIL ≠ permission problems (permission.md §9.2.2). Verify the four admission conditions G0-1..G0-4 defined in `references/permission-checklist.v2.md` §1. In this non-blocking flow, G0-1 (no unfixed P0 in Stage A) and G0-2 (no unfixed P0 in Stage B) are **recorded as informational findings and do not gate**; G0-3 (responsibility boundary statements exist and are locatable) is **non-blocking** — its absence only downgrades the 1.x items to N/A; G0-4 (each Tool Schema's name/description are complete, tool-level only) remains the only structural admission condition for Stage D. This non-blocking treatment of G0-1/G0-2/G0-3 is a consumer-side choice authorized by `permission-checklist.v2.md` §1 ("Gate-0's blocking/degradation strategy is consumer-side behavior"); under the non-blocking flow, a `Passed` here does **not** mean the source spec's gate was passed — it means this flow did not gate on it.
 
 - **Report every G0 condition with its result and reason, whether it passes or fails** — never a bare `Passed`. G0-4 is reported as `complete` / `vacuous (no Tool)` / `incomplete`; G0-3 as `locatable` / `absent → 1.x N/A`. A reader must be able to tell *how* each condition passed, not just that the gate opened.
 - G0-4 passes → proceed to Stage D. `complete` and `vacuous (no Tool)` are both passing values — `vacuous` passes because with no Tool Schema the G0-4 object set is empty, so nothing is incomplete (Stage D then runs on the Prompt/Skill items only). G0-1/G0-2 findings and any G0-3 absence are carried forward in the report; a G0-3 absence N/A's the 1.x items.
@@ -162,7 +162,7 @@ Gate-0 **is not an inspection item**: it produces no numbers and no score; "not 
 ### Stage D — Permission proportionality (QD-PM, full 43-item set)
 
 1. Run Permission on the artifact types that are present (Prompt, Skill, and/or Tool Schema), not on a required three-artifact set. Items that depend on an absent type are N/A with basis (e.g. "no Tool Schema"). Record NOT EXECUTED only when no permission-evidence artifact exists at all.
-2. Run the **full 43-item set** defined in `references/permission-checklist.v2.md` §2 (all items) — **once per run, at the Agent level**: permission-responsibility proportionality is an Agent-level judgment, so the 43 items are assessed for the Agent as a whole, with per-Tool evidence written as sub-items of the applicable QD-PM item (never a separate 43-item pass per Tool). The Quick Mode 17-item subset in §2.1 is retained only as a fast-screening view, not as the lite default. For each item output `QD-PM-x.y | PASS/FAIL/N/A | evidence` (matching §6.2), and mark every verdict **"provisional (lite)"**.
+2. Run the **full 43-item set** defined in `references/permission-checklist.v2.md` §2 (all items) — **once per run, at the Agent level**: permission-responsibility proportionality is an Agent-level judgment, so the 43 items are assessed for the Agent as a whole, with per-Tool evidence written as sub-items of the applicable QD-PM item (never a separate 43-item pass per Tool). The Quick Mode 17-item subset in §2.1 is retained only as a fast-screening view, not as the condensed default. For each item output `QD-PM-x.y | PASS/FAIL/N/A | evidence` (matching §6.2), and mark every verdict **"provisional (condensed)"**.
 3. Apply the checklist's classification binding: applicability is a **structural fact** (the checklist's `applicability.fact`), **not** derived from AC-L; severity is a risk fact from OR-L (basic mapping OR-L3→P0 / OR-L2→P1 / OR-L1→P2, with fixed-P0 items 3.4/5.4/6.3/6.5 and each item's inline severity rule). Never use AC-L to grade severity or OR-L to decide applicability. Every FAIL carries the classification-basis line `<operation> → <OR-L> → <rule> → <severity>`. N/A verdicts record the structural-fact determination basis (a basis-less N/A is treated as failure per the checklist). The IR's per-object `L` is an artifact-level risk ceiling for the Prompt/Skill/Tool domains only — Permission severity is derived **per permission item** from the highest operation risk that item covers (permission v2 §1 R2), never from the object's single `L`.
 4. Include the checklist's mandatory scope statement (its §7.2): declared proportionality only — not IAM/PEP/runtime enforcement.
 
@@ -177,7 +177,7 @@ Gate-0 **is not an inspection item**: it produces no numbers and no score; "not 
    - Assess only content **explicitly declared** in the risk text — never infer implicit risks (those belong to Risk Implicit, which is **not** run here).
    - Static text only: an EX finding is a static-document risk, **not** a confirmed runtime exploit. State explicitly that Risk Implicit (dynamic exploitability) was **not** run.
    - Keep this stage's report **physically separated** from the Inspect verdicts — it is a risk scan, not a defect verdict; an `Explicit·P0/P1/P2` grade is a Risk-Explicit assessment, never a security conclusion.
-   - Risk Explicit produces a grade, not a numeric score: the lite skill computes no numeric score in any stage (see §6.6); `score_weight` exists only for the platform (`_meta.md` §5).
+   - Risk Explicit produces a grade, not a numeric score: this inspector computes no numeric score in any stage (see §6.6); `score_weight` exists only for the platform (`_meta.md` §5).
 
 ### Stage F — Impact outlook (candidate mapping, advisory only)
 
@@ -186,11 +186,11 @@ Gate-0 **is not an inspection item**: it produces no numbers and no score; "not 
 3. Red lines (mandatory):
    - Candidate language only: "candidate association", "may", "needs dynamic verification". **Never** "will cause", "inevitably", "guarantees".
    - Strength ≠ severity. Label both explicitly.
-   - State that Risk Implicit and the runtime Quality subsets were **not run** (Risk Explicit ran in Stage E; the lite embedded-code QC ran in Stage A), and that per relevance.md §1.4 no assumption is made that controls outside the artifacts are absent.
+   - State that Risk Implicit and the runtime Quality subsets were **not run** (Risk Explicit ran in Stage E; the condensed embedded-code QC ran in Stage A), and that per relevance.md §1.4 no assumption is made that controls outside the artifacts are absent.
    - Keep this section **physically separated** from the stage verdicts (advisory context, not a verdict).
    - v1 scope: single-defect mapping only; defect chains (SC-*/QC-TA-*/QC-RA-*) are out of scope.
 
-### Stage G — Self-verification (lightweight, in-line + closing)
+### Stage G — Self-verification (condensed, in-line + closing)
 
 This stage verifies **the inspector's own report**, not the artifacts. It catches the host model's own execution errors — fabricated rule IDs, red-line wording, and output-contract violations — without re-inspecting the artifacts or re-reading the references from scratch. It keeps the dependency-free posture (no scripts, no extra tools).
 
@@ -274,7 +274,7 @@ Stage G (Self-verification): Executed / Not Executed — <reason>
 ```
 
 5. **Blocking wording red line**: a stage that did not run is reported as **Not Executed** with a concrete structural reason — the specific Gate-0 condition ID (G0-4) or "no permission-evidence artifact" (Stage D). P0 findings alone are never a reason for a stage to be Not Executed in this non-blocking flow. Never report a non-executed stage as FAIL, and never write "Permission = ERROR/BLOCKED" — the correct form is "Permission did not execute due to Gate-0 not satisfied".
-6. **No score** — this skill does not compute a numeric score and does not map findings to an AI-application level. Output is "check item → severity (P) → evidence" only. If the user asks for a score, state that scoring is out of scope for the lite skill (full scoring lives in `sanityops-cli` / platform, which read the checklist's `score_weight`).
+6. **No score** — this skill does not compute a numeric score and does not map findings to an AI-application level. Output is "check item → severity (P) → evidence" only. If the user asks for a score, state that scoring is out of scope for this inspector (full scoring lives in `sanityops-cli` / platform, which read the checklist's `score_weight`).
 7. **Report header (mandatory on every report and every stage-only report)** — exactly these provenance facts:
    - Host model name (self-declared by the model executing this skill, e.g. `Host model: <vendor/model>`);
    - Single-model statement: `Extraction (pre-inspect) and inspection were performed by the same host model in the same context; no independent verifier reviewed the extraction or the verdicts.` (omit the extraction clause when no IR was used);
@@ -326,7 +326,7 @@ Condensed from the SanityOps Framework v1.1 (2026-10 release), maintained by San
 ## 10. Further reading & upgrade
 
 - **Upgrade to the full inspection**: the open-source `sanityops-cli` and the SanityOps Platform provide the complete Inspect ruleset plus the Risk (Explicit/Implicit) and Quality subsets, remediation, and version-level evidence chains. See https://github.com/sanityops-org/sanityops-framework/blob/main/framework/try-the-tools.md.
-- **Background, lite-vs-full comparison, worked samples, FAQ**: see the repository README at https://github.com/sanityops-org/sanityops-inspector#readme (the README is not bundled into the installed plugin).
+- **Background, inspector-vs-full comparison, worked samples, FAQ**: see the repository README at https://github.com/sanityops-org/sanityops-inspector#readme (the README is not bundled into the installed plugin).
 
 ## Appendix A — Terminology quick reference
 

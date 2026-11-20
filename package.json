@@ -1,7 +1,7 @@
 {
   "name": "sanityops-inspector",
   "version": "1.5.0",
-  "description": "Lite, dependency-free inspector for AI Agent logic artifacts (System Prompt, Skill, Tool Schema) based on the SanityOps Framework v1.1. Detect-only; never rewrites artifacts.",
+  "description": "Dependency-free inspector for AI Agent logic artifacts (System Prompt, Skill, Tool Schema) based on the SanityOps Framework v1.1. Detect-only; never rewrites artifacts.",
   "license": "CC-BY-SA-4.0",
   "repository": {
     "type": "git",
@@ -21,7 +21,7 @@
     "plugins/",
     "README.md",
     "GET_STARTED.md",
-    "pre-inspect-harvester-spec.md",
+    "extraction-layer-design.md",
     "quality/",
     "LICENSE"
   ]

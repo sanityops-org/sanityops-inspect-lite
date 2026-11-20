@@ -1,6 +1,6 @@
 # SanityOps Inspector — Quick Start
 
-A lightweight inspector for AI Agent logic artifacts (**System Prompt / Skill / Tool Schema**): **report-only** (detect-only), built on SanityOps Framework v1.1.
+A dependency-free inspector for AI Agent logic artifacts (**System Prompt / Skill / Tool Schema**): **report-only** (detect-only), built on SanityOps Framework v1.1.
 
 ## Option 1: Claude Code users (recommended)
 
@@ -41,4 +41,4 @@ The plugin ships three skills under `plugins/sanityops-inspector/skills/` — `s
 
 - ✅ Seven-stage inspection: single-artifact → cross-artifact → Gate-0 → permission → explicit-risk audit → impact outlook → self-verification
 - ✅ Reports only; never rewrites any artifact
-- ❌ Does not run Risk Implicit or the runtime Quality subsets (the lite embedded-code QC in Stage A is the only Quality check); for full capability use the official `sanityops-cli`
+- ❌ Does not run Risk Implicit or the runtime Quality subsets (the condensed embedded-code QC in Stage A is the only Quality check); for full capability use the official `sanityops-cli`
