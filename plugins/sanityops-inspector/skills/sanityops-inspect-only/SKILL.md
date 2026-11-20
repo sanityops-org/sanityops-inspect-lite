@@ -1,8 +1,8 @@
 ---
 name: sanityops-inspect-only
-version: 1.5.0
+version: 2.0.0
 owner: Sanity AI Labs
-description: Trigger words: sanityops-inspect-only / single check / inspect only. Dependency-free inspector for AI Agent logic artifacts (System Prompt, Skill, Tool Schema) based on the SanityOps Framework v1.1. Runs a seven-stage non-blocking flow — single-artifact defect inspection (QD-P/QD-S/QD-T/QC), cross-artifact contract checks (QD-PS/PT/ST/SS/TT/CYC), Gate-0 admission, permission proportionality check (QD-PM, full 43-item set), explicit-risk audit (EX NL-A/NL-B/NR-O/NR-S), a candidate-impact outlook (AS-*/FM-* mapping), and a condensed self-verification pass (Stage G). P0 findings are aggregated and reported but never halt the flow. Detect-only — it never rewrites the inspected artifacts. Use only when the artifacts are already extracted (an IR from sanityops-extract-only, or a single clean artifact file) and you want the seven-stage inspection; for raw or mixed documents run sanityops-inspector (extract + inspect) instead. Local mod: Stage F grouped compact output (v1.5.0).
+description: Trigger words: sanityops-inspect-only / single check / inspect only. Dependency-free inspector for AI Agent logic artifacts (System Prompt, Skill, Tool Schema) based on the SanityOps Framework v1.1. Runs a seven-stage non-blocking flow — single-artifact defect inspection (QD-P/QD-S/QD-T/QC), cross-artifact contract checks (QD-PS/PT/ST/SS/TT/CYC), Gate-0 admission, permission proportionality check (QD-PM, full 43-item set), explicit-risk audit (EX NL-A/NL-B/NR-O/NR-S), a candidate-impact outlook (AS-*/FM-* mapping), and a condensed self-verification pass (Stage G). P0 findings are aggregated and reported but never halt the flow. Detect-only — it never rewrites the inspected artifacts. Use only when the artifacts are already extracted (an IR from sanityops-extract-only, or a single clean artifact file) and you want the seven-stage inspection; for raw or mixed documents run sanityops-inspector (extract + inspect) instead. Local mod: Stage F grouped compact output (v2.0.0).
 license: CC BY-SA 4.0
 changelog: https://github.com/sanityops-org/sanityops-inspector/releases
 ---
@@ -278,7 +278,7 @@ Stage G (Self-verification): Executed / Not Executed — <reason>
 7. **Report header (mandatory on every report and every stage-only report)** — exactly these provenance facts:
    - Host model name (self-declared by the model executing this skill, e.g. `Host model: <vendor/model>`);
    - Single-model statement: `Extraction (pre-inspect) and inspection were performed by the same host model in the same context; no independent verifier reviewed the extraction or the verdicts.` (omit the extraction clause when no IR was used);
-   - Skill package: `sanityops-inspect-only v1.5.0` (the `version` value of this SKILL.md front matter);
+   - Skill package: `sanityops-inspect-only v2.0.0` (the `version` value of this SKILL.md front matter);
    - Specification baseline: `SanityOps Framework v1.1 (2026-10 release)`;
    - The non-official-result statement, verbatim in substance: *"This result is produced by the skill rule package applied by the host model; it is NOT a conclusion of the official SanityOps engine. For a full inspection use sanityops-cli."*
    - Inspection date and the artifact version label supplied by the user;

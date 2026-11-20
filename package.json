@@ -1,6 +1,6 @@
 {
   "name": "sanityops-inspector",
-  "version": "1.5.0",
+  "version": "2.0.0",
   "description": "Dependency-free inspector for AI Agent logic artifacts (System Prompt, Skill, Tool Schema) based on the SanityOps Framework v1.1. Detect-only; never rewrites artifacts.",
   "license": "CC-BY-SA-4.0",
   "repository": {

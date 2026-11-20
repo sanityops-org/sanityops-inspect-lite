@@ -1,6 +1,6 @@
 ---
 name: sanityops-inspector
-version: 1.5.0
+version: 2.0.0
 owner: Sanity AI Labs
 description: Trigger words: sanityops-inspector / inspector / inspect / check / full check. Orchestration wrapper that runs the extraction layer (sanityops-extract-only) and the seven-stage inspector (sanityops-inspect-only) back-to-back over one artifact or one artifact set. Use when you want a single request to both extract and inspect logic artifacts end to end.
 license: CC BY-SA 4.0
