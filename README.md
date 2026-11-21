@@ -159,7 +159,7 @@ Top findings:
 Status board: Stage A Executed · Stage B Not Executed (no Tool/Skill) · ...
 ```
 
-Full reports carry a seven-line status board, an executive summary, per-rule verdicts with verbatim evidence, and a self-verification statement.
+Full reports carry a seven-line status board, an executive summary, per-rule verdicts for every FAIL / uncertain / related item with verbatim evidence, per-stage PASS/N/A tallies, and a self-verification statement. PASS and N/A lines are folded by default; the complete verdict ledger is emitted on request.
 
 ---
 
